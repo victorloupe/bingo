@@ -16,5 +16,6 @@
 // (offline), exatamente como antes.
 window.SUPABASE_CONFIG = {
   url: 'https://eaepaaicvaxoopjekuyu.supabase.co',
-  anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVhZXBhYWljdmF4b29wamVrdXl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4MzI0ODksImV4cCI6MjEwMjQwODQ4OX0.BZQoXR60cLc6l8iTlX3wMpR02rfqONCZg-LnWk9NeDg'
+  anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVhZXBhYWljdmF4b29wamVrdXl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4MzI0ODksImV4cCI6MjEwMjQwODQ4OX0.BZQoXR60cLc6l8iTlX3wMpR02rfqONCZg-LnWk9NeDg',
+  operatorKey: 'fb90cfc60a7eadaf52693d50b3817a8fb3e323053b029b3e'
 };

@@ -2,7 +2,8 @@
 // Bingo 75 — Sincronização com Supabase (Local + Nuvem)
 // ============================================================
 (function () {
-  const ROOM = 'default';
+  const urlParams = (typeof window !== 'undefined' && window.location && window.location.search) ? new URLSearchParams(window.location.search) : null;
+  const ROOM = (urlParams && (urlParams.get('sala') || urlParams.get('room') || urlParams.get('token'))) || localStorage.getItem('bingo.room') || 'default';
   let client = null;
   let configured = false;
   let pushTimer = null;
@@ -23,7 +24,7 @@
     const chip = document.getElementById('chip-sync');
     if (chip) {
       chip.textContent = STATUS_LABEL[status] || '☁️';
-      chip.title = 'Sincronização com a nuvem: ' + (STATUS_LABEL[status] || status);
+      chip.title = 'Sincronização com a nuvem (Sala: ' + ROOM + '): ' + (STATUS_LABEL[status] || status);
       chip.className = chip.className.replace(/\bsync-\S+/g, '').trim() + ' sync-' + status;
     }
     const line = document.getElementById('sync-line');
@@ -53,7 +54,12 @@
   }
 
   function operatorKey() {
-    return (typeof window !== 'undefined' && window.BINGO_OPERATOR_KEY) || '';
+    return (
+      (typeof window !== 'undefined' && window.BINGO_OPERATOR_KEY) ||
+      (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.operatorKey) ||
+      localStorage.getItem('bingo.operatorKey') ||
+      'fb90cfc60a7eadaf52693d50b3817a8fb3e323053b029b3e'
+    );
   }
 
   async function pushState(state) {
