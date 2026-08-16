@@ -401,8 +401,7 @@ progress::-moz-progress-bar {
 
 /* Os 3 Cards da Coluna Esquerda com Tamanho Fixo e Equilibrado */
 .tv-history-wrap,
-.tv-ranking,
-.tv-auditor-box {
+.tv-ranking {
   flex: 1 1 0;
   min-height: 0;
   height: 100%;
@@ -411,9 +410,42 @@ progress::-moz-progress-bar {
   background: #ffffff;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 10px 14px;
+  padding: 8px 12px;
   box-shadow: var(--shadow-sm);
   overflow: hidden;
+}
+
+.tv-auditor-box {
+  flex: 0 0 auto;
+  max-height: 105px;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 6px 10px;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.tv-auditor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 3px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid #f1f5f9;
+  flex-shrink: 0;
+}
+
+.tv-auditor-title {
+  font-weight: 800;
+  font-size: 0.72rem;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  line-height: 1;
 }
 
 .tv-history-title {
@@ -1742,10 +1774,87 @@ progress::-moz-progress-bar {
 .auditor-live-content {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 3px;
   flex: 1;
   overflow-y: auto;
   min-height: 0;
+  padding-right: 1px;
+}
+
+.auditor-bingou-banner {
+  background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
+  color: #ffffff;
+  border-radius: 6px;
+  padding: 3px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  box-shadow: 0 2px 5px rgba(22, 163, 74, 0.25);
+  flex-shrink: 0;
+}
+
+.auditor-bingou-serial-pill {
+  background: #ffffff;
+  color: #15803d;
+  font-weight: 800;
+  font-size: 0.72rem;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.auditor-btn-conferir {
+  background: #ffffff;
+  color: #15803d;
+  font-weight: 800;
+  font-size: 0.68rem;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  line-height: 1;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.auditor-btn-conferir:hover {
+  background: #f0fdf4;
+  color: #166534;
+  transform: translateY(-1px);
+}
+
+.auditor-armada-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 1px 4px;
+  font-size: 0.7rem;
+  line-height: 1;
+  transition: border-color 0.15s ease;
+}
+.auditor-armada-chip:hover {
+  border-color: #fca5a5;
+  background: #fff5f5;
+}
+.armada-serial {
+  font-weight: 800;
+  color: #334155;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+}
+.armada-ball-badge {
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 0.65rem;
+  padding: 1px 4px;
+  border-radius: 3px;
+  line-height: 1;
 }
 
 .chip-auditor {
@@ -1761,10 +1870,10 @@ progress::-moz-progress-bar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 2px 8px;
+  padding: 1px 6px;
   border-radius: 999px;
   font-weight: 900;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   color: #ffffff;
   letter-spacing: 0.5px;
   white-space: nowrap;
@@ -1778,17 +1887,26 @@ progress::-moz-progress-bar {
 .armada-item-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 8px 12px;
+  border-radius: 8px;
+  padding: 6px 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
   transition: all 0.15s ease;
 }
 .armada-item-card:hover {
   border-color: #f87171;
   background: #fff5f5;
+}
+
+.lucide-xs {
+  width: 12px;
+  height: 12px;
+}
+.lucide-sm {
+  width: 15px;
+  height: 15px;
 }
 
 /* Garante exibição de SVG de ícones */

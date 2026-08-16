@@ -83,20 +83,47 @@
     adNoticeObj._conferenceMode = isConference;
     adNoticeObj._adMode = isAd;
 
+    // Sponsors: preserva patrocinadores salvos caso state não passe explicitamente
+    let sponsorsList = (Array.isArray(state.sponsors) && state.sponsors.length > 0) ? state.sponsors : null;
+    if (!sponsorsList) {
+      try {
+        const localSp = JSON.parse(localStorage.getItem('bingo.sponsors') || 'null');
+        if (Array.isArray(localSp) && localSp.length > 0) sponsorsList = localSp;
+      } catch (e) {}
+    }
+
+    // RoundsList: preserva lista de rodadas
+    let roundsListVal = (Array.isArray(state.roundsList) && state.roundsList.length > 0) ? state.roundsList : null;
+    if (!roundsListVal) {
+      try {
+        const localRounds = JSON.parse(localStorage.getItem('bingo.roundsList') || 'null');
+        if (Array.isArray(localRounds) && localRounds.length > 0) roundsListVal = localRounds;
+      } catch (e) {}
+    }
+
+    // RoundsQueue: preserva fila de rodadas
+    let roundsQueueVal = (Array.isArray(state.roundsQueue) && state.roundsQueue.length > 0) ? state.roundsQueue : null;
+    if (!roundsQueueVal) {
+      try {
+        const localQueue = JSON.parse(localStorage.getItem('bingo.roundsQueue') || 'null');
+        if (Array.isArray(localQueue) && localQueue.length > 0) roundsQueueVal = localQueue;
+      } catch (e) {}
+    }
+
     const payload = {
       room: ROOM,
       active_round_id: state.activeRoundId || 'round_1',
       round_name: state.roundName || 'Rodada 1',
-      rounds_list: state.roundsList || [],
+      rounds_list: roundsListVal || [],
       next_round: state.nextRound || {},
-      rounds_queue: state.roundsQueue || [],
+      rounds_queue: roundsQueueVal || [],
       drawn: state.drawn || [],
       last: state.last ?? null,
       game_over: !!state.gameOver,
       first_ts: state.firstTs ?? null,
       last_ts: state.lastTs ?? null,
       prizes: state.prizes || {},
-      sponsors: state.sponsors || [],
+      sponsors: sponsorsList || [],
       ad_mode: isAd,
       ad_notice: adNoticeObj
     };
@@ -301,13 +328,26 @@
     const rDrawn = Array.isArray(remote.drawn) ? remote.drawn : [];
     const lDrawn = Array.isArray(local.drawn) ? local.drawn : [];
     const mergedPrizes = Object.assign({}, remote.prizes || {}, local.prizes || {});
-    const sponsors = (remote.sponsors && remote.sponsors.length) ? remote.sponsors : (local.sponsors || []);
     
-    const adMode = typeof remote.adMode === 'boolean' ? remote.adMode : (typeof local.adMode === 'boolean' ? local.adMode : (localStorage.getItem('bingo.adMode') === '1'));
-    const conferenceMode = typeof remote.conferenceMode === 'boolean' ? remote.conferenceMode : (typeof local.conferenceMode === 'boolean' ? local.conferenceMode : (localStorage.getItem('bingo.conferenceMode') === '1'));
-    const roundsList = (local.roundsList && local.roundsList.length) ? local.roundsList : (remote.roundsList || []);
-    const nextRound = local.nextRound || remote.nextRound || null;
-    const roundsQueue = (local.roundsQueue && local.roundsQueue.length) ? local.roundsQueue : (remote.roundsQueue || []);
+    // Sponsors: Prioriza lista com itens
+    const sponsors = (Array.isArray(remote.sponsors) && remote.sponsors.length > 0)
+      ? remote.sponsors
+      : (Array.isArray(local.sponsors) && local.sponsors.length > 0 ? local.sponsors : []);
+    
+    const adMode = typeof remote.adMode === 'boolean' 
+      ? remote.adMode 
+      : (typeof local.adMode === 'boolean' ? local.adMode : (localStorage.getItem('bingo.adMode') === '1'));
+    const conferenceMode = typeof remote.conferenceMode === 'boolean' 
+      ? remote.conferenceMode 
+      : (typeof local.conferenceMode === 'boolean' ? local.conferenceMode : (localStorage.getItem('bingo.conferenceMode') === '1'));
+    const roundsList = (Array.isArray(remote.roundsList) && remote.roundsList.length > 0)
+      ? remote.roundsList
+      : (Array.isArray(local.roundsList) && local.roundsList.length > 0 ? local.roundsList : []);
+    const nextRound = remote.nextRound || local.nextRound || null;
+    const roundsQueue = (Array.isArray(remote.roundsQueue) && remote.roundsQueue.length > 0)
+      ? remote.roundsQueue
+      : (Array.isArray(local.roundsQueue) && local.roundsQueue.length > 0 ? local.roundsQueue : []);
+    
     let base = local;
     const rLastTs = Number(remote.lastTs) || 0;
     const lLastTs = Number(local.lastTs) || 0;
@@ -315,10 +355,11 @@
     const isLocalPristine = !local.activeRoundId || (lDrawn.length === 0 && !lLastTs && !local.firstTs && !local.gameOver);
     if (isLocalPristine && remote.activeRoundId) {
       return Object.assign({}, remote, {
-        sponsors: (remote.sponsors && remote.sponsors.length) ? remote.sponsors : (local.sponsors || []),
+        sponsors,
         adMode,
         conferenceMode,
-        adNotice: remote.adNotice || local.adNotice || null
+        adNotice: remote.adNotice || local.adNotice || null,
+        roundsQueue
       });
     }
 

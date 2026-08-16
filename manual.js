@@ -112,9 +112,29 @@ const LS = {
     const nextRound = rIndex >= 0 && rIndex + 1 < roundsList.length ? roundsList[rIndex + 1] : null;
     let adNotice = null;
     try { adNotice = JSON.parse(localStorage.getItem('bingo.adNotice') || 'null'); } catch (e) {}
+    let sponsors = [];
+    try { sponsors = JSON.parse(localStorage.getItem('bingo.sponsors') || '[]'); } catch (e) {}
+    let roundsQueue = [];
+    try { roundsQueue = JSON.parse(localStorage.getItem('bingo.roundsQueue') || '[]'); } catch (e) {}
+
     const data = {
-      activeRoundId: activeId, roundName, nextRound, roundsList, drawn, last, selectedVoiceName, rate, pitch, gameOver,
-      firstTs, lastTs, prizes, adMode, adNotice
+      activeRoundId: activeId,
+      roundName,
+      nextRound,
+      roundsList,
+      roundsQueue,
+      drawn,
+      last,
+      selectedVoiceName,
+      rate,
+      pitch,
+      gameOver,
+      firstTs,
+      lastTs,
+      prizes,
+      sponsors,
+      adMode,
+      adNotice
     };
     localStorage.setItem('bingo.state', JSON.stringify(data));
     localStorage.setItem('bingo.prizes', JSON.stringify(prizes));
@@ -159,7 +179,12 @@ const LS = {
       if(typeof stateData.selectedVoiceName==='string') selectedVoiceName = stateData.selectedVoiceName;
       if(typeof stateData.rate==='number') rate = stateData.rate;
       if(typeof stateData.pitch==='number') pitch = stateData.pitch;
-      adMode = localStorage.getItem('bingo.adMode') === '1' || !!stateData.adMode;
+      if (typeof stateData.adMode === 'boolean') {
+        adMode = stateData.adMode;
+        localStorage.setItem('bingo.adMode', adMode ? '1' : '0');
+      } else {
+        adMode = localStorage.getItem('bingo.adMode') === '1';
+      }
     }catch(e){}
   },
   saveRanking(list){
@@ -471,9 +496,9 @@ function renderAuditorPanel() {
 
   if (!audit.totalCardsAudited) {
     container.innerHTML = `
-      <div class="text-muted small py-2 d-flex align-items-center gap-1" style="font-size:0.75rem;">
-        <i data-lucide="info" class="lucide-sm text-primary"></i>
-        <span>Nenhum lote associado a este bingo. Cadastre em <a href="cartelas.html" class="fw-bold text-primary">Cartelas</a>.</span>
+      <div class="text-muted py-1 d-flex align-items-center gap-1" style="font-size:0.68rem; line-height:1.2;">
+        <i data-lucide="info" class="lucide-xs text-primary"></i>
+        <span>Nenhum lote associado. Cadastre em <a href="cartelas.html" class="fw-bold text-primary">Cartelas</a>.</span>
       </div>
     `;
     if (window.lucide) lucide.createIcons();
@@ -485,16 +510,14 @@ function renderAuditorPanel() {
   // Se houver cartelas que BINGARAM (24/24)
   if (audit.hasBingou) {
     html += `
-      <div class="p-2 rounded bg-success text-white d-flex align-items-center justify-content-between gap-2 shadow-sm mb-1">
-        <div class="d-flex align-items-center gap-2">
-          <span class="fs-5">🏆</span>
-          <div>
-            <div class="fw-bold" style="font-size:0.85rem;">BINGOU! (${audit.bingouCards.length} Cartela${audit.bingouCards.length > 1 ? 's' : ''})</div>
-            <div class="small opacity-90">${audit.bingouCards.map(c => '#' + c.formattedSerial).join(', ')}</div>
-          </div>
+      <div class="auditor-bingou-banner">
+        <div class="d-flex align-items-center gap-1 min-w-0">
+          <span style="font-size:0.85rem; line-height:1;">🏆</span>
+          <strong style="font-size:0.75rem; letter-spacing:0.3px;">BINGOU!</strong>
+          <span class="auditor-bingou-serial-pill">${audit.bingouCards.map(c => '#' + c.formattedSerial).join(', ')}</span>
         </div>
-        <a href="check.html" class="btn btn-sm btn-light fw-bold py-1 px-2 text-success d-inline-flex align-items-center gap-1" style="font-size:0.75rem;">
-          <i data-lucide="check-square" class="lucide-sm"></i> Conferir
+        <a href="check.html" class="auditor-btn-conferir">
+          <i data-lucide="check-square" class="lucide-xs"></i> Conferir
         </a>
       </div>
     `;
@@ -503,21 +526,20 @@ function renderAuditorPanel() {
   // Se houver cartelas ARMADAS (23/24)
   if (audit.hasArmada) {
     html += `
-      <div class="d-flex align-items-center justify-content-between mb-1">
-        <span class="text-danger fw-bold d-flex align-items-center gap-1" style="font-size:0.75rem;">
-          <i data-lucide="flame" class="lucide-sm"></i> ${audit.armadaCards.length} armada${audit.armadaCards.length > 1 ? 's' : ''} (falta 1 pedra):
+      <div class="d-flex align-items-center justify-content-between" style="line-height:1; margin-bottom:1px;">
+        <span class="text-danger fw-bold d-flex align-items-center gap-1" style="font-size:0.68rem;">
+          <i data-lucide="flame" class="lucide-xs text-danger"></i> ${audit.armadaCards.length} armada${audit.armadaCards.length > 1 ? 's' : ''} (falta 1):
         </span>
       </div>
-      <div class="d-flex flex-wrap gap-1" style="max-height:100px; overflow-y:auto;">
+      <div class="d-flex flex-wrap gap-1" style="max-height:56px; overflow-y:auto;">
         ${audit.armadaCards.map(c => {
           const n = c.missingNumber;
           const L = letterFor(n);
           const bClass = getBallClass(n);
           return `
-            <div class="d-flex align-items-center gap-1 p-1 px-2 rounded border bg-light" style="font-size:0.75rem; line-height:1;" title="Lote: ${esc(c.batchName)}">
-              <span class="fw-bold text-dark">#${esc(c.formattedSerial)}</span>
-              <span class="text-muted" style="font-size:0.68rem;">falta</span>
-              <span class="ball-badge-sm ${bClass}" style="font-size:0.7rem; padding:1px 5px;">${L} ${n}</span>
+            <div class="auditor-armada-chip" title="Lote: ${esc(c.batchName)}">
+              <span class="armada-serial">#${esc(c.formattedSerial)}</span>
+              <span class="armada-ball-badge ${bClass}">${L} ${n}</span>
             </div>
           `;
         }).join('')}
@@ -527,11 +549,11 @@ function renderAuditorPanel() {
 
   if (!audit.hasBingou && !audit.hasArmada) {
     html = `
-      <div class="d-flex align-items-center justify-content-between p-2 rounded bg-light border text-muted" style="font-size:0.75rem;">
+      <div class="d-flex align-items-center justify-content-between p-1 px-2 rounded bg-light border text-muted" style="font-size:0.68rem; line-height:1.2;">
         <span class="d-flex align-items-center gap-1">
-          <i data-lucide="shield-check" class="lucide-sm text-success"></i> Nenhuma armada no momento.
+          <i data-lucide="shield-check" class="lucide-xs text-success"></i> Nenhuma armada.
         </span>
-        <span class="text-secondary small font-monospace">${drawn.length}/75 pedras</span>
+        <span class="text-secondary small font-monospace" style="font-size:0.65rem;">${drawn.length}/75 sorteadas</span>
       </div>
     `;
   }
@@ -1058,9 +1080,19 @@ async function initCloudSync(){
     lastTs = merged.lastTs ?? null;
     if(merged.roundName) roundName = merged.roundName;
     if(merged.activeRoundId) roundId = merged.activeRoundId;
-    if(typeof merged.adMode==='boolean') adMode = merged.adMode;
+    if(typeof merged.adMode==='boolean') {
+      adMode = merged.adMode;
+      localStorage.setItem('bingo.adMode', adMode ? '1' : '0');
+    }
     if(merged.prizes) prizes = Object.assign({}, DEFAULT_PRIZES, merged.prizes);
-    LS.save();
+    if(merged.adNotice) localStorage.setItem('bingo.adNotice', JSON.stringify(merged.adNotice));
+    if(Array.isArray(merged.sponsors) && merged.sponsors.length > 0) localStorage.setItem('bingo.sponsors', JSON.stringify(merged.sponsors));
+    if(Array.isArray(merged.roundsQueue) && merged.roundsQueue.length > 0) localStorage.setItem('bingo.roundsQueue', JSON.stringify(merged.roundsQueue));
+
+    localStorage.setItem('bingo.state', JSON.stringify(merged));
+    if (Array.isArray(merged.roundsList) && merged.roundsList.length > 0) {
+      localStorage.setItem('bingo.roundsList', JSON.stringify(merged.roundsList));
+    }
   }
   if(remoteRanking){
     const mergedRanking = BingoSync.mergeRanking(LS.loadRanking(), remoteRanking);
@@ -1081,9 +1113,15 @@ async function initCloudSync(){
       lastTs = merged.lastTs ?? null;
       if(merged.roundName) roundName = merged.roundName;
       if(merged.activeRoundId) roundId = merged.activeRoundId;
-      if(typeof merged.adMode==='boolean') adMode = merged.adMode;
+      if(typeof merged.adMode==='boolean') {
+        adMode = merged.adMode;
+        localStorage.setItem('bingo.adMode', adMode ? '1' : '0');
+      }
       if(merged.prizes) prizes = Object.assign({}, DEFAULT_PRIZES, merged.prizes);
-      
+      if(merged.adNotice) localStorage.setItem('bingo.adNotice', JSON.stringify(merged.adNotice));
+      if(Array.isArray(merged.sponsors) && merged.sponsors.length > 0) localStorage.setItem('bingo.sponsors', JSON.stringify(merged.sponsors));
+      if(Array.isArray(merged.roundsQueue) && merged.roundsQueue.length > 0) localStorage.setItem('bingo.roundsQueue', JSON.stringify(merged.roundsQueue));
+
       localStorage.setItem('bingo.state', JSON.stringify(merged));
       if (Array.isArray(merged.roundsList) && merged.roundsList.length > 0) {
         localStorage.setItem('bingo.roundsList', JSON.stringify(merged.roundsList));

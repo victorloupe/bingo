@@ -213,12 +213,16 @@
   let adNotice = null;
 
   // ====== Modo Propaganda / Comercial Slider ======
-  function renderCurrentSlide() {
+  function renderCurrentSlide(force = false) {
     const spList = sponsors && sponsors.length ? sponsors : SAMPLE_SPONSORS;
     if (currentAdIndex >= spList.length) currentAdIndex = 0;
     const cur = spList[currentAdIndex];
 
-    if (cur && currentAdIndex !== lastRenderedSlideIndex) {
+    if (adImg) {
+      adImg.onerror = () => { adImg.src = 'favicon.svg'; };
+    }
+
+    if (cur && (force || currentAdIndex !== lastRenderedSlideIndex)) {
       lastRenderedSlideIndex = currentAdIndex;
       if (adSlideBox) {
         adSlideBox.style.transition = 'opacity 0.25s ease';
@@ -239,7 +243,7 @@
 
   function updateAdCarousel() {
     if (!adOverlay) return;
-    const isAd = (typeof adMode === 'boolean' ? adMode : false) || (localStorage.getItem('bingo.adMode') === '1');
+    const isAd = typeof adMode === 'boolean' ? adMode : (localStorage.getItem('bingo.adMode') === '1');
     if (!isAd) {
       adOverlay.setAttribute('hidden', '');
       adOverlay.style.display = 'none';
@@ -261,9 +265,9 @@
       try { customNotice = JSON.parse(localStorage.getItem('bingo.adNotice') || 'null'); } catch (e) {}
     }
 
-    if (customNotice && customNotice.title && adNextBanner) {
+    if (customNotice && (customNotice.title || customNotice.desc) && adNextBanner) {
       adNextBanner.style.display = 'flex';
-      if (adNextTitle) adNextTitle.innerHTML = esc(customNotice.title);
+      if (adNextTitle) adNextTitle.innerHTML = esc(customNotice.title || 'COMUNICADO');
       if (adNextPrizes) adNextPrizes.innerHTML = esc(customNotice.desc || '');
     } else {
       let nextItem = nextRound;
@@ -286,6 +290,7 @@
           adNextPrizes.innerHTML = `${cheia}${cheia && outros ? ' &nbsp;|&nbsp; ' : ''}${outros}`;
         }
       } else if (adNextBanner) {
+        adNextBanner.style.display = 'flex';
         if (adNextTitle) adNextTitle.innerHTML = `👉 A SEGUIR: <b>Próxima Rodada</b>`;
         if (adNextPrizes) adNextPrizes.innerHTML = `Fiquem atentos para a próxima chamada de pedras!`;
       }
@@ -297,7 +302,7 @@
       adIntervalTimer = setInterval(() => {
         const list = sponsors && sponsors.length ? sponsors : SAMPLE_SPONSORS;
         currentAdIndex = (currentAdIndex + 1) % list.length;
-        renderCurrentSlide();
+        renderCurrentSlide(true);
       }, 6000);
     }
   }
@@ -604,7 +609,10 @@
     localStorage.setItem('bingo.conferenceMode', conferenceMode ? '1' : '0');
 
     if (newState.prizes) prizes = Object.assign({}, DEFAULT_PRIZES, newState.prizes);
-    if (Array.isArray(newState.sponsors) && newState.sponsors.length > 0) sponsors = newState.sponsors;
+    if (Array.isArray(newState.sponsors) && newState.sponsors.length > 0) {
+      sponsors = newState.sponsors;
+      lastRenderedSlideIndex = -1;
+    }
 
     if (isNewBall) {
       const L = letterFor(last);
@@ -627,6 +635,8 @@
       if (Array.isArray(localSponsors) && localSponsors.length > 0) sponsors = localSponsors;
       const localQueue = JSON.parse(localStorage.getItem('bingo.roundsQueue') || 'null');
       if (Array.isArray(localQueue)) roundsQueue = localQueue;
+      const localNotice = JSON.parse(localStorage.getItem('bingo.adNotice') || 'null');
+      if (localNotice) adNotice = localNotice;
       
       adMode = (typeof st.adMode === 'boolean') ? st.adMode : (localStorage.getItem('bingo.adMode') === '1');
       st.adMode = adMode;
@@ -651,6 +661,8 @@
         localStorage.setItem('bingo.state', JSON.stringify(remoteState));
         if (remoteState.prizes) localStorage.setItem('bingo.prizes', JSON.stringify(remoteState.prizes));
         if (remoteState.sponsors) localStorage.setItem('bingo.sponsors', JSON.stringify(remoteState.sponsors));
+        if (remoteState.adNotice) localStorage.setItem('bingo.adNotice', JSON.stringify(remoteState.adNotice));
+        if (typeof remoteState.adMode === 'boolean') localStorage.setItem('bingo.adMode', remoteState.adMode ? '1' : '0');
         handleStateChange(remoteState);
       }
 
@@ -668,6 +680,8 @@
           localStorage.setItem('bingo.state', JSON.stringify(rs));
           if (rs.prizes) localStorage.setItem('bingo.prizes', JSON.stringify(rs.prizes));
           if (rs.sponsors) localStorage.setItem('bingo.sponsors', JSON.stringify(rs.sponsors));
+          if (rs.adNotice) localStorage.setItem('bingo.adNotice', JSON.stringify(rs.adNotice));
+          if (typeof rs.adMode === 'boolean') localStorage.setItem('bingo.adMode', rs.adMode ? '1' : '0');
           handleStateChange(rs);
         }
         if (rr) {

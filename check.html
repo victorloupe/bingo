@@ -1279,6 +1279,9 @@
         merged.conferenceMode = conferenceActive;
         localStorage.setItem('bingo.state', JSON.stringify(merged));
         if (merged.prizes) localStorage.setItem('bingo.prizes', JSON.stringify(merged.prizes));
+        if (merged.sponsors) localStorage.setItem('bingo.sponsors', JSON.stringify(merged.sponsors));
+        if (typeof merged.adMode === 'boolean') localStorage.setItem('bingo.adMode', merged.adMode ? '1' : '0');
+        if (merged.adNotice) localStorage.setItem('bingo.adNotice', JSON.stringify(merged.adNotice));
         if (conferenceActive) {
           window.BingoSync.pushState(merged);
         }
@@ -1304,6 +1307,9 @@
           merged.conferenceMode = conferenceActive;
           localStorage.setItem('bingo.state', JSON.stringify(merged));
           if (merged.prizes) localStorage.setItem('bingo.prizes', JSON.stringify(merged.prizes));
+          if (merged.sponsors) localStorage.setItem('bingo.sponsors', JSON.stringify(merged.sponsors));
+          if (typeof merged.adMode === 'boolean') localStorage.setItem('bingo.adMode', merged.adMode ? '1' : '0');
+          if (merged.adNotice) localStorage.setItem('bingo.adNotice', JSON.stringify(merged.adNotice));
         }
         const rr = await BingoSync.pullRanking();
         if (rr) {
