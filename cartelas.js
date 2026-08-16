@@ -202,8 +202,9 @@
     const batches = Storage.getAllBatches();
     const matchingBatches = batches.filter(b => {
       if (!roundId) return true;
-      if (!b.roundIds || !b.roundIds.length) return true;
-      return b.roundIds.includes(roundId);
+      const ids = b.assignedRoundIds || b.roundIds;
+      if (!ids || !ids.length || ids.includes('all')) return true;
+      return ids.includes(roundId);
     });
 
     const bingouCards = [];

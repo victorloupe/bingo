@@ -536,9 +536,9 @@
     last = newState.last ?? null;
     gameOver = !!newState.gameOver;
     if (newState.roundName) roundName = newState.roundName;
-    if (newState.nextRound) nextRound = newState.nextRound;
-    if (Array.isArray(newState.roundsQueue)) roundsQueue = newState.roundsQueue;
-    if (newState.adNotice) adNotice = newState.adNotice;
+    nextRound = newState.nextRound ?? null;
+    roundsQueue = Array.isArray(newState.roundsQueue) ? newState.roundsQueue : [];
+    adNotice = newState.adNotice ?? null;
     
     // adMode é persistente
     if (typeof newState.adMode === 'boolean') {
