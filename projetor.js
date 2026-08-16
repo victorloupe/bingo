@@ -27,6 +27,21 @@
     { id: '3', name: 'Padaria & Confeitaria Estrela', desc: 'Pães quentinhos e bolos especiais todos os dias!', img: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&auto=format&fit=crop&q=80' }
   ];
 
+  const ICONS = {
+    trophy: `<svg class="lucide lucide-trophy lucide-sm text-success" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.45.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.45.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>`,
+    gift: `<svg class="lucide lucide-gift lucide-sm text-primary" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg>`,
+    sparkles: `<svg class="lucide lucide-sparkles lucide-sm text-primary" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>`,
+    check: `<svg class="lucide lucide-check lucide-sm text-success" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><polyline points="20 6 9 17 4 12"/></svg>`,
+    award: `<svg class="lucide lucide-award lucide-sm text-warning" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>`,
+    search: `<svg class="lucide lucide-search lucide-sm text-warning" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>`,
+    flag: `<svg class="lucide lucide-flag lucide-sm" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>`,
+    dices: `<svg class="lucide lucide-dices lucide-sm text-primary" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><rect width="12" height="12" x="2" y="10" rx="2" ry="2"/><path d="m17.92 14 3.5-3.5a2.24 2.24 0 0 0 0-3.18l-5.74-5.74a2.24 2.24 0 0 0-3.18 0L9 5.08"/><path d="M6 14h.01"/><path d="M10 18h.01"/><path d="M14 6h.01"/><path d="M18 10h.01"/></svg>`,
+    activity: `<svg class="lucide lucide-activity lucide-sm text-success" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+    clock: `<svg class="lucide lucide-clock lucide-sm text-primary" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`,
+    volume2: `<svg class="lucide lucide-volume-2 lucide-sm" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>`,
+    volumeX: `<svg class="lucide lucide-volume-x lucide-sm" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></svg>`
+  };
+
   function esc(s) {
     return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
@@ -305,18 +320,18 @@
       if (isWon) {
         card.innerHTML = `
           <div class="p-left">
-            <span class="p-type">${isCheia ? '<i data-lucide="trophy" class="lucide-sm text-success"></i>' : '<i data-lucide="gift" class="lucide-sm text-primary"></i>'} ${esc(mod)}</span>
+            <span class="p-type">${isCheia ? ICONS.trophy : ICONS.gift} ${esc(mod)}</span>
             <span class="p-name">${esc(prizeName)}</span>
           </div>
-          <span class="p-badge"><i data-lucide="check" class="lucide-sm text-success"></i> ${esc(winner.name || winner.player)}</span>
+          <span class="p-badge">${ICONS.check} ${esc(winner.name || winner.player)}</span>
         `;
       } else {
         card.innerHTML = `
           <div class="p-left">
-            <span class="p-type">${isCheia ? '<i data-lucide="trophy" class="lucide-sm text-success"></i>' : '<i data-lucide="gift" class="lucide-sm text-primary"></i>'} ${esc(mod)}</span>
+            <span class="p-type">${isCheia ? ICONS.trophy : ICONS.gift} ${esc(mod)}</span>
             <span class="p-name">${esc(prizeName)}</span>
           </div>
-          <span class="p-badge badge-open"><i data-lucide="sparkles" class="lucide-sm text-primary"></i> Em disputa</span>
+          <span class="p-badge badge-open">${ICONS.sparkles} Em disputa</span>
         `;
       }
       elPrizesGrid.appendChild(card);
@@ -442,46 +457,41 @@
     if (activeCelebrationWinner) {
       const prizeWon = prizes[activeCelebrationWinner.type] || DEFAULT_PRIZES[activeCelebrationWinner.type] || '';
       elLiveNoticeBar.className = 'live-notice-bar state-winner';
-      elNoticeIcon.innerHTML = '<i data-lucide="award" class="lucide-sm text-warning"></i>';
+      elNoticeIcon.innerHTML = ICONS.award;
       elNoticeBadge.textContent = 'TEMOS GANHADOR!';
       elNoticeText.innerHTML = `<b>${esc(activeCelebrationWinner.name || activeCelebrationWinner.player)}</b> ganhou o <b>${esc(activeCelebrationWinner.type)}</b>! Prêmio: <b>${esc(prizeWon)}</b>!`;
-      if (window.lucide) lucide.createIcons();
       return;
     }
 
     if (isConference) {
       elLiveNoticeBar.className = 'live-notice-bar state-conference';
-      elNoticeIcon.innerHTML = '<i data-lucide="search" class="lucide-sm text-warning"></i>';
+      elNoticeIcon.innerHTML = ICONS.search;
       elNoticeBadge.textContent = 'CONFERÊNCIA EM ANDAMENTO';
       elNoticeText.innerHTML = `Mesa de Conferência ativa: Conferindo cartela no momento... Aguarde a validação dos números!`;
-      if (window.lucide) lucide.createIcons();
       return;
     }
 
     if (gameOver) {
       elLiveNoticeBar.className = 'live-notice-bar state-gameover';
-      elNoticeIcon.innerHTML = '<i data-lucide="flag" class="lucide-sm"></i>';
+      elNoticeIcon.innerHTML = ICONS.flag;
       elNoticeBadge.textContent = 'ENCERRADO';
       elNoticeText.innerHTML = `Rodada encerrada com sucesso! Parabéns a todos os ganhadores da noite!`;
-      if (window.lucide) lucide.createIcons();
       return;
     }
 
     if (drawn.length > 0) {
       const L = last != null ? letterFor(last) : '';
       elLiveNoticeBar.className = 'live-notice-bar state-idle';
-      elNoticeIcon.innerHTML = '<i data-lucide="dices" class="lucide-sm text-primary"></i>';
+      elNoticeIcon.innerHTML = ICONS.dices;
       elNoticeBadge.textContent = 'AO VIVO';
       elNoticeText.innerHTML = `Sorteio em andamento • <b>${drawn.length}/75</b> sorteadas (Restam <b>${75 - drawn.length}</b>). Última pedra sorteada: <b>${L} ${last ?? '—'}</b>.`;
-      if (window.lucide) lucide.createIcons();
       return;
     }
 
     elLiveNoticeBar.className = 'live-notice-bar state-idle';
-    elNoticeIcon.innerHTML = '<i data-lucide="sparkles" class="lucide-sm text-primary"></i>';
+    elNoticeIcon.innerHTML = ICONS.sparkles;
     elNoticeBadge.textContent = 'BINGO 75';
     elNoticeText.innerHTML = `Aguardando início do sorteio desta rodada. Boa sorte a todos os participantes!`;
-    if (window.lucide) lucide.createIcons();
   }
 
   function showVictoryCelebration(winner) {
@@ -513,7 +523,7 @@
     if (elStatLeft) elStatLeft.textContent = `${75 - drawn.length}`;
     if (elRoundBadge) elRoundBadge.textContent = roundName || 'Rodada 1';
     if (elStatStatus) {
-      elStatStatus.innerHTML = gameOver ? '<i data-lucide="flag" class="lucide-sm"></i> Encerrado' : (drawn.length > 0 ? '<i data-lucide="activity" class="lucide-sm text-success"></i> Em Andamento' : '<i data-lucide="clock" class="lucide-sm text-primary"></i> Aguardando');
+      elStatStatus.innerHTML = gameOver ? `${ICONS.flag} Encerrado` : (drawn.length > 0 ? `${ICONS.activity} Em Andamento` : `${ICONS.clock} Aguardando`);
       elStatStatus.className = 'chip d-inline-flex align-items-center gap-1 ' + (gameOver ? 'sync-disabled' : (drawn.length > 0 ? 'sync-online' : ''));
     }
 
@@ -524,13 +534,17 @@
     renderPrizes();
     updateLiveNoticeBar();
     updateAdCarousel();
-    if (window.lucide) lucide.createIcons();
   }
 
+  let lastHandledStateJson = '';
   function handleStateChange(newState) {
     if (!newState) return;
+    const str = JSON.stringify(newState);
     const newDrawn = Array.isArray(newState.drawn) ? newState.drawn : [];
     const isNewBall = newDrawn.length > previousDrawnLength && newState.last != null && newState.last !== previousLast;
+
+    if (str === lastHandledStateJson && !isNewBall) return;
+    lastHandledStateJson = str;
 
     drawn = newDrawn;
     last = newState.last ?? null;
@@ -641,9 +655,8 @@
   elUnmuteBanner?.addEventListener('click', unlockAudioOnUserGesture);
 
   function updateSoundButton() {
-    if (soundIcon) soundIcon.innerHTML = soundEnabled ? '<i data-lucide="volume-2" class="lucide-sm"></i>' : '<i data-lucide="volume-x" class="lucide-sm"></i>';
+    if (soundIcon) soundIcon.innerHTML = soundEnabled ? ICONS.volume2 : ICONS.volumeX;
     if (soundLabel) soundLabel.textContent = soundEnabled ? 'Som On' : 'Som Mudo';
-    if (window.lucide) lucide.createIcons();
   }
   updateSoundButton();
 
@@ -713,5 +726,6 @@
     loadLocalState();
     startClock();
     initSync();
+    if (window.lucide) lucide.createIcons();
   });
 })();
