@@ -774,13 +774,13 @@ function openAdConfigModal() {
 }
 
 btnAdToggle?.addEventListener('click', () => {
+  adMode = !adMode;
+  updateAdButton();
+  LS.save();
   if (adMode) {
-    adMode = false;
-    updateAdButton();
-    LS.save();
-    BingoDialog.toast('Intervalo comercial desativado no telão.', 'info');
+    BingoDialog.toast('Intervalo comercial ATIVADO no telão!', 'success');
   } else {
-    openAdConfigModal();
+    BingoDialog.toast('Intervalo comercial DESATIVADO no telão.', 'info');
   }
 });
 

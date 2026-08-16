@@ -239,7 +239,8 @@
 
   function updateAdCarousel() {
     if (!adOverlay) return;
-    if (!adMode) {
+    const isAd = (typeof adMode === 'boolean' ? adMode : false) || (localStorage.getItem('bingo.adMode') === '1');
+    if (!isAd) {
       adOverlay.setAttribute('hidden', '');
       adOverlay.style.display = 'none';
       if (adIntervalTimer) { clearInterval(adIntervalTimer); adIntervalTimer = null; }
@@ -626,11 +627,10 @@
       if (Array.isArray(localSponsors) && localSponsors.length > 0) sponsors = localSponsors;
       const localQueue = JSON.parse(localStorage.getItem('bingo.roundsQueue') || 'null');
       if (Array.isArray(localQueue)) roundsQueue = localQueue;
-      if (typeof st.adMode === 'boolean') {
-        adMode = st.adMode;
-      } else {
-        adMode = localStorage.getItem('bingo.adMode') === '1';
-      }
+      
+      adMode = (typeof st.adMode === 'boolean') ? st.adMode : (localStorage.getItem('bingo.adMode') === '1');
+      st.adMode = adMode;
+      st.conferenceMode = conferenceMode || (localStorage.getItem('bingo.conferenceMode') === '1');
       handleStateChange(st);
     } catch (e) {}
   }
@@ -756,7 +756,7 @@
   });
 
   window.addEventListener('storage', (e) => {
-    if (e.key === 'bingo.state' || e.key === 'bingo.ranking' || e.key === 'bingo.prizes' || e.key === 'bingo.sponsors') {
+    if (e.key === 'bingo.state' || e.key === 'bingo.ranking' || e.key === 'bingo.prizes' || e.key === 'bingo.sponsors' || e.key === 'bingo.adMode' || e.key === 'bingo.conferenceMode' || e.key === 'bingo.adNotice') {
       loadLocalState();
     }
   });
