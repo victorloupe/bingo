@@ -98,6 +98,10 @@
   const adLastBall = document.getElementById('ad-last-ball');
   const adTotalDrawn = document.getElementById('ad-total-drawn');
   const adSlideBox = document.getElementById('ad-slide-box');
+  const adLastRound = document.getElementById('ad-last-round');
+  const adNextBanner = document.getElementById('ad-next-banner');
+  const adNextTitle = document.getElementById('ad-next-title');
+  const adNextPrizes = document.getElementById('ad-next-prizes');
 
   // Botões
   const btnSoundToggle = document.getElementById('btn-sound-toggle');
@@ -204,12 +208,6 @@
     } catch (e) {}
   }
 
-  // Elementos do Banner de Próxima Rodada
-  const adNextBanner = document.getElementById('ad-next-banner');
-  const adNextTitle = document.getElementById('ad-next-title');
-  const adNextPrizes = document.getElementById('ad-next-prizes');
-  const adLastRound = document.getElementById('ad-last-round');
-
   let nextRound = null;
   let roundsQueue = [];
   let adNotice = null;
@@ -242,18 +240,15 @@
   function updateAdCarousel() {
     if (!adOverlay) return;
     if (!adMode) {
-      if (!adOverlay.hasAttribute('hidden')) {
-        adOverlay.setAttribute('hidden', '');
-      }
+      adOverlay.setAttribute('hidden', '');
+      adOverlay.style.display = 'none';
       if (adIntervalTimer) { clearInterval(adIntervalTimer); adIntervalTimer = null; }
       lastRenderedSlideIndex = -1;
       return;
     }
 
-    if (adOverlay.hasAttribute('hidden')) {
-      adOverlay.removeAttribute('hidden');
-      lastRenderedSlideIndex = -1;
-    }
+    adOverlay.removeAttribute('hidden');
+    adOverlay.style.display = 'flex';
 
     if (adLastBall) adLastBall.textContent = last != null ? `${letterFor(last)} - ${last}` : '—';
     if (adTotalDrawn) adTotalDrawn.textContent = `${drawn.length}/75`;

@@ -247,7 +247,7 @@
       
       const rawNotice = (data.ad_notice && typeof data.ad_notice === 'object') ? data.ad_notice : null;
       const confMode = rawNotice && typeof rawNotice._conferenceMode === 'boolean' ? rawNotice._conferenceMode : false;
-      const adModeVal = typeof data.ad_mode === 'boolean' ? data.ad_mode : (rawNotice && typeof rawNotice._adMode === 'boolean' ? rawNotice._adMode : false);
+      const adModeVal = (rawNotice && typeof rawNotice._adMode === 'boolean') ? rawNotice._adMode : (typeof data.ad_mode === 'boolean' ? data.ad_mode : false);
 
       let cleanNotice = null;
       if (rawNotice && (rawNotice.title || rawNotice.desc)) {
