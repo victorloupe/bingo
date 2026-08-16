@@ -277,6 +277,24 @@
     const rLastTs = Number(remote.lastTs) || 0;
     const lLastTs = Number(local.lastTs) || 0;
 
+    // Um dispositivo que ainda não tem "activeRoundId" salvo no localStorage
+    // (ex.: telão ou Mesa de Conferência aberta pela primeira vez num
+    // computador novo, localStorage vazio) não tem de fato uma "rodada
+    // ativada localmente" — é só um estado em branco. Sem este caso
+    // especial, o bloco de baixo interpretava esse "local vazio" como uma
+    // rodada DIFERENTE da da nuvem (undefined !== id da rodada real) e
+    // preservava o "local" (vazio) em vez de adotar a nuvem — resultado:
+    // o telão abria mostrando o jogo zerado (sem pedras, sem prêmios
+    // ganhos) mesmo com a rodada já em andamento em outro computador, até
+    // a pedra seguinte ser sorteada. Aqui, sem activeRoundId local, adota a
+    // nuvem por completo.
+    if (!local.activeRoundId) {
+      return Object.assign({}, remote, {
+        sponsors: (remote.sponsors && remote.sponsors.length) ? remote.sponsors : (local.sponsors || []),
+        adMode: typeof remote.adMode !== 'undefined' ? remote.adMode : (localStorage.getItem('bingo.adMode') === '1')
+      });
+    }
+
     // Só mescla pedras sorteadas se ambas as pontas estiverem na MESMA rodada ativa
     const sameRound = (local.activeRoundId === remote.activeRoundId);
 
