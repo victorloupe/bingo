@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#005ef5" />
+  <title>Bingo 75 – Automático</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;700;800&display=swap" rel="stylesheet">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="styles.css" />
+
+  <style>
+    #last.show-animate{animation: pulseDraw .8s ease;}
+    @keyframes pulseDraw{0%{transform:scale(.8);opacity:.3}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+    .last-number{font-size:clamp(5rem,12vw,10rem)!important}
+    .badge-letter{font-size:clamp(3rem,7vw,6rem)!important}
+  </style>
+</head>
+<body class="dark">
+  <div class="tv-shell">
+    <header class="tv-header">
+      <h1 class="app-title m-0">Bingo 75 - Modo Automático</h1>
+      <div class="stats d-flex flex-wrap gap-2">
+        <div class="chip"><span class="text-muted">Sorteados</span><span class="v tabnum" id="stat-drawn">0/75</span></div>
+        <div class="chip"><span class="text-muted">Restam</span><span class="v tabnum" id="stat-left">75</span></div>
+        <div class="chip"><span class="text-muted">Voz</span><span class="v" id="stat-voice">ativa</span></div>
+        <div class="chip" id="chip-status" title="Status do jogo">⏳ Em andamento</div>
+        <div class="chip" id="chip-sync" title="Status de sincronização">💻 Local apenas</div>
+      </div>
+    </header>
+
+    <div id="projector-banner" class="projector-banner" hidden>
+      <div class="label">🎥 Modo Projetor Ativado</div>
+      <div class="actions">
+        <button id="btn-exit-projector" class="btn btn-sm btn-light">Sair do Modo Projetor</button>
+      </div>
+    </div>
+
+    <div class="tv-progress">
+      <progress id="progress" max="75" value="0" class="w-100"></progress>
+    </div>
+
+    <main class="tv-main">
+      <section class="tv-last">
+        <div id="last" class="last" style="display:none">
+          <div class="badge-letter" id="last-letter">B</div>
+          <div class="last-sep">·</div>
+          <div class="last-number tabnum" id="last-number">1</div>
+        </div>
+
+        <div class="tv-history-wrap">
+          <div class="tv-history-title text-muted">Sequência:</div>
+          <div id="history" class="history"></div>
+        </div>
+
+        <section class="tv-ranking">
+          <div class="ranking-header">
+            <h2>Ranking e vencedores</h2>
+            <div class="ranking-actions">
+              <button class="btn btn-outline-secondary lift" id="btn-export-pdf">⬇️ Exportar PDF</button>
+              <button class="btn btn-outline-secondary lift" id="btn-export-csv">⬇️ Exportar CSV</button>
+              <button class="btn btn-outline-secondary lift" id="btn-import-csv">⬆️ Importar CSV</button>
+              <input type="file" id="input-import-csv" accept=".csv" style="display:none">
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle table-dark table-borderless" id="tbl-ranking">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Jogador</th>
+                  <th>Conquista</th>
+                  <th>Quando</th><th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="ranking-body"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="tv-grid">
+        <div id="grid" class="grid"></div>
+      </section>
+    </main>
+
+    <footer class="tv-footer">
+      <div class="footer-controls">
+        <a href="menu.html" class="btn btn-outline-secondary lift" title="Voltar ao início">🏠 Início</a>
+        <button class="btn btn-primary btn-lg lift" id="btn-draw" title="(Barra de espaço)">
+          <span class="me-1">🎲</span> Sortear
+        </button>
+        <button class="btn btn-outline-secondary lift" id="btn-undo" disabled title="(U)">↩️ Desfazer</button>
+        <button class="btn btn-outline-secondary lift" id="btn-reset" title="(R)">🔄 Reiniciar</button>
+        <button class="btn btn-outline-secondary lift" id="btn-voice" title="Mutar (M)">🔊 Voz on</button>
+
+        <button class="btn btn-outline-secondary lift" id="btn-auto" title="Iniciar/Pausar Auto">⏸️ Pausar Auto</button>
+
+        <div class="form-check form-switch m-0 ms-2">
+          <input class="form-check-input" type="checkbox" id="chk-auto">
+          <label class="form-check-label text-muted" for="chk-auto">Auto</label>
+        </div>
+
+        <select id="sel-interval" class="form-select w-auto" disabled>
+          <option value="2000">2s</option>
+          <option value="3000">3s</option>
+          <option value="4000">4s</option>
+          <option value="6000" selected>6s</option>
+          <option value="8000">8s</option>
+          <option value="10000">10s</option>
+        </select>
+
+        <div class="form-check form-switch m-0 ms-2">
+          <input class="form-check-input" type="checkbox" id="chk-only-drawn" checked>
+          <label class="form-check-label text-muted" for="chk-only-drawn">Só sorteadas</label>
+        </div>
+
+        <a class="btn btn-success lift" id="btn-bingo" href="check.html" title="Conferir Bingo">✅ Bingo</a>
+
+        <button class="btn btn-outline-secondary lift" id="btn-full" title="Tela cheia (F)">⛶ Tela cheia</button>
+        <button class="btn btn-outline-secondary lift" id="btn-projector" title="Modo projetor (P)">🎥 Projetor</button>
+        <button class="btn btn-outline-secondary lift" id="btn-help" title="Atalhos (?)">❔ Ajuda</button>
+        <button class="btn btn-outline-secondary lift" id="btn-theme" title="Alternar tema">🌙 Escuro</button>
+
+        <details class="voice-panel">
+          <summary>⚙️ Opções</summary>
+          <div class="voice-inline" style="flex-wrap:wrap; gap:8px; align-items:center">
+            <label class="small text-muted">Volume do sorteio</label>
+            <input id="vol-ding" class="form-range" type="range" min="0" max="1" value="0.6" step="0.05" style="width:160px" />
+          </div>
+        </details>
+
+        <details class="voice-panel ms-auto">
+          <summary>Voz</summary>
+          <div class="voice-inline">
+            <select id="sel-voice" class="form-select"></select>
+            <label class="small text-muted ms-2">Velocidade</label>
+            <input id="slider-rate" class="form-range w-25" type="range" min="0.7" max="1.3" value="0.95" step="0.05" />
+            <span class="small text-muted" id="rate-val">0.95×</span>
+            <label class="small text-muted ms-2">Tom</label>
+            <input id="slider-pitch" class="form-range w-25" type="range" min="0.8" max="1.3" value="1.0" step="0.05" />
+            <span class="small text-muted" id="pitch-val">1.00×</span>
+            <button class="btn btn-outline-secondary lift ms-2" id="btn-test">▶️ Testar</button>
+          </div>
+        </details>
+      </div>
+    </footer>
+  </div>
+
+  <div id="snackbar" class="snackbar" role="status" aria-live="polite">
+    <span id="snack-msg">Ranking limpo.</span>
+    <button id="btn-undo-clear" class="btn btn-sm btn-outline-light ms-2">Desfazer</button>
+    <button id="btn-snack-ok" class="btn btn-sm btn-light ms-1">OK</button>
+  </div>
+
+  <div id="shortcuts" class="shortcuts-modal" hidden>
+    <div class="box">
+      <h3>Atalhos</h3>
+      <ul>
+        <li><b>Espaço</b>: Sortear</li>
+        <li><b>A</b>: Iniciar/Pausar auto</li>
+        <li><b>U</b>: Desfazer</li>
+        <li><b>R</b>: Reiniciar</li>
+        <li><b>F</b>: Tela cheia</li>
+        <li><b>T</b>: Alternar tema</li>
+        <li><b>P</b>: Modo projetor</li>
+        <li><b>?</b>: Mostrar/ocultar esta ajuda</li>
+      </ul>
+      <button id="btn-close-shortcuts" class="btn btn-primary">OK</button>
+    </div>
+  </div>
+
+  <div id="shortcut-confirm" class="confirm-modal" hidden>
+    <div class="box">
+      <div id="confirm-text" class="mb-3">Confirmar ação?</div>
+      <div class="d-flex gap-2 justify-content-end">
+        <button id="confirm-cancel" class="btn btn-outline-secondary">Cancelar</button>
+        <button id="confirm-ok" class="btn btn-primary">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="sync.js"></script>
+  <script src="app.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="pdf-export.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const drawBtn = document.getElementById('btn-draw');
+
+      // 1. Previne o comportamento padrão da tecla Espaço globalmente
+      window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') {
+          // Se não estiver em um campo de texto, para o evento totalmente
+          if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+
+            // Força o clique manual no botão para disparar a lógica do app.js UMA vez
+            if (drawBtn) drawBtn.click();
+          }
+        }
+      }, true);
+
+      if (drawBtn) {
+        drawBtn.addEventListener('click', (e) => {
+          // 2. Remove o foco do botão para evitar que o navegador tente clicá-lo de novo
+          drawBtn.blur();
+
+          // 3. Só executa a animação se for um clique real (não o preventDefault acima)
+          const last = document.getElementById('last');
+          if (last) {
+            last.classList.remove('show-animate');
+            void last.offsetWidth;
+            last.classList.add('show-animate');
+          }
+        });
+      }
+
+      // Voice and backup logic
+      if ('speechSynthesis' in window) {
+        const voices = speechSynthesis.getVoices();
+        const pt = voices.find(v => v.lang.includes('pt')) || voices[0];
+        window.bingoSpeakStrong = function(txt) {
+          const u = new SpeechSynthesisUtterance(txt);
+          u.voice = pt;
+          u.rate = 0.9;
+          u.pitch = 1.1;
+          u.volume = 1;
+          speechSynthesis.cancel();
+          speechSynthesis.speak(u);
+        }
+      }
+
+      window.addEventListener('beforeunload', () => {
+        localStorage.setItem('bingo.backup.auto', JSON.stringify({
+          state: localStorage.getItem('bingo.state'),
+          ranking: localStorage.getItem('bingo.ranking')
+        }));
+      });
+    });
+  </script>
+</body>
+</html>
