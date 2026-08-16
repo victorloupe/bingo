@@ -721,6 +721,16 @@
       playPattern(type);
       LS.saveRanking(list);
 
+      try {
+        let roundsList = JSON.parse(localStorage.getItem('bingo.roundsList') || '[]');
+        const activeId = localStorage.getItem('bingo.activeRoundId') || 'round_1';
+        const rIdx = roundsList.findIndex(r => r.id === activeId);
+        if (rIdx >= 0) {
+          roundsList[rIdx].ranking = list;
+          localStorage.setItem('bingo.roundsList', JSON.stringify(roundsList));
+        }
+      } catch (e) {}
+
       if (typeof window.confetti === 'function') {
         confetti({ particleCount: 60, spread: 60, origin: { y: 0.7 } });
       }
@@ -1210,6 +1220,17 @@
       if (confirmed) {
         list.splice(idx, 1);
         LS.saveRanking(list);
+
+        try {
+          let roundsList = JSON.parse(localStorage.getItem('bingo.roundsList') || '[]');
+          const activeId = localStorage.getItem('bingo.activeRoundId') || 'round_1';
+          const rIdx = roundsList.findIndex(r => r.id === activeId);
+          if (rIdx >= 0) {
+            roundsList[rIdx].ranking = list;
+            localStorage.setItem('bingo.roundsList', JSON.stringify(roundsList));
+          }
+        } catch (e) {}
+
         updateRankingTable();
         renderPrizes();
         BingoDialog.toast('Registro de vencedor removido com sucesso!', 'success');
@@ -1255,9 +1276,18 @@
       if (remoteState) {
         const st = LS.state();
         const merged = BingoSync.mergeState(st, remoteState);
+        merged.conferenceMode = conferenceActive;
         localStorage.setItem('bingo.state', JSON.stringify(merged));
         if (merged.prizes) localStorage.setItem('bingo.prizes', JSON.stringify(merged.prizes));
+        if (conferenceActive) {
+          window.BingoSync.pushState(merged);
+        }
+      } else if (conferenceActive) {
+        const st = LS.state();
+        st.conferenceMode = true;
+        window.BingoSync.pushState(st);
       }
+
       if (remoteRanking) {
         const merged = BingoSync.mergeRanking(LS.loadRanking(), remoteRanking);
         localStorage.setItem('bingo.ranking', JSON.stringify(merged || []));
@@ -1271,6 +1301,7 @@
         if (rs) {
           const cur = LS.state();
           const merged = BingoSync.mergeState(cur, rs);
+          merged.conferenceMode = conferenceActive;
           localStorage.setItem('bingo.state', JSON.stringify(merged));
           if (merged.prizes) localStorage.setItem('bingo.prizes', JSON.stringify(merged.prizes));
         }
@@ -1290,12 +1321,13 @@
       }
     });
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       renderDrawnChips();
       updateRankingTable();
       updateVictorySelectOptions();
+      if (window.BingoSync) BingoSync.init();
       setConferenceBroadcast(true);
-      syncFromCloud();
+      await syncFromCloud();
     });
   </script>
 </body>

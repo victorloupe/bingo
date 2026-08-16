@@ -92,6 +92,7 @@ const LS = {
     const activeId = localStorage.getItem('bingo.activeRoundId') || 'round_1';
     let rIndex = roundsList.findIndex(r => r.id === activeId);
 
+    const currentRank = LS.loadRanking();
     if (rIndex >= 0) {
       roundsList[rIndex].name = roundName;
       roundsList[rIndex].prizes = prizes;
@@ -100,6 +101,7 @@ const LS = {
       roundsList[rIndex].gameOver = gameOver;
       roundsList[rIndex].firstTs = firstTs;
       roundsList[rIndex].lastTs = lastTs;
+      roundsList[rIndex].ranking = currentRank;
     } else {
       roundsList.push({
         id: activeId,
@@ -109,7 +111,8 @@ const LS = {
         last: last,
         gameOver: gameOver,
         firstTs: firstTs,
-        lastTs: lastTs
+        lastTs: lastTs,
+        ranking: currentRank
       });
       rIndex = roundsList.length - 1;
     }
@@ -139,6 +142,12 @@ const LS = {
         firstTs = round.firstTs ?? stateData.firstTs ?? null;
         lastTs = round.lastTs ?? stateData.lastTs ?? null;
         if (round.prizes) prizes = Object.assign({}, DEFAULT_PRIZES, round.prizes);
+        if (Array.isArray(round.ranking) && round.ranking.length > 0) {
+          const curRank = LS.loadRanking();
+          if (!curRank.length) {
+            localStorage.setItem('bingo.ranking', JSON.stringify(round.ranking));
+          }
+        }
       } else {
         if(typeof stateData.roundName==='string') roundName = stateData.roundName;
         if(Array.isArray(stateData.drawn)) drawn = stateData.drawn;
@@ -1047,6 +1056,7 @@ rankingBody?.addEventListener('click', async (e) => {
     if (confirmed) {
       list.splice(idx, 1);
       LS.saveRanking(list);
+      LS.save();
       renderRanking();
       BingoDialog.toast('Registro de vencedor excluído com sucesso!', 'success');
     }
@@ -1146,6 +1156,19 @@ async function initCloudSync(){
       if(gameOver) stopAuto();
       updateUI();
     }
+  });
+
+  // Transmite sinal de conferência imediatamente ao clicar no botão de ir para conferência
+  document.querySelectorAll('a[href*="check.html"]').forEach((el) => {
+    el.addEventListener('click', () => {
+      localStorage.setItem('bingo.conferenceMode', '1');
+      try {
+        const st = JSON.parse(localStorage.getItem('bingo.state') || '{}');
+        st.conferenceMode = true;
+        localStorage.setItem('bingo.state', JSON.stringify(st));
+        window.BingoSync?.pushState(st);
+      } catch (e) {}
+    });
   });
   initCloudSync();
 })();

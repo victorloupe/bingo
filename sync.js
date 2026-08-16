@@ -3,7 +3,11 @@
 // ============================================================
 (function () {
   const urlParams = (typeof window !== 'undefined' && window.location && window.location.search) ? new URLSearchParams(window.location.search) : null;
-  const ROOM = (urlParams && (urlParams.get('sala') || urlParams.get('room') || urlParams.get('token'))) || localStorage.getItem('bingo.room') || 'default';
+  const roomFromUrl = urlParams && (urlParams.get('sala') || urlParams.get('room') || urlParams.get('token'));
+  if (roomFromUrl) {
+    try { localStorage.setItem('bingo.room', roomFromUrl); } catch (e) {}
+  }
+  const ROOM = roomFromUrl || localStorage.getItem('bingo.room') || 'default';
   let client = null;
   let configured = false;
   let pushTimer = null;
@@ -304,10 +308,6 @@
     const roundsList = (local.roundsList && local.roundsList.length) ? local.roundsList : (remote.roundsList || []);
     const nextRound = local.nextRound || remote.nextRound || null;
     const roundsQueue = (local.roundsQueue && local.roundsQueue.length) ? local.roundsQueue : (remote.roundsQueue || []);
-
-    const activeRoundId = local.activeRoundId || remote.activeRoundId || 'round_1';
-    const roundName = local.roundName || remote.roundName || 'Rodada 1';
-
     let base = local;
     const rLastTs = Number(remote.lastTs) || 0;
     const lLastTs = Number(local.lastTs) || 0;
@@ -337,8 +337,16 @@
         base = local;
       }
     } else {
-      base = local;
+      // Se as rodadas são diferentes, a rodada com lastTs mais recente ou a remota com dados tem preferência
+      if (rLastTs >= lLastTs || rDrawn.length > 0 || !local.activeRoundId) {
+        base = remote;
+      } else {
+        base = local;
+      }
     }
+
+    const activeRoundId = base.activeRoundId || remote.activeRoundId || local.activeRoundId || 'round_1';
+    const roundName = base.roundName || remote.roundName || local.roundName || 'Rodada 1';
 
     return Object.assign({}, base, {
       activeRoundId,
@@ -355,8 +363,16 @@
   }
 
   function mergeRanking(local, remote) {
-    if (Array.isArray(remote)) return remote;
-    return local || [];
+    const lList = Array.isArray(local) ? local : [];
+    const rList = Array.isArray(remote) ? remote : [];
+    if (lList.length === 0) return rList;
+    if (rList.length === 0) return lList;
+
+    const key = (r) => (r.name || r.player || '').trim().toLowerCase() + '|' + (r.type || '').trim().toLowerCase();
+    const map = new Map();
+    lList.forEach((r) => map.set(key(r), r));
+    rList.forEach((r) => map.set(key(r), r));
+    return Array.from(map.values()).sort((a, b) => new Date(a.ts || 0) - new Date(b.ts || 0));
   }
 
   let remoteCallbackTimer = null;

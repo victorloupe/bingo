@@ -54,7 +54,10 @@
   let prizes = Object.assign({}, DEFAULT_PRIZES);
   let sponsors = SAMPLE_SPONSORS;
   let adMode = false;
+  let conferenceMode = false;
+  let previousConferenceMode = false;
   let currentAdIndex = 0;
+  let lastRenderedSlideIndex = -1;
   let adIntervalTimer = null;
 
   let soundEnabled = localStorage.getItem('bingo.projector.sound') !== '0';
@@ -212,15 +215,46 @@
   let adNotice = null;
 
   // ====== Modo Propaganda / Comercial Slider ======
+  function renderCurrentSlide() {
+    const spList = sponsors && sponsors.length ? sponsors : SAMPLE_SPONSORS;
+    if (currentAdIndex >= spList.length) currentAdIndex = 0;
+    const cur = spList[currentAdIndex];
+
+    if (cur && currentAdIndex !== lastRenderedSlideIndex) {
+      lastRenderedSlideIndex = currentAdIndex;
+      if (adSlideBox) {
+        adSlideBox.style.transition = 'opacity 0.25s ease';
+        adSlideBox.style.opacity = '0.3';
+        setTimeout(() => {
+          if (adImg) adImg.src = cur.img || 'favicon.svg';
+          if (adName) adName.textContent = cur.name || 'Patrocinador Oficial';
+          if (adDesc) adDesc.textContent = cur.desc || 'Apoio aos nossos eventos';
+          if (adSlideBox) adSlideBox.style.opacity = '1';
+        }, 150);
+      } else {
+        if (adImg) adImg.src = cur.img || 'favicon.svg';
+        if (adName) adName.textContent = cur.name || 'Patrocinador Oficial';
+        if (adDesc) adDesc.textContent = cur.desc || 'Apoio aos nossos eventos';
+      }
+    }
+  }
+
   function updateAdCarousel() {
     if (!adOverlay) return;
     if (!adMode) {
-      adOverlay.setAttribute('hidden', '');
+      if (!adOverlay.hasAttribute('hidden')) {
+        adOverlay.setAttribute('hidden', '');
+      }
       if (adIntervalTimer) { clearInterval(adIntervalTimer); adIntervalTimer = null; }
+      lastRenderedSlideIndex = -1;
       return;
     }
 
-    adOverlay.removeAttribute('hidden');
+    if (adOverlay.hasAttribute('hidden')) {
+      adOverlay.removeAttribute('hidden');
+      lastRenderedSlideIndex = -1;
+    }
+
     if (adLastBall) adLastBall.textContent = last != null ? `${letterFor(last)} - ${last}` : '—';
     if (adTotalDrawn) adTotalDrawn.textContent = `${drawn.length}/75`;
     if (adLastRound) adLastRound.textContent = roundName || 'Rodada 1';
@@ -261,28 +295,14 @@
       }
     }
 
-    const spList = sponsors && sponsors.length ? sponsors : SAMPLE_SPONSORS;
-    if (currentAdIndex >= spList.length) currentAdIndex = 0;
-    const cur = spList[currentAdIndex];
-
-    if (cur) {
-      if (adImg) adImg.src = cur.img || 'favicon.svg';
-      if (adName) adName.textContent = cur.name || 'Patrocinador Oficial';
-      if (adDesc) adDesc.textContent = cur.desc || 'Apoio aos nossos eventos';
-      
-      if (adSlideBox) {
-        adSlideBox.style.animation = 'none';
-        void adSlideBox.offsetWidth;
-        adSlideBox.style.animation = 'popInAd 0.5s cubic-bezier(0.2, 0.9, 0.2, 1)';
-      }
-    }
+    renderCurrentSlide();
 
     if (!adIntervalTimer) {
       adIntervalTimer = setInterval(() => {
         const list = sponsors && sponsors.length ? sponsors : SAMPLE_SPONSORS;
         currentAdIndex = (currentAdIndex + 1) % list.length;
-        updateAdCarousel();
-      }, 5000);
+        renderCurrentSlide();
+      }, 6000);
     }
   }
 
@@ -452,7 +472,24 @@
   function updateLiveNoticeBar() {
     if (!elLiveNoticeBar || !elNoticeIcon || !elNoticeBadge || !elNoticeText) return;
 
-    const isConference = localStorage.getItem('bingo.conferenceMode') === '1';
+    const isConference = conferenceMode || (localStorage.getItem('bingo.conferenceMode') === '1');
+
+    const elLiveDot = document.getElementById('live-indicator');
+    if (elLiveDot) {
+      if (isConference) {
+        elLiveDot.className = 'chip d-inline-flex align-items-center gap-1';
+        elLiveDot.style.background = '#0284c7';
+        elLiveDot.style.color = '#ffffff';
+        elLiveDot.style.borderColor = '#0369a1';
+        elLiveDot.innerHTML = '<span class="live-dot" style="background:#38bdf8;"></span> 🔍 CONFERÊNCIA';
+      } else {
+        elLiveDot.className = 'chip sync-online d-inline-flex align-items-center gap-1';
+        elLiveDot.style.background = '';
+        elLiveDot.style.color = '';
+        elLiveDot.style.borderColor = '';
+        elLiveDot.innerHTML = '<span class="live-dot"></span> AO VIVO';
+      }
+    }
 
     if (activeCelebrationWinner) {
       const prizeWon = prizes[activeCelebrationWinner.type] || DEFAULT_PRIZES[activeCelebrationWinner.type] || '';
@@ -562,9 +599,13 @@
       adMode = localStorage.getItem('bingo.adMode') === '1';
     }
 
-    if (typeof newState.conferenceMode === 'boolean') {
-      localStorage.setItem('bingo.conferenceMode', newState.conferenceMode ? '1' : '0');
+    const newConf = (typeof newState.conferenceMode === 'boolean') ? newState.conferenceMode : (localStorage.getItem('bingo.conferenceMode') === '1');
+    if (newConf && !previousConferenceMode) {
+      try { playDrawDing(); } catch (e) {}
     }
+    conferenceMode = newConf;
+    previousConferenceMode = newConf;
+    localStorage.setItem('bingo.conferenceMode', conferenceMode ? '1' : '0');
 
     if (newState.prizes) prizes = Object.assign({}, DEFAULT_PRIZES, newState.prizes);
     if (Array.isArray(newState.sponsors) && newState.sponsors.length > 0) sponsors = newState.sponsors;
@@ -612,38 +653,36 @@
       ]);
 
       if (remoteState) {
-        const local = JSON.parse(localStorage.getItem('bingo.state') || '{}');
-        const merged = BingoSync.mergeState(local, remoteState);
-        localStorage.setItem('bingo.state', JSON.stringify(merged));
-        handleStateChange(merged);
+        localStorage.setItem('bingo.state', JSON.stringify(remoteState));
+        if (remoteState.prizes) localStorage.setItem('bingo.prizes', JSON.stringify(remoteState.prizes));
+        if (remoteState.sponsors) localStorage.setItem('bingo.sponsors', JSON.stringify(remoteState.sponsors));
+        handleStateChange(remoteState);
       }
 
       if (remoteRanking) {
-        let localRank = [];
-        try { localRank = JSON.parse(localStorage.getItem('bingo.ranking') || '[]'); } catch (e) {}
-        const mergedRank = BingoSync.mergeRanking(localRank, remoteRanking);
-        localStorage.setItem('bingo.ranking', JSON.stringify(mergedRank));
+        localStorage.setItem('bingo.ranking', JSON.stringify(remoteRanking));
         renderRanking();
       }
 
       BingoSync.subscribe(async () => {
-        const rs = await BingoSync.pullState();
+        const [rs, rr] = await Promise.all([
+          BingoSync.pullState(),
+          BingoSync.pullRanking()
+        ]);
         if (rs) {
-          const cur = JSON.parse(localStorage.getItem('bingo.state') || '{}');
-          const m = BingoSync.mergeState(cur, rs);
-          localStorage.setItem('bingo.state', JSON.stringify(m));
-          handleStateChange(m);
+          localStorage.setItem('bingo.state', JSON.stringify(rs));
+          if (rs.prizes) localStorage.setItem('bingo.prizes', JSON.stringify(rs.prizes));
+          if (rs.sponsors) localStorage.setItem('bingo.sponsors', JSON.stringify(rs.sponsors));
+          handleStateChange(rs);
         }
-        const rr = await BingoSync.pullRanking();
         if (rr) {
-          let curRank = [];
-          try { curRank = JSON.parse(localStorage.getItem('bingo.ranking') || '[]'); } catch (e) {}
-          const mRank = BingoSync.mergeRanking(curRank, rr);
-          localStorage.setItem('bingo.ranking', JSON.stringify(mRank));
+          localStorage.setItem('bingo.ranking', JSON.stringify(rr));
           renderRanking();
         }
       });
-    } catch (e) {}
+    } catch (e) {
+      console.warn('[Projetor] Erro na sincronização com a nuvem:', e);
+    }
   }
 
   // ====== Relógio ======
@@ -725,6 +764,10 @@
     if (e.key === 'bingo.state' || e.key === 'bingo.ranking' || e.key === 'bingo.prizes' || e.key === 'bingo.sponsors') {
       loadLocalState();
     }
+  });
+
+  window.addEventListener('online', () => {
+    initSync();
   });
 
   document.addEventListener('DOMContentLoaded', () => {

@@ -1178,14 +1178,7 @@ progress::-moz-progress-bar {
   padding: 24px 32px;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  animation: popInAd 0.5s cubic-bezier(0.2, 0.9, 0.2, 1);
-}
-
-@keyframes popInAd {
-  0% { opacity: 0; transform: scale(0.92); }
-  100% { opacity: 1; transform: scale(1); }
+  transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
 .ad-slide-img {
