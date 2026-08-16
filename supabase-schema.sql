@@ -37,7 +37,9 @@ begin
     alter table bingo_state add column round_name text not null default 'Rodada 1';
   end if;
   if not exists (select 1 from information_schema.columns where table_schema='public' and table_name='bingo_state' and column_name='next_round') then
-    alter table bingo_state add column next_round jsonb;
+    alter table bingo_state add column next_round jsonb default '{}'::jsonb;
+  else
+    alter table bingo_state alter column next_round drop not null;
   end if;
   if not exists (select 1 from information_schema.columns where table_schema='public' and table_name='bingo_state' and column_name='rounds_queue') then
     alter table bingo_state add column rounds_queue jsonb not null default '[]'::jsonb;
@@ -52,7 +54,9 @@ begin
     alter table bingo_state add column ad_mode boolean not null default false;
   end if;
   if not exists (select 1 from information_schema.columns where table_schema='public' and table_name='bingo_state' and column_name='ad_notice') then
-    alter table bingo_state add column ad_notice jsonb;
+    alter table bingo_state add column ad_notice jsonb default '{}'::jsonb;
+  else
+    alter table bingo_state alter column ad_notice drop not null;
   end if;
 end $$;
 

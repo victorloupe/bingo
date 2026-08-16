@@ -64,7 +64,7 @@
       active_round_id: state.activeRoundId || 'round_1',
       round_name: state.roundName || 'Rodada 1',
       rounds_list: state.roundsList || [],
-      next_round: state.nextRound || null,
+      next_round: state.nextRound || {},
       rounds_queue: state.roundsQueue || [],
       drawn: state.drawn || [],
       last: state.last ?? null,
@@ -74,7 +74,7 @@
       prizes: state.prizes || {},
       sponsors: state.sponsors || [],
       ad_mode: isAd,
-      ad_notice: state.adNotice || (JSON.parse(localStorage.getItem('bingo.adNotice') || 'null'))
+      ad_notice: state.adNotice || (JSON.parse(localStorage.getItem('bingo.adNotice') || 'null')) || {}
     };
 
     const str = JSON.stringify(payload);
@@ -219,11 +219,13 @@
     try {
       const { data, error } = await client.from('bingo_state').select('*').eq('room', ROOM).maybeSingle();
       if (error || !data) return null;
+      const nRound = (data.next_round && typeof data.next_round === 'object' && data.next_round.name) ? data.next_round : null;
+      const nNotice = (data.ad_notice && typeof data.ad_notice === 'object' && (data.ad_notice.title || data.ad_notice.desc)) ? data.ad_notice : null;
       return {
         activeRoundId: data.active_round_id || 'round_1',
         roundName: data.round_name || 'Rodada 1',
         roundsList: Array.isArray(data.rounds_list) ? data.rounds_list : [],
-        nextRound: data.next_round || null,
+        nextRound: nRound,
         roundsQueue: Array.isArray(data.rounds_queue) ? data.rounds_queue : [],
         drawn: Array.isArray(data.drawn) ? data.drawn : [],
         last: data.last,
@@ -233,7 +235,7 @@
         prizes: data.prizes || {},
         sponsors: Array.isArray(data.sponsors) ? data.sponsors : [],
         adMode: !!data.ad_mode,
-        adNotice: data.ad_notice || null
+        adNotice: nNotice
       };
     } catch (e) {
       return null;
@@ -351,6 +353,9 @@
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bingo_ranking', filter: `room=eq.${ROOM}` }, handleRemoteChange)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bingo_card_batches', filter: `room=eq.${ROOM}` }, handleRemoteChange)
       .subscribe();
+
+    // Heartbeat de polling periódico (garante sincronização contínua mesmo se WebSocket oscilar/reconectar)
+    setInterval(handleRemoteChange, 2500);
   }
 
   window.addEventListener('online', () => setStatus(configured ? 'online' : 'disabled'));
