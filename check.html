@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#2563eb" />
+  <title>Bingo 75 – Mesa de Conferência</title>
+
+  <!-- Google Fonts & Bootstrap 5 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    .col-card {
+      background: #ffffff;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 6px 6px;
+      height: 100%;
+      box-shadow: var(--shadow-sm);
+    }
+    .col-header-chip {
+      font-weight: 900;
+      font-size: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+      padding-bottom: 4px;
+      border-bottom: 1.5px solid var(--border);
+    }
+    .col-card .hchip {
+      font-size: 1.1rem !important;
+      font-weight: 900 !important;
+      min-width: 36px !important;
+      height: 36px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      border-radius: 6px !important;
+      border: 1.5px solid #cbd5e1 !important;
+      background: #f8fafc !important;
+      color: #0f172a !important;
+      padding: 1px 4px !important;
+      transition: all 0.15s ease !important;
+    }
+    .col-card .hchip.last {
+      background: #fef08a !important;
+      color: #854d0e !important;
+      border-color: #eab308 !important;
+      font-weight: 900 !important;
+      box-shadow: 0 0 12px rgba(234, 179, 8, 0.6) !important;
+      transform: scale(1.06);
+    }
+    .check-columns-5 {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+    }
+    .tv-ranking-compact {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 4px 10px;
+      box-shadow: var(--shadow-sm);
+    }
+    @media (max-width: 1200px) {
+      .check-columns-5 {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+    @media (max-width: 600px) {
+      .check-columns-5 {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="tv-shell">
+    <!-- Cabeçalho Compacto -->
+    <header class="tv-header">
+      <div class="d-flex align-items-center gap-2">
+        <h1 class="app-title">
+          <span>Bingo 75</span>
+          <span class="badge-sub">CONFERÊNCIA</span>
+        </h1>
+        <span id="round-badge" class="badge-round">Rodada 1</span>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span id="chip-sync" class="chip d-inline-flex align-items-center gap-1" title="Status de sincronização">
+          <i data-lucide="cloud" class="lucide-sm"></i> Sincronizado
+        </span>
+        <button type="button" id="btn-back-header" class="btn btn-primary btn-sm fw-bold lift d-inline-flex align-items-center gap-1">
+          <i data-lucide="arrow-left" class="lucide-sm"></i> Voltar ao Sorteio
+        </button>
+        <a href="menu.html" class="btn btn-outline-secondary btn-sm lift d-inline-flex align-items-center gap-1">
+          <i data-lucide="home" class="lucide-sm"></i> Início
+        </a>
+      </div>
+    </header>
+
+    <!-- Fita Compacta de Prêmios da Rodada -->
+    <div class="prizes-container">
+      <div class="prizes-header">
+        <h2 class="d-flex align-items-center gap-1">
+          <i data-lucide="gift" class="lucide text-primary"></i>
+          <span>Prêmios em Disputa</span>
+        </h2>
+        <span class="text-muted small">Prêmios ganhos são riscados na hora</span>
+      </div>
+      <div class="prizes-grid" id="prizes-grid"></div>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <div class="row g-3 flex-grow-1">
+      <!-- Coluna Esquerda: Pedras Sorteadas por Letra -->
+      <div class="col-12 col-lg-7">
+        <div class="p-3 rounded-3 h-100 d-flex flex-column" style="background:#ffffff; border:1.5px solid var(--border); box-shadow:var(--shadow-sm); border-radius:var(--radius-md);">
+          <div class="d-flex align-items-center justify-content-between mb-2 pb-1 border-bottom">
+            <h2 class="h6 m-0 fw-bold fs-5 d-flex align-items-center gap-1">
+              <i data-lucide="hash" class="lucide text-primary"></i>
+              <span>Pedras Sorteadas</span>
+            </h2>
+            <span id="drawn-count-badge" class="badge bg-primary px-3 py-1 fs-6">0/75 sorteadas</span>
+          </div>
+          
+          <div id="chips" class="check-columns-5 flex-grow-1"></div>
+          <div id="emptyMsg" class="text-muted text-center py-4 small">Nenhuma pedra sorteada ainda.</div>
+        </div>
+      </div>
+
+      <!-- Coluna Direita: Registro de Vencedor & Validador de Cartela -->
+      <div class="col-12 col-lg-5">
+        <div class="p-3 rounded-3 h-100 d-flex flex-column" style="background:#ffffff; border:1.5px solid var(--border); box-shadow:var(--shadow-sm); border-radius:var(--radius-md);">
+          <h2 class="h6 mb-2 fw-bold fs-5 d-flex align-items-center gap-1">
+            <i data-lucide="trophy" class="lucide text-warning"></i>
+            <span>Registrar Ganhador</span>
+          </h2>
+          
+          <form id="form">
+            <div class="mb-2">
+              <label class="form-label small fw-bold text-muted mb-1">Nome do Jogador:</label>
+              <input type="text" id="name" class="form-control form-control-sm" placeholder="Ex.: Ana Silva" required />
+            </div>
+
+            <div class="mb-2">
+              <div class="d-flex align-items-center justify-content-between mb-1">
+                <label class="form-label small fw-bold text-muted mb-0">Tipo de Vitória:</label>
+                <button type="button" id="btn-open-category-modal" class="btn btn-sm btn-link p-0 text-decoration-none fw-bold d-inline-flex align-items-center gap-1" style="font-size:0.75rem;" title="Mudar nomes das vitórias para todas as rodadas">
+                  <i data-lucide="sliders" class="lucide-sm"></i> Nomes das Vitórias
+                </button>
+              </div>
+              <select id="type" class="form-select form-select-sm" required>
+                <option value="">Selecione a conquista da rodada...</option>
+              </select>
+            </div>
+
+            <div class="d-flex gap-2 align-items-center mb-3">
+              <button class="btn btn-success btn-sm fw-bold px-3 py-1 lift d-inline-flex align-items-center gap-1" type="submit">
+                <i data-lucide="check-circle-2" class="lucide-sm"></i> Salvar Registro
+              </button>
+              <button class="btn btn-outline-secondary btn-sm lift" type="button" id="btn-clear">Limpar</button>
+            </div>
+
+            <hr class="my-2" />
+
+            <!-- Validador Inteligente de Cartela -->
+            <div class="d-flex align-items-center justify-content-between mb-1">
+              <h2 class="h6 mb-0 fw-bold fs-6 d-flex align-items-center gap-1">
+                <i data-lucide="search" class="lucide-sm text-primary"></i>
+                <span>Conferência de Cartela</span>
+              </h2>
+              <a href="cartelas.html" class="btn btn-sm btn-link p-0 text-decoration-none fw-bold d-inline-flex align-items-center gap-1" style="font-size:0.75rem;" title="Abrir Gerador e Impressor de Cartelas">
+                <i data-lucide="ticket" class="lucide-sm"></i> Lotes de Cartelas
+              </a>
+            </div>
+
+            <!-- Tabs de Conferência: Por Serial ou Manual -->
+            <div class="d-flex gap-1 mb-2">
+              <button type="button" class="btn btn-sm btn-primary py-0 px-2 fw-bold d-inline-flex align-items-center gap-1" id="tab-val-serial" style="font-size:0.78rem;">
+                <i data-lucide="hash" class="lucide-sm"></i> Por Série Oficial
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2 fw-bold d-inline-flex align-items-center gap-1" id="tab-val-manual" style="font-size:0.78rem;">
+                <i data-lucide="keyboard" class="lucide-sm"></i> Digitar Números
+              </button>
+            </div>
+
+            <!-- Painel 1: Por Serial Oficial -->
+            <div id="panel-val-serial">
+              <div class="input-group input-group-sm mb-2">
+                <span class="input-group-text bg-light fw-bold text-muted">Série Nº</span>
+                <input type="number" id="card-serial-input" class="form-control" placeholder="Ex: 42 ou 105" min="1" />
+                <button id="btn-check-serial" type="button" class="btn btn-primary fw-bold px-3 lift d-inline-flex align-items-center gap-1">
+                  <i data-lucide="search" class="lucide-sm"></i> Conferir
+                </button>
+              </div>
+            </div>
+
+            <!-- Painel 2: Manual (Números Avulsos) -->
+            <div id="panel-val-manual" style="display:none;">
+              <div class="mb-1">
+                <label class="form-label small fw-bold text-muted mb-0">Condição a testar:</label>
+                <select id="board-type" class="form-select form-select-sm">
+                  <option value="Terno">Terno (mínimo 3 acertos)</option>
+                  <option value="Quatro Cantos">Quatro Cantos (25 números ordenados)</option>
+                  <option value="Cinquina">Cinquina (mínimo 5 acertos)</option>
+                  <option value="Cartela Cheia">Cartela Cheia (todos sorteados)</option>
+                </select>
+              </div>
+              <div class="mb-2">
+                <label class="form-label small fw-bold text-muted mb-0">Números da cartela:</label>
+                <textarea id="board-input" class="form-control form-control-sm" rows="2" placeholder="Ex: 5, 12, 18, 34, 45, 52..."></textarea>
+              </div>
+              <button id="btn-validate-board" type="button" class="btn btn-primary btn-sm w-100 fw-bold lift mb-1 d-inline-flex align-items-center justify-content-center gap-1">
+                <i data-lucide="check-circle-2" class="lucide-sm"></i> Validar Números
+              </button>
+            </div>
+
+            <!-- Área de Resultado Visual da Cartela -->
+            <div id="board-result" class="rounded small"></div>
+            <div id="msg" class="mt-1"></div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vencedores Registrados em 2 Colunas -->
+    <div class="row g-0 mt-1">
+      <div class="col-12">
+        <section class="tv-ranking-compact p-1 px-2">
+          <div class="d-flex align-items-center justify-content-between mb-1 pb-1 border-bottom">
+            <h2 class="h6 m-0 fw-bold d-flex align-items-center gap-1" style="font-size:0.82rem;">
+              <i data-lucide="award" class="lucide-sm text-warning"></i>
+              <span>Vencedores Registrados</span>
+              <span id="winners-count-badge" class="badge bg-secondary py-0 px-2" style="font-size:0.68rem;">0</span>
+            </h2>
+            <span class="text-muted small" style="font-size:0.7rem;">Sincronizado automaticamente com o Telão</span>
+          </div>
+          <!-- Grade de 2 Colunas com Scroll Isolado -->
+          <div id="winners-grid-container" class="row g-1" style="max-height: 80px; overflow-y: auto;">
+            <!-- Itens de vencedores inseridos via JS em 2 colunas -->
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- TOOLBAR MINIMALISTA FIXA DE RODAPÉ -->
+    <footer class="tv-footer">
+      <div class="footer-controls">
+        <!-- Grupo 1: Voltar e Navegação -->
+        <div class="toolbar-group">
+          <button type="button" class="btn-tool btn-tool-primary d-inline-flex align-items-center gap-1" id="btn-back-footer" title="Voltar ao modo de sorteio anterior">
+            <i data-lucide="arrow-left" class="lucide"></i> Voltar ao Sorteio
+          </button>
+          <a class="btn-tool d-inline-flex align-items-center gap-1" href="menu.html" title="Menu Principal">
+            <i data-lucide="home" class="lucide"></i> Início
+          </a>
+          <a class="btn-tool d-inline-flex align-items-center gap-1" href="automatico.html" title="Modo Automático">
+            <i data-lucide="play" class="lucide"></i> Auto
+          </a>
+          <a class="btn-tool d-inline-flex align-items-center gap-1" href="manual.html" title="Modo Manual">
+            <i data-lucide="hand" class="lucide"></i> Manual
+          </a>
+          <a class="btn-tool d-inline-flex align-items-center gap-1" href="projetor.html" target="_blank" style="background:#fffbeb; border-color:#f59e0b; color:#b45309; font-weight:800;" title="Abrir Telão">
+            <i data-lucide="tv" class="lucide"></i> Telão
+          </a>
+        </div>
+
+        <!-- Grupo 2: Status do Telão -->
+        <div class="toolbar-group">
+          <button type="button" class="btn-tool btn-tool-ad active d-inline-flex align-items-center gap-1" id="btn-toggle-conference-alert" title="Ativar ou desativar aviso no Telão">
+            <i data-lucide="megaphone" class="lucide"></i> <span id="conf-alert-label">Telão: Avisando</span>
+          </button>
+        </div>
+
+        <!-- Grupo 3: Ferramentas -->
+        <div class="toolbar-group ms-auto">
+          <button type="button" class="btn-tool btn-tool-icon" id="btn-open-voice" title="Configurações de Voz & Áudio"><i data-lucide="settings" class="lucide"></i></button>
+          <button type="button" class="btn-tool btn-tool-icon" id="btn-full" title="Tela Cheia (F)"><i data-lucide="maximize" class="lucide"></i></button>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Modal para Personalizar Nomes das Vitórias -->
+  <div id="modal-categories" class="modal-backdrop-custom" hidden>
+    <div class="modal-box-custom" style="max-width:540px;">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="modal-icon-badge" style="background:#e0f2fe; color:#0369a1;">⚙️</div>
+          <div>
+            <h3 class="fw-bold m-0 fs-5 text-dark">Nomes das Conquistas / Vitórias</h3>
+            <p class="text-muted m-0" style="font-size:0.82rem;">Personalize as 4 conquistas padrão do seu evento.</p>
+          </div>
+        </div>
+        <button id="btn-close-categories-x" class="modal-close-btn">✕</button>
+      </div>
+
+      <form id="form-categories" class="d-flex flex-column gap-2">
+        <div class="form-field-card">
+          <label class="form-label-clean">1ª Conquista (Padrão: Terno)</label>
+          <input type="text" id="cat-1" class="form-input-clean" placeholder="Ex: Terno ou 1ª Linha" required />
+        </div>
+        <div class="form-field-card">
+          <label class="form-label-clean">2ª Conquista (Padrão: Quatro Cantos)</label>
+          <input type="text" id="cat-2" class="form-input-clean" placeholder="Ex: Quatro Cantos ou 2ª Linha" required />
+        </div>
+        <div class="form-field-card">
+          <label class="form-label-clean">3ª Conquista (Padrão: Cinquina)</label>
+          <input type="text" id="cat-3" class="form-input-clean" placeholder="Ex: Cinquina ou Cruz" required />
+        </div>
+        <div class="form-field-card highlight-cheia">
+          <label class="form-label-clean" style="color:#15803d;">4ª Conquista Principal (Padrão: Cartela Cheia)</label>
+          <input type="text" id="cat-4" class="form-input-clean" placeholder="Ex: Cartela Cheia ou Bingão" required />
+        </div>
+
+        <div class="d-flex gap-2 justify-content-between align-items-center pt-3 mt-1 border-top">
+          <button type="button" id="btn-reset-categories" class="btn-min text-muted" style="font-size:0.75rem;">Restaurar Padrão</button>
+          <div class="d-flex gap-2">
+            <button type="button" id="btn-close-categories" class="btn-min px-3">Cancelar</button>
+            <button type="submit" class="btn-min btn-min-primary px-4">Salvar Nomes</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal de Configurações de Voz & Áudio -->
+  <div id="modal-voice" class="modal-backdrop-custom" hidden>
+    <div class="modal-box-custom" style="max-width:540px;">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="modal-icon-badge" style="background:#eff6ff; color:#1d4ed8;">🎙️</div>
+          <div>
+            <h3 class="fw-bold m-0 fs-5 text-dark">Configurações de Voz & Áudio</h3>
+            <p class="text-muted m-0" style="font-size:0.82rem;">Ajuste o narrador e os efeitos sonoros do bingo.</p>
+          </div>
+        </div>
+        <button id="btn-close-voice-x" class="modal-close-btn">✕</button>
+      </div>
+
+      <div class="d-flex flex-column gap-3">
+        <div class="form-field-card">
+          <label class="form-label-clean">🗣️ Escolha do Narrador (Voz)</label>
+          <select id="sel-voice" class="form-select form-select-sm"></select>
+        </div>
+
+        <div class="row g-2">
+          <div class="col-12 col-md-6">
+            <div class="form-field-card">
+              <label class="form-label-clean">⚡ Velocidade da Fala: <span id="val-rate-lbl" class="fw-bold text-primary">Normal (1.0x)</span></label>
+              <input id="sel-rate" class="form-range mt-2" type="range" min="0.7" max="1.3" value="1.0" step="0.05" />
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="form-field-card">
+              <label class="form-label-clean">🔔 Volume do Ding: <span id="val-ding-lbl" class="fw-bold text-primary">60%</span></label>
+              <input id="vol-ding" class="form-range mt-2" type="range" min="0" max="1" value="0.6" step="0.05" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Onde Ativar a Voz / Áudio -->
+        <div class="form-field-card">
+          <label class="form-label-clean mb-2">🔊 Onde a Voz e o Som devem Tocar?</label>
+          <div class="d-flex flex-column gap-2">
+            <!-- Toggle Painel de Controle -->
+            <div class="d-flex align-items-center justify-content-between p-2 rounded-2" style="background:#f8fafc; border:1px solid #e2e8f0;">
+              <div class="d-flex align-items-center gap-2">
+                <span class="fs-5">🕹️</span>
+                <div>
+                  <div class="fw-bold small text-dark">Painel do Operador (Mesa)</div>
+                  <div class="text-muted" style="font-size:0.75rem;">Narração e efeitos sonoros neste dispositivo</div>
+                </div>
+              </div>
+              <div class="form-check form-switch m-0">
+                <input class="form-check-input" type="checkbox" role="switch" id="switch-voice-panel" checked style="cursor:pointer; width:2.5em; height:1.3em;">
+              </div>
+            </div>
+
+            <!-- Toggle Telão / Projetor -->
+            <div class="d-flex align-items-center justify-content-between p-2 rounded-2" style="background:#f8fafc; border:1px solid #e2e8f0;">
+              <div class="d-flex align-items-center gap-2">
+                <span class="fs-5">📺</span>
+                <div>
+                  <div class="fw-bold small text-dark">Telão / Projetor do Público</div>
+                  <div class="text-muted" style="font-size:0.75rem;">Narração e efeitos sonoros no telão</div>
+                </div>
+              </div>
+              <div class="form-check form-switch m-0">
+                <input class="form-check-input" type="checkbox" role="switch" id="switch-voice-projector" checked style="cursor:pointer; width:2.5em; height:1.3em;">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 justify-content-between align-items-center pt-2 border-top">
+          <button type="button" class="btn-min" id="btn-test">▶️ Testar Voz do Bingo</button>
+          <button type="button" class="btn-min btn-min-primary px-4" id="btn-close-voice">Pronto</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <script src="supabase-config.js"></script>
+  <script src="operator-key.js"></script>
+  <script src="dialog.js"></script>
+  <script src="sync.js"></script>
+  <script src="cartelas.js"></script>
+
+  <script>
+    const DEFAULT_PRIZES = {
+      'Terno': '1 Frango Assado',
+      'Quatro Cantos': '1 Caixa de Bombom',
+      'Cinquina': '1 Liquidificador',
+      'Cartela Cheia': 'R$ 500,00'
+    };
+
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    // ====== Nomes de Categorias / Vitórias Personalizáveis ======
+    function getVictoryCategories() {
+      try {
+        const saved = JSON.parse(localStorage.getItem('bingo.victoryCategories') || 'null');
+        if (Array.isArray(saved) && saved.length === 4) return saved;
+      } catch (e) {}
+      return ['Terno', 'Quatro Cantos', 'Cinquina', 'Cartela Cheia'];
+    }
+
+    function saveVictoryCategories(cats) {
+      localStorage.setItem('bingo.victoryCategories', JSON.stringify(cats));
+    }
+
+    function getPrizes() {
+      try {
+        const list = JSON.parse(localStorage.getItem('bingo.roundsList') || '[]');
+        const activeId = localStorage.getItem('bingo.activeRoundId') || 'round_1';
+        const round = list.find(r => r.id === activeId);
+        if (round && round.prizes) return round.prizes;
+
+        const st = JSON.parse(localStorage.getItem('bingo.state') || '{}');
+        if (st.prizes) return st.prizes;
+
+        const saved = JSON.parse(localStorage.getItem('bingo.prizes') || 'null');
+        if (saved) return saved;
+      } catch (e) {}
+      return { 'Cartela Cheia': 'R$ 500,00' };
+    }
+
+    // ====== Atualização Dinâmica do Dropdown de Conquistas ======
+    function updateVictorySelectOptions() {
+      const prizes = getPrizes();
+      const selectType = document.getElementById('type');
+      const boardType = document.getElementById('board-type');
+      if (!selectType) return;
+
+      const curVal = selectType.value;
+      const cats = getVictoryCategories();
+      
+      // Filtra apenas os prêmios que realmente estão configurados/em disputa na rodada ativa
+      const priorityOrder = ['Cartela Cheia', 'Cinquina', 'Quatro Cantos', 'Terno'];
+      let activeKeys = priorityOrder.filter(k => prizes[k] && prizes[k].trim() !== '');
+      if (!activeKeys.length) {
+        activeKeys = ['Cartela Cheia'];
+      }
+
+      selectType.innerHTML = activeKeys.map(k => {
+        const pName = prizes[k] ? ` (${prizes[k]})` : '';
+        return `<option value="${esc(k)}">${esc(k)}${esc(pName)}</option>`;
+      }).join('');
+
+      if (boardType) {
+        boardType.innerHTML = activeKeys.map(k => {
+          return `<option value="${esc(k)}">${esc(k)}</option>`;
+        }).join('');
+      }
+
+      if (activeKeys.includes(curVal)) selectType.value = curVal;
+      else if (activeKeys.length > 0) selectType.value = activeKeys[0];
+    }
+
+    // ====== Áudio / Efeitos Sonoros ======
+    let sfxCtx = null;
+    let sfxGain = null;
+
+    function ensureAudio() {
+      if (!sfxCtx) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) {
+          sfxCtx = new AudioCtx();
+          sfxGain = sfxCtx.createGain();
+          sfxGain.gain.value = 0.4;
+          sfxGain.connect(sfxCtx.destination);
+        }
+      }
+      if (sfxCtx && sfxCtx.state === 'suspended') {
+        sfxCtx.resume().catch(() => {});
+      }
+    }
+
+    function beep(freq = 880, dur = 0.1, when = 0) {
+      if (localStorage.getItem('bingo.panel.muted') === '1') return;
+      ensureAudio();
+      if (!sfxCtx || !sfxGain) return;
+      try {
+        const o = sfxCtx.createOscillator();
+        const g = sfxCtx.createGain();
+        o.type = 'sine';
+        o.frequency.value = freq;
+        g.gain.value = 0.001;
+        o.connect(g);
+        g.connect(sfxGain);
+        const t = sfxCtx.currentTime + when;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.3, t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        o.start(t);
+        o.stop(t + dur + 0.05);
+      } catch (e) {}
+    }
+
+    function playPattern(type) {
+      if (type === 'Terno') [523, 659, 784].forEach((f, i) => beep(f, 0.1, i * 0.15));
+      else if (type === 'Quatro Cantos') [660, 440, 660, 440].forEach((f, i) => beep(f, 0.1, i * 0.15));
+      else if (type === 'Cinquina') [392, 523, 659, 784, 988].forEach((f, i) => beep(f, 0.1, i * 0.12));
+      else [523, 659, 784, 988, 1175, 1319].forEach((f, i) => beep(f, 0.15, i * 0.15));
+    }
+
+    // ====== Persistência Local & Nuvem ======
+    const LS = {
+      state() { try { return JSON.parse(localStorage.getItem('bingo.state') || '{}'); } catch (e) { return {}; } },
+      loadRanking() { try { return JSON.parse(localStorage.getItem('bingo.ranking') || '[]'); } catch (e) { return []; } },
+      saveRanking(list) {
+        localStorage.setItem('bingo.ranking', JSON.stringify(list || []));
+        window.BingoSync?.pushRanking(list || []);
+      },
+      saveState(data) {
+        localStorage.setItem('bingo.state', JSON.stringify(data || {}));
+        window.BingoSync?.pushState(data || {});
+      }
+    };
+
+    // ====== Renderização de Prêmios Compactos (Apenas os configurados) ======
+    function renderPrizes() {
+      const grid = document.getElementById('prizes-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+      const ranking = LS.loadRanking();
+      const prizes = getPrizes();
+      const winnersMap = {};
+      ranking.forEach(r => { if (r.type && !winnersMap[r.type]) winnersMap[r.type] = r; });
+
+      const cats = getVictoryCategories();
+      const allKeys = [...new Set([...cats, ...Object.keys(prizes)])];
+      let renderedCount = 0;
+
+      allKeys.forEach(mod => {
+        const prizeName = (prizes[mod] || '').trim();
+        if (!prizeName) return; // Só exibe se estiver preenchido
+
+        renderedCount++;
+        const isCheia = mod.toLowerCase().includes('cheia') || mod.toLowerCase().includes('bingo');
+        const winner = winnersMap[mod];
+        const isWon = !!winner;
+
+        const card = document.createElement('div');
+        card.className = 'prize-card' + (isWon ? ' won' : '');
+
+        if (isWon) {
+          card.innerHTML = `
+            <div class="p-left">
+              <span class="p-type">${isCheia ? '<i data-lucide="trophy" class="lucide-sm text-success"></i>' : '<i data-lucide="gift" class="lucide-sm text-primary"></i>'} ${esc(mod)}</span>
+              <span class="p-name">${esc(prizeName)}</span>
+            </div>
+            <span class="p-badge"><i data-lucide="check" class="lucide-sm text-success"></i> ${esc(winner.name || winner.player)}</span>
+          `;
+        } else {
+          card.innerHTML = `
+            <div class="p-left">
+              <span class="p-type">${isCheia ? '<i data-lucide="trophy" class="lucide-sm text-success"></i>' : '<i data-lucide="gift" class="lucide-sm text-primary"></i>'} ${esc(mod)}</span>
+              <span class="p-name">${esc(prizeName)}</span>
+            </div>
+            <span class="p-badge badge-open"><i data-lucide="sparkles" class="lucide-sm text-primary"></i> Em disputa</span>
+          `;
+        }
+        grid.appendChild(card);
+      });
+
+      if (renderedCount === 0) {
+        grid.innerHTML = '<div class="text-muted small py-1">Prêmios da rodada livres a anunciar.</div>';
+      }
+
+      updateVictorySelectOptions();
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // ====== Atualização do Ranking em Grade de 2 Colunas ======
+    function updateRankingTable() {
+      const list = LS.loadRanking();
+      const grid = document.getElementById('winners-grid-container');
+      const countBadge = document.getElementById('winners-count-badge');
+      const prizes = getPrizes();
+      if (countBadge) countBadge.textContent = String(list.length);
+      if (!grid) return;
+
+      if (!list.length) {
+        grid.innerHTML = '<div class="col-12 text-center text-muted py-1 small" style="font-size:0.75rem;">Nenhum vencedor registrado nesta rodada.</div>';
+        renderPrizes();
+        return;
+      }
+
+      const sorted = list.slice().sort((a, b) => new Date(b.ts || 0) - new Date(a.ts || 0));
+      grid.innerHTML = sorted.map((item, idx) => {
+        const prizeWon = prizes[item.type] || '—';
+        const origIdx = list.indexOf(item);
+        return `
+          <div class="col-12 col-md-6">
+            <div class="d-flex align-items-center justify-content-between p-1 px-2 rounded border" style="background:#ffffff; font-size:0.78rem; line-height:1.2; box-shadow:0 1px 2px rgba(0,0,0,0.03);">
+              <div class="d-flex align-items-center gap-1 text-truncate" style="min-width:0;">
+                <span class="badge bg-secondary py-0 px-1" style="font-size:0.68rem;">#${idx + 1}</span>
+                <span class="fw-bold text-dark text-truncate" style="max-width:110px;" title="${esc(item.name || item.player)}">${esc(item.name || item.player)}</span>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle py-0 px-1" style="font-size:0.68rem;">${esc(item.type)}</span>
+                <span class="text-success fw-bold text-truncate" style="max-width:140px; font-size:0.72rem;" title="${esc(prizeWon)}">${esc(prizeWon)}</span>
+              </div>
+              <div class="d-flex align-items-center gap-1 flex-shrink-0 ms-1">
+                <span class="text-muted" style="font-size:0.68rem;">${new Date(item.ts || Date.now()).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}</span>
+                <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1 fw-bold" style="font-size:0.68rem; line-height:1;" data-action="del-winner" data-idx="${origIdx}" title="Excluir este registro">✕</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      renderPrizes();
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // ====== Renderização dos Chips Sorteadas por Letra ======
+    function renderDrawnChips() {
+      const st = LS.state();
+      const drawn = Array.isArray(st.drawn) ? st.drawn.slice() : [];
+      const last = st.last;
+      const chips = document.getElementById('chips');
+      const empty = document.getElementById('emptyMsg');
+      const badgeCount = document.getElementById('drawn-count-badge');
+      if (!chips) return;
+
+      if (badgeCount) badgeCount.textContent = `${drawn.length}/75 sorteadas`;
+      const roundBadge = document.getElementById('round-badge');
+      if (roundBadge) roundBadge.textContent = st.roundName || 'Rodada 1';
+
+      chips.innerHTML = '';
+      if (!drawn.length) {
+        if (empty) empty.style.display = '';
+        return;
+      }
+      if (empty) empty.style.display = 'none';
+
+      const groups = { B: [], I: [], N: [], G: [], O: [] };
+      drawn.forEach(n => {
+        const L = n <= 15 ? 'B' : n <= 30 ? 'I' : n <= 45 ? 'N' : n <= 60 ? 'G' : 'O';
+        groups[L].push(n);
+      });
+
+      const letters = ['B', 'I', 'N', 'G', 'O'];
+      letters.forEach(L => {
+        const card = document.createElement('div');
+        card.className = 'col-card';
+
+        const header = document.createElement('div');
+        header.className = 'col-header-chip';
+        header.innerHTML = `<span class="letter letter-${L}" style="font-size:1.3rem;">${L}</span><span class="badge bg-secondary-subtle text-body fw-bold" style="font-size:0.85rem;">${groups[L].length}/15</span>`;
+        card.appendChild(header);
+
+        const wrap = document.createElement('div');
+        wrap.className = 'd-flex flex-wrap gap-2';
+        const nums = groups[L].slice().sort((a, b) => a - b);
+        if (!nums.length) {
+          wrap.innerHTML = '<span class="text-muted small py-2">—</span>';
+        } else {
+          nums.forEach(n => {
+            const span = document.createElement('span');
+            span.className = 'hchip tabnum' + (n === last ? ' last' : '');
+            span.textContent = n;
+            wrap.appendChild(span);
+          });
+        }
+        card.appendChild(wrap);
+        chips.appendChild(card);
+      });
+    }
+
+    // ====== Formulário de Registro de Vencedor ======
+    document.getElementById('form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = document.getElementById('name').value.trim();
+      const type = document.getElementById('type').value;
+      const msg = document.getElementById('msg');
+
+      const normalize = (s) => (s || '').trim().toLowerCase().replace(/\s+/g, ' ');
+      const list = LS.loadRanking();
+      const already = list.some(i => normalize(i.name || i.player) === normalize(name) && i.type === type);
+      if (already) {
+        msg.innerHTML = '<div class="alert alert-warning py-1 mb-0 small">Este jogador já foi registrado nessa conquista.</div>';
+        return;
+      }
+
+      list.push({ name, type, ts: new Date().toISOString() });
+      playPattern(type);
+      LS.saveRanking(list);
+
+      if (typeof window.confetti === 'function') {
+        confetti({ particleCount: 60, spread: 60, origin: { y: 0.7 } });
+      }
+
+      const st = LS.state();
+      if (type === 'Cartela Cheia') {
+        st.gameOver = true;
+        LS.saveState(st);
+      }
+
+      const prizes = getPrizes();
+      const prizeWon = prizes[type] || '';
+      msg.innerHTML = `<div class="alert alert-success py-1 mb-0 small">✅ Ganhador registrado! Prêmio: <b>${esc(prizeWon)}</b> (já riscado no telão).</div>`;
+      e.target.reset();
+      updateRankingTable();
+      setTimeout(() => { if (msg) msg.innerHTML = ''; }, 4000);
+    });
+
+    // ====== Alternância de Abas de Validação (Serial vs Manual) ======
+    const tabValSerial = document.getElementById('tab-val-serial');
+    const tabValManual = document.getElementById('tab-val-manual');
+    const panelValSerial = document.getElementById('panel-val-serial');
+    const panelValManual = document.getElementById('panel-val-manual');
+
+    tabValSerial?.addEventListener('click', () => {
+      tabValSerial.className = 'btn btn-sm btn-primary py-0 px-2 fw-bold';
+      tabValManual.className = 'btn btn-sm btn-outline-secondary py-0 px-2 fw-bold';
+      panelValSerial.style.display = '';
+      panelValManual.style.display = 'none';
+      document.getElementById('board-result').innerHTML = '';
+    });
+
+    tabValManual?.addEventListener('click', () => {
+      tabValManual.className = 'btn btn-sm btn-primary py-0 px-2 fw-bold';
+      tabValSerial.className = 'btn btn-sm btn-outline-secondary py-0 px-2 fw-bold';
+      panelValManual.style.display = '';
+      panelValSerial.style.display = 'none';
+      document.getElementById('board-result').innerHTML = '';
+    });
+
+    // ====== Validador Inteligente por Número de Série Oficial ======
+    function checkCardBySerial(serialNum) {
+      const res = document.getElementById('board-result');
+      if (!res) return;
+
+      const st = LS.state();
+      const drawn = Array.isArray(st.drawn) ? st.drawn : [];
+      const activeRoundId = st.roundId || localStorage.getItem('bingo.activeRoundId') || null;
+
+      const foundRes = window.BingoCardsEngine?.Storage.findCardBySerial(serialNum, activeRoundId);
+      const card = foundRes?.card || (foundRes?.grid ? foundRes : null);
+      const batch = foundRes?.batch || null;
+
+      if (!card) {
+        res.innerHTML = `
+          <div class="alert alert-danger py-2 px-2 mt-2 mb-0 small">
+            <b>❌ Cartela #${serialNum} não encontrada!</b><br>
+            Nenhum lote oficial contendo esta numeração foi cadastrado.
+            <div class="mt-1"><a href="cartelas.html" class="fw-bold text-danger">➡️ Ir para Gerador de Cartelas</a></div>
+          </div>
+        `;
+        return;
+      }
+
+      // Confere o código antifraude: recalcula o hash a partir dos números
+      // da própria cartela e do seed do lote, e compara com o que está
+      // gravado. Isso pega cartelas cujos números foram adulterados depois
+      // de geradas (a validação por série sozinha não detectava isso).
+      const expectedAuthCode = window.BingoCardsEngine.generateAuthCode(card.serial, card.numbers, batch?.seed || 'LOTE1');
+      const authOk = expectedAuthCode === card.authCode;
+
+      const ev = window.BingoCardsEngine.evaluateCard(card, drawn);
+      const letters = ['B', 'I', 'N', 'G', 'O'];
+      const headerColors = ['#dc2626', '#0284c7', '#16a34a', '#d97706', '#9333ea'];
+
+      let cellsHtml = '';
+      // Cabeçalhos B I N G O
+      letters.forEach((L, idx) => {
+        cellsHtml += `<div style="background:${headerColors[idx]}; color:#fff; font-weight:900; text-align:center; font-size:0.75rem; border-radius:2px; height:20px; display:flex; align-items:center; justify-content:center;">${L}</div>`;
+      });
+
+      // 25 Células
+      for (let r = 0; r < 5; r++) {
+        for (let c = 0; c < 5; c++) {
+          const val = card.grid[r][c];
+          const isHit = ev.hitsGrid[r][c];
+          if (val === 'FREE') {
+            cellsHtml += `<div style="background:#fef08a; border:1px solid #eab308; display:flex; align-items:center; justify-content:center; border-radius:2px; height:24px;"><img src="favicon.svg" alt="Logo" style="width:14px; height:14px; object-fit:contain;" /></div>`;
+          } else if (isHit) {
+            cellsHtml += `<div style="background:#dcfce7; border:1px solid #22c55e; color:#15803d; font-weight:900; font-size:0.75rem; display:flex; align-items:center; justify-content:center; border-radius:2px; height:24px;">✓${val}</div>`;
+          } else {
+            cellsHtml += `<div style="background:#ffffff; border:1px solid #cbd5e1; color:#0f172a; font-weight:700; font-size:0.75rem; display:flex; align-items:center; justify-content:center; border-radius:2px; height:24px;">${val}</div>`;
+          }
+        }
+      }
+
+      const prizes = getPrizes();
+      const hasCheia = prizes['Cartela Cheia'] ? !!prizes['Cartela Cheia'].trim() : true;
+      const hasCinquina = !!(prizes['Cinquina'] && prizes['Cinquina'].trim());
+      const hasCantos = !!(prizes['Quatro Cantos'] && prizes['Quatro Cantos'].trim());
+      const hasTerno = !!(prizes['Terno'] && prizes['Terno'].trim());
+
+      const cats = getVictoryCategories();
+      const catTerno = cats[0] || 'Terno';
+      const catCantos = cats[1] || 'Quatro Cantos';
+      const catCinquina = cats[2] || 'Cinquina';
+      const catCheia = cats[3] || 'Cartela Cheia';
+
+      let statusBadges = [];
+      if (ev.isCartelaCheia && hasCheia) {
+        statusBadges.push(`<div class="badge bg-success p-2 text-wrap w-100 text-start mb-1 d-flex align-items-center gap-1" style="font-size:0.78rem;"><i data-lucide="sparkles" class="lucide-sm"></i> <b>BINGOU!</b> ${esc(catCheia)} (24/24)</div>`);
+      } else if (ev.isArmada && hasCheia) {
+        statusBadges.push(`<div class="badge bg-danger p-2 text-wrap w-100 text-start mb-1 d-flex align-items-center gap-1" style="font-size:0.78rem;"><i data-lucide="flame" class="lucide-sm"></i> <b>ARMADA!</b> Falta nº <b>${ev.missingNumbers[0]}</b></div>`);
+      } else {
+        statusBadges.push(`<div class="badge bg-secondary p-1 text-wrap w-100 text-start mb-1 d-flex align-items-center gap-1" style="font-size:0.72rem;"><i data-lucide="clock" class="lucide-sm"></i> Faltam ${ev.missingCount} pedras para fechar</div>`);
+      }
+
+      const otherBadges = [];
+      if (hasCinquina && ev.isCinquina) otherBadges.push(`<span class="badge bg-success d-inline-flex align-items-center gap-1" style="font-size:0.72rem;"><i data-lucide="check" class="lucide-sm"></i> ${esc(catCinquina)}</span>`);
+      if (hasCantos && ev.isQuatroCantos) otherBadges.push(`<span class="badge bg-primary d-inline-flex align-items-center gap-1" style="font-size:0.72rem;"><i data-lucide="check" class="lucide-sm"></i> ${esc(catCantos)}</span>`);
+      if (hasTerno && ev.isTerno) otherBadges.push(`<span class="badge bg-warning text-dark d-inline-flex align-items-center gap-1" style="font-size:0.72rem;"><i data-lucide="check" class="lucide-sm"></i> ${esc(catTerno)}</span>`);
+
+      res.innerHTML = `
+        <div class="card p-2 mt-2" style="background:#f8fafc; border:1.5px solid ${authOk ? '#cbd5e1' : '#dc2626'}; border-radius:10px;">
+          ${authOk ? '' : `
+            <div class="alert alert-danger py-1 px-2 mb-2 small fw-bold d-flex align-items-center gap-1">
+              <i data-lucide="shield-alert" class="lucide-sm"></i> Código antifraude não confere! Os números desta cartela não batem com o hash gravado no lote oficial. Confira manualmente antes de premiar.
+            </div>
+          `}
+          <div class="row g-2 align-items-stretch">
+            <!-- Coluna Esquerda: A Cartela 5x5 -->
+            <div class="col-12 col-sm-6">
+              <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:6px; box-shadow:0 1px 3px rgba(0,0,0,0.05); height:100%;">
+                <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom gap-1 flex-wrap" style="font-size:0.75rem;">
+                  <span class="badge ${authOk ? 'bg-success' : 'bg-danger'} d-inline-flex align-items-center gap-1" style="font-size:0.72rem;"><i data-lucide="${authOk ? 'shield-check' : 'shield-alert'}" class="lucide-sm"></i> SÉRIE Nº ${card.formattedSerial}</span>
+                  ${batch ? `<span class="badge bg-light text-dark border text-truncate" style="font-size:0.65rem; max-width:80px;" title="Lote: ${esc(batch.eventName)}">${esc(batch.roundName || 'Lote')}</span>` : ''}
+                  <span class="text-muted font-monospace ms-auto" style="font-size:0.65rem;" title="${authOk ? 'Código confere com o lote oficial' : 'Código NÃO confere — possível adulteração'}">AUT: ${card.authCode}${authOk ? '' : ' ⚠️'}</span>
+                </div>
+                <div style="display:grid; grid-template-columns:repeat(5, 1fr); gap:2px; background:#e2e8f0; padding:2px; border-radius:4px;">
+                  ${cellsHtml}
+                </div>
+              </div>
+            </div>
+
+            <!-- Coluna Direita: As Informações e Status + Botão de Ação -->
+            <div class="col-12 col-sm-6 d-flex flex-column">
+              <div class="p-2 rounded-2 h-100 d-flex flex-column justify-content-between" style="background:#ffffff; border:1px solid #e2e8f0;">
+                <div>
+                  <div class="d-flex align-items-center justify-content-between mb-1 pb-1 border-bottom">
+                    <span class="fw-bold text-dark" style="font-size:0.75rem;">Status da Cartela</span>
+                    <span class="badge bg-light text-dark border" style="font-size:0.7rem;">Acertos: <b>${ev.totalHits}/24</b></span>
+                  </div>
+
+                  <div class="d-flex flex-column gap-1 my-1">
+                    ${statusBadges.join('')}
+                  </div>
+
+                  ${otherBadges.length > 0 ? `<div class="d-flex flex-wrap gap-1 my-1">${otherBadges.join(' ')}</div>` : ''}
+
+                  ${ev.missingNumbers.length > 0 && !ev.isArmada ? `
+                    <div class="text-muted small mt-1 pt-1 border-top" style="font-size:0.68rem; line-height:1.2; max-height:42px; overflow-y:auto;">
+                      Falta: <b>${ev.missingNumbers.join(', ')}</b>
+                    </div>
+                  ` : ''}
+                </div>
+
+                <button type="button" class="btn btn-sm btn-success w-100 fw-bold lift py-1 mt-2 d-inline-flex align-items-center justify-content-center gap-1" id="btn-prefill-card" data-serial="${card.serial}" style="font-size:0.78rem;">
+                  <i data-lucide="check-circle-2" class="lucide-sm"></i> Usar esta Cartela
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      if (window.lucide) lucide.createIcons();
+
+      document.getElementById('btn-prefill-card')?.addEventListener('click', () => {
+        const nameInput = document.getElementById('name');
+        const typeSelect = document.getElementById('type');
+        if (nameInput) {
+          nameInput.value = `Cartela #${card.formattedSerial}`;
+          nameInput.focus();
+        }
+        if (typeSelect) {
+          if (ev.isCartelaCheia && hasCheia) typeSelect.value = catCheia;
+          else if (ev.isCinquina && hasCinquina) typeSelect.value = catCinquina;
+          else if (ev.isQuatroCantos && hasCantos) typeSelect.value = catCantos;
+          else if (ev.isTerno && hasTerno) typeSelect.value = catTerno;
+          else if (hasCheia) typeSelect.value = catCheia;
+        }
+        BingoDialog.toast(`Dados da Cartela #${card.formattedSerial} inseridos no formulário!`, 'info');
+      });
+    }
+
+    document.getElementById('btn-check-serial')?.addEventListener('click', () => {
+      const serial = parseInt(document.getElementById('card-serial-input')?.value, 10);
+      if (isNaN(serial) || serial <= 0) {
+        BingoDialog.toast('Informe um número de cartela válido.', 'warning');
+        return;
+      }
+      checkCardBySerial(serial);
+    });
+
+    document.getElementById('card-serial-input')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        document.getElementById('btn-check-serial')?.click();
+      }
+    });
+
+    // ====== Validador de Cartelas Manual (Números Digitados) ======
+    document.getElementById('btn-validate-board')?.addEventListener('click', () => {
+      const st = LS.state();
+      const drawn = Array.isArray(st.drawn) ? st.drawn : [];
+      const type = document.getElementById('board-type').value;
+      const raw = (document.getElementById('board-input').value || '').replace(/[^0-9,\s]/g, '');
+      const nums = raw.split(/[\s,]+/).filter(Boolean).map(n => parseInt(n, 10)).filter(n => !isNaN(n));
+      const res = document.getElementById('board-result');
+
+      if (!nums.length) {
+        res.innerHTML = '<div class="p-1 rounded bg-warning text-dark small">Informe os números da cartela.</div>';
+        return;
+      }
+
+      const setDrawn = new Set(drawn);
+      let checkNums = nums;
+      let passed = false;
+
+      if (type === 'Cartela Cheia') {
+        passed = nums.every(n => setDrawn.has(n));
+      } else if (type === 'Cinquina') {
+        passed = nums.filter(n => setDrawn.has(n)).length >= 5;
+      } else if (type === 'Terno') {
+        passed = nums.filter(n => setDrawn.has(n)).length >= 3;
+      } else if (type === 'Quatro Cantos') {
+        if (nums.length !== 25) {
+          res.innerHTML = '<div class="p-1 rounded bg-warning text-dark small">Informe os 25 números da cartela.</div>';
+          return;
+        }
+        checkNums = [nums[0], nums[4], nums[20], nums[24]];
+        passed = checkNums.every(n => setDrawn.has(n));
+      }
+
+      const hit = checkNums.filter(n => setDrawn.has(n));
+      const miss = checkNums.filter(n => !setDrawn.has(n));
+
+      if (passed) {
+        res.innerHTML = `<div class="p-2 rounded bg-success text-white small">🎉 <b>VÁLIDA!</b> Atende a <b>${esc(type)}</b> (${hit.length} acertos).</div>`;
+      } else {
+        res.innerHTML = `<div class="p-2 rounded bg-danger text-white small">❌ <b>Falta:</b> ${miss.join(', ')} (${hit.length} acertos).</div>`;
+      }
+    });
+
+    document.getElementById('btn-clear')?.addEventListener('click', () => {
+      document.getElementById('form').reset();
+      document.getElementById('msg').innerHTML = '';
+      document.getElementById('board-result').innerHTML = '';
+      document.getElementById('board-result').className = '';
+      if (document.getElementById('card-serial-input')) document.getElementById('card-serial-input').value = '';
+    });
+
+    // ====== Modal de Personalização de Vitórias ======
+    const modalCategories = document.getElementById('modal-categories');
+    const btnOpenCategoryModal = document.getElementById('btn-open-category-modal');
+    const btnCloseCategories = document.getElementById('btn-close-categories');
+    const btnCloseCategoriesX = document.getElementById('btn-close-categories-x');
+    const formCategories = document.getElementById('form-categories');
+    const btnResetCategories = document.getElementById('btn-reset-categories');
+
+    btnOpenCategoryModal?.addEventListener('click', () => {
+      const cats = getVictoryCategories();
+      document.getElementById('cat-1').value = cats[0] || 'Terno';
+      document.getElementById('cat-2').value = cats[1] || 'Quatro Cantos';
+      document.getElementById('cat-3').value = cats[2] || 'Cinquina';
+      document.getElementById('cat-4').value = cats[3] || 'Cartela Cheia';
+      modalCategories?.removeAttribute('hidden');
+    });
+
+    btnCloseCategories?.addEventListener('click', () => modalCategories?.setAttribute('hidden', ''));
+    btnCloseCategoriesX?.addEventListener('click', () => modalCategories?.setAttribute('hidden', ''));
+
+    btnResetCategories?.addEventListener('click', () => {
+      document.getElementById('cat-1').value = 'Terno';
+      document.getElementById('cat-2').value = 'Quatro Cantos';
+      document.getElementById('cat-3').value = 'Cinquina';
+      document.getElementById('cat-4').value = 'Cartela Cheia';
+    });
+
+    formCategories?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const c1 = document.getElementById('cat-1').value.trim() || 'Terno';
+      const c2 = document.getElementById('cat-2').value.trim() || 'Quatro Cantos';
+      const c3 = document.getElementById('cat-3').value.trim() || 'Cinquina';
+      const c4 = document.getElementById('cat-4').value.trim() || 'Cartela Cheia';
+
+      const newCats = [c1, c2, c3, c4];
+      saveVictoryCategories(newCats);
+      modalCategories?.setAttribute('hidden', '');
+      renderPrizes();
+      updateVictorySelectOptions();
+      BingoDialog.toast('Nomes das vitórias atualizados com sucesso!', 'success');
+    });
+
+    // ====== Controle do Aviso de Conferência no Telão ======
+    let conferenceActive = true;
+    function setConferenceBroadcast(active) {
+      conferenceActive = !!active;
+      localStorage.setItem('bingo.conferenceMode', conferenceActive ? '1' : '0');
+      const btn = document.getElementById('btn-toggle-conference-alert');
+      const label = document.getElementById('conf-alert-label');
+      if (btn) {
+        if (conferenceActive) {
+          btn.classList.add('active');
+          if (label) label.textContent = 'Telão: Avisando';
+          btn.title = 'O Telão está exibindo o aviso de conferência. Clique para desativar';
+        } else {
+          btn.classList.remove('active');
+          if (label) label.textContent = 'Telão: Silenciado';
+          btn.title = 'Aviso desativado no telão. Clique para ativar';
+        }
+      }
+      const st = LS.state();
+      st.conferenceMode = conferenceActive;
+      LS.saveState(st);
+    }
+
+    document.getElementById('btn-toggle-conference-alert')?.addEventListener('click', () => {
+      setConferenceBroadcast(!conferenceActive);
+    });
+
+    // ====== Voltar ao Modo Anterior ======
+    function goBackToGame() {
+      // 1. Prioriza o modo registrado no sessionStorage
+      const lastMode = sessionStorage.getItem('bingo.lastMode');
+      if (lastMode && (lastMode.includes('automatico') || lastMode.includes('manual') || lastMode.includes('menu'))) {
+        window.location.href = lastMode;
+        return;
+      }
+
+      // 2. Se houver referrer da aplicação
+      const ref = document.referrer;
+      if (ref && (ref.includes('automatico.html') || ref.includes('manual.html') || ref.includes('menu.html'))) {
+        window.location.href = ref;
+        return;
+      }
+
+      // 3. Histórico do navegador
+      if (window.history.length > 1) {
+        window.history.back();
+        return;
+      }
+
+      // 4. Fallback padrão
+      window.location.href = 'automatico.html';
+    }
+
+    document.getElementById('btn-back-header')?.addEventListener('click', goBackToGame);
+    document.getElementById('btn-back-footer')?.addEventListener('click', goBackToGame);
+
+    // ====== Tela Cheia ======
+    document.getElementById('btn-full')?.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    });
+
+    // ====== Modal de Configurações de Voz & Áudio na Conferência ======
+    const modalVoice = document.getElementById('modal-voice');
+    const btnOpenVoice = document.getElementById('btn-open-voice');
+    const btnCloseVoice = document.getElementById('btn-close-voice');
+    const btnCloseVoiceX = document.getElementById('btn-close-voice-x');
+    const selVoice = document.getElementById('sel-voice');
+    const selRate = document.getElementById('sel-rate');
+    const valRateLbl = document.getElementById('val-rate-lbl');
+    const volDingSlider = document.getElementById('vol-ding');
+    const valDingLbl = document.getElementById('val-ding-lbl');
+    const btnTest = document.getElementById('btn-test');
+
+    btnOpenVoice?.addEventListener('click', () => modalVoice?.removeAttribute('hidden'));
+    btnCloseVoice?.addEventListener('click', () => modalVoice?.setAttribute('hidden', ''));
+    btnCloseVoiceX?.addEventListener('click', () => modalVoice?.setAttribute('hidden', ''));
+
+    // Carregar Vozes Sintetizadas
+    function populateVoices() {
+      if (!selVoice || !('speechSynthesis' in window)) return;
+      const voices = speechSynthesis.getVoices();
+      selVoice.innerHTML = '';
+      const ptVoices = voices.filter(v => (v.lang || '').toLowerCase().startsWith('pt'));
+      const listToUse = ptVoices.length ? ptVoices : voices;
+      listToUse.forEach((v) => {
+        const opt = document.createElement('option');
+        opt.value = v.name;
+        opt.textContent = `${v.name} (${v.lang})`;
+        selVoice.appendChild(opt);
+      });
+      const saved = localStorage.getItem('bingo.voice');
+      if (saved && [...selVoice.options].some(o => o.value === saved)) {
+        selVoice.value = saved;
+      }
+    }
+    if ('speechSynthesis' in window) {
+      speechSynthesis.onvoiceschanged = populateVoices;
+      populateVoices();
+    }
+    selVoice?.addEventListener('change', () => {
+      localStorage.setItem('bingo.voice', selVoice.value);
+    });
+
+    if (selRate && valRateLbl) {
+      const savedRate = parseFloat(localStorage.getItem('bingo.rate') || '1.0');
+      selRate.value = isNaN(savedRate) ? 1.0 : savedRate;
+      valRateLbl.textContent = `${selRate.value}x`;
+
+      selRate.addEventListener('input', (e) => {
+        const r = parseFloat(e.target.value);
+        valRateLbl.textContent = `${r.toFixed(2)}x`;
+        localStorage.setItem('bingo.rate', String(r));
+      });
+    }
+
+    if (volDingSlider && valDingLbl) {
+      const savedDing = parseFloat(localStorage.getItem('bingo.dingvol') || '0.6');
+      volDingSlider.value = isNaN(savedDing) ? 0.6 : savedDing;
+      valDingLbl.textContent = `${Math.round(volDingSlider.value * 100)}%`;
+
+      volDingSlider.addEventListener('input', (e) => {
+        const v = parseFloat(e.target.value);
+        valDingLbl.textContent = `${Math.round(v * 100)}%`;
+        localStorage.setItem('bingo.dingvol', String(v));
+      });
+    }
+
+    // Switches de Ativação de Voz (Painel e Telão)
+    const switchPanel = document.getElementById('switch-voice-panel');
+    const switchProj = document.getElementById('switch-voice-projector');
+
+    if (switchPanel) {
+      switchPanel.checked = localStorage.getItem('bingo.panel.muted') !== '1';
+      switchPanel.addEventListener('change', (e) => {
+        localStorage.setItem('bingo.panel.muted', e.target.checked ? '0' : '1');
+      });
+    }
+
+    if (switchProj) {
+      switchProj.checked = localStorage.getItem('bingo.projector.muted') !== '1';
+      switchProj.addEventListener('change', (e) => {
+        localStorage.setItem('bingo.projector.muted', e.target.checked ? '0' : '1');
+      });
+    }
+
+    btnTest?.addEventListener('click', () => {
+      if ('speechSynthesis' in window) {
+        try { speechSynthesis.cancel(); speechSynthesis.resume(); } catch(e){}
+        const voiceName = selVoice?.value || localStorage.getItem('bingo.voice');
+        const voices = speechSynthesis.getVoices();
+        const chosen = voices.find(x => x.name === voiceName) || voices.find(v => /pt-BR/i.test(v.lang)) || voices[0];
+        const r = parseFloat(localStorage.getItem('bingo.rate') || '1.0');
+        const u = new SpeechSynthesisUtterance('Letra B, número 10. Teste de voz do Bingo!');
+        u.lang = chosen ? chosen.lang : 'pt-BR';
+        if (chosen) u.voice = chosen;
+        u.rate = isNaN(r) ? 1.0 : r;
+        speechSynthesis.speak(u);
+      }
+    });
+
+    // ====== Exclusão de Vencedores com Modal Padrão do Sistema ======
+    document.getElementById('winners-grid-container')?.addEventListener('click', async (e) => {
+      const btn = e.target.closest('button[data-action="del-winner"]');
+      if (!btn) return;
+      const idx = parseInt(btn.dataset.idx, 10);
+      const list = LS.loadRanking();
+      if (isNaN(idx) || !list[idx]) return;
+
+      const item = list[idx];
+      const confirmed = await BingoDialog.confirm({
+        title: 'Excluir Vencedor',
+        message: `Deseja realmente remover o registro de <b>${esc(item.name || item.player)}</b> (${esc(item.type)})?<br><br>O prêmio correspondente voltará ao status <b>"Em Disputa"</b>.`,
+        confirmText: 'Sim, Excluir',
+        cancelText: 'Cancelar',
+        danger: true,
+        icon: '🗑️'
+      });
+
+      if (confirmed) {
+        list.splice(idx, 1);
+        LS.saveRanking(list);
+        updateRankingTable();
+        renderPrizes();
+        BingoDialog.toast('Registro de vencedor removido com sucesso!', 'success');
+      }
+    });
+
+    window.addEventListener('beforeunload', () => {
+      localStorage.setItem('bingo.conferenceMode', '0');
+      const st = LS.state();
+      st.conferenceMode = false;
+      LS.saveState(st);
+    });
+
+    // ====== Sincronização Supabase ======
+    // Busca lotes de cartelas gerados em outro aparelho/navegador (ex.:
+    // cartelas.html rodando no computador da organização) e mescla com os
+    // lotes já salvos localmente, para que a busca por número de série
+    // encontre a cartela independente de onde ela foi gerada.
+    async function syncCardBatches() {
+      if (!window.BingoSync || !window.BingoCardsEngine) return;
+      try {
+        const remoteBatches = await BingoSync.pullCardBatches?.();
+        // Importante: usar Array.isArray (não "remoteBatches.length"). Uma
+        // lista vazia é um resultado válido (todos os lotes remotos foram
+        // excluídos) e precisa mesmo assim chegar até mergeRemoteBatches
+        // pra limpar o cache local — só "null" (falha de rede/offline) deve
+        // ser ignorado, senão a exclusão de um lote em outro aparelho nunca
+        // se refletiria aqui.
+        if (Array.isArray(remoteBatches)) {
+          BingoCardsEngine.Storage.mergeRemoteBatches(remoteBatches);
+        }
+      } catch (e) {}
+    }
+
+    async function syncFromCloud() {
+      if (!window.BingoSync) return;
+      BingoSync.init();
+      if (!BingoSync.ready()) return;
+
+      syncCardBatches();
+
+      const [remoteState, remoteRanking] = await Promise.all([BingoSync.pullState(), BingoSync.pullRanking()]);
+      if (remoteState) {
+        const st = LS.state();
+        const merged = BingoSync.mergeState(st, remoteState);
+        localStorage.setItem('bingo.state', JSON.stringify(merged));
+        if (merged.prizes) localStorage.setItem('bingo.prizes', JSON.stringify(merged.prizes));
+      }
+      if (remoteRanking) {
+        const merged = BingoSync.mergeRanking(LS.loadRanking(), remoteRanking);
+        localStorage.setItem('bingo.ranking', JSON.stringify(merged || []));
+      }
+      renderDrawnChips();
+      updateRankingTable();
+
+      BingoSync.subscribe(async () => {
+        syncCardBatches();
+        const rs = await BingoSync.pullState();
+        if (rs) {
+          const cur = LS.state();
+          const merged = BingoSync.mergeState(cur, rs);
+          localStorage.setItem('bingo.state', JSON.stringify(merged));
+          if (merged.prizes) localStorage.setItem('bingo.prizes', JSON.stringify(merged.prizes));
+        }
+        const rr = await BingoSync.pullRanking();
+        if (rr) {
+          localStorage.setItem('bingo.ranking', JSON.stringify(BingoSync.mergeRanking(LS.loadRanking(), rr)));
+        }
+        renderDrawnChips();
+        updateRankingTable();
+      });
+    }
+
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'bingo.ranking' || e.key === 'bingo.state' || e.key === 'bingo.prizes' || e.key === 'bingo.victoryCategories') {
+        renderDrawnChips();
+        updateRankingTable();
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderDrawnChips();
+      updateRankingTable();
+      updateVictorySelectOptions();
+      setConferenceBroadcast(true);
+      syncFromCloud();
+    });
+  </script>
+</body>
+</html>

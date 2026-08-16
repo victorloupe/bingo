@@ -1,0 +1,9 @@
+# Segredo local — nunca deve ir para o repositório. Veja
+# operator-key.example.js para o modelo e as instruções de como gerar o seu.
+operator-key.js
+
+# Arquivos de SO/editor que não têm nada a ver com o projeto
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/

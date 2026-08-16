@@ -1,0 +1,1369 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Bingo 75 – Menu & Programação da Noite</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    body {
+      height: 100dvh;
+      max-height: 100dvh;
+      margin: 0;
+      padding: 10px 16px;
+      background: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+    .menu-container {
+      width: 100%;
+      max-width: 100%;
+      height: 100%;
+      max-height: 100%;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+    .schedule-section-wrap {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .schedule-scroll-area {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding-right: 6px;
+    }
+    .schedule-scroll-area::-webkit-scrollbar {
+      width: 6px;
+    }
+    .schedule-scroll-area::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 999px;
+    }
+    .schedule-scroll-area::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    .quick-launch-fixed-footer {
+      flex-shrink: 0;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 10px 16px;
+    }
+    .sponsor-preview-thumb {
+      width: 48px;
+      height: 48px;
+      object-fit: cover;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .prize-tag {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: #334155;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .prize-tag.cheia {
+      background: #f0fdf4;
+      border-color: #bbf7d0;
+      color: #166534;
+    }
+  </style>
+</head>
+<body>
+  <div class="menu-container">
+    <!-- Cabeçalho Minimalista Fixo -->
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pb-2 border-bottom flex-shrink-0">
+      <div class="d-flex align-items-center gap-2">
+        <h1 class="app-title m-0" style="font-size: 1.45rem;">Bingo 75</h1>
+        <span class="badge bg-light text-secondary border px-2 py-1 small fw-bold">Painel de Controle</span>
+      </div>
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <button id="btn-open-create-modal" class="btn-min btn-min-primary d-inline-flex align-items-center gap-1">
+          <i data-lucide="plus-circle" class="lucide"></i> Criar Novo Bingo
+        </button>
+        <a href="cartelas.html" class="btn-min d-inline-flex align-items-center gap-1" style="background:#f0fdf4; border-color:#86efac; color:#15803d; font-weight:800;" title="Gerar e Imprimir Cartelas em PDF com Antifraude">
+          <i data-lucide="ticket" class="lucide"></i> Gerar Cartelas PDF
+        </a>
+        <button id="btn-menu-ad" class="btn-min btn-min-ad d-inline-flex align-items-center gap-1">
+          <i data-lucide="megaphone" class="lucide"></i> <span id="menu-ad-label">Propaganda: OFF</span>
+        </button>
+        <button id="btn-edit-sponsors" class="btn-min d-inline-flex align-items-center gap-1">
+          <i data-lucide="image" class="lucide"></i> Patrocinadores
+        </button>
+        <div id="chip-sync" class="chip d-inline-flex align-items-center gap-1" title="Status de sincronização">
+          <i data-lucide="cloud" class="lucide-sm"></i> Sincronizado
+        </div>
+      </div>
+    </div>
+
+    <!-- Seção Central: Lista de Bingos com Scroll no Meio -->
+    <div class="schedule-section-wrap">
+      <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2 flex-shrink-0">
+        <div>
+          <h2 class="fs-6 fw-bold m-0 d-flex align-items-center gap-2 text-dark">
+            <i data-lucide="calendar" class="lucide text-primary"></i>
+            <span>Sequência de Bingos da Noite</span>
+            <span id="rounds-total-badge" class="badge bg-light text-dark border" style="font-size:0.75rem;">0 bingos</span>
+          </h2>
+          <span class="text-muted" style="font-size:0.78rem;">Role para ver todos os bingos agendados. Use os botões à direita para iniciar a tela desejada.</span>
+        </div>
+      </div>
+
+      <!-- Container com Scroll para os Cards de Bingos -->
+      <div class="schedule-scroll-area">
+        <div id="schedule-list" class="d-flex flex-column gap-2"></div>
+      </div>
+    </div>
+
+    <!-- Seção Inferior Fixa no Rodapé: Início Rápido / Bingo Avulso -->
+    <div class="quick-launch-fixed-footer">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2">
+          <i data-lucide="zap" class="lucide text-warning"></i>
+          <div>
+            <h3 class="fs-6 fw-bold m-0 text-dark">Início Rápido / Bingo Avulso</h3>
+            <span class="text-muted" style="font-size:0.75rem;">Iniciar um sorteio imediato sem pré-configuração de rodadas:</span>
+          </div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+          <a href="cartelas.html" class="btn-min d-inline-flex align-items-center gap-1" style="background:#eff6ff; border-color:#93c5fd; color:#1d4ed8; font-weight:800;">
+            <i data-lucide="ticket" class="lucide-sm"></i> Cartelas PDF
+          </a>
+          <button type="button" id="btn-quick-auto" class="btn-min d-inline-flex align-items-center gap-1">
+            <i data-lucide="play" class="lucide-sm"></i> Automático
+          </button>
+          <button type="button" id="btn-quick-manual" class="btn-min d-inline-flex align-items-center gap-1">
+            <i data-lucide="hand" class="lucide-sm"></i> Manual
+          </button>
+          <button type="button" id="btn-quick-tv" class="btn-min d-inline-flex align-items-center gap-1">
+            <i data-lucide="tv" class="lucide-sm"></i> Telão / TV
+          </button>
+          <button type="button" id="btn-quick-check" class="btn-min d-inline-flex align-items-center gap-1">
+            <i data-lucide="clipboard-check" class="lucide-sm"></i> Conferência
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Datalist de Sugestões Rápidas de Prêmios -->
+  <datalist id="prize-suggestions">
+    <option value="1 Frango Assado"></option>
+    <option value="1 Caixa de Bombom"></option>
+    <option value="1 Cesta Básica"></option>
+    <option value="1 Liquidificador"></option>
+    <option value="1 Air Fryer"></option>
+    <option value="1 Sanduicheira"></option>
+    <option value="1 Garrafa de Whisky"></option>
+    <option value="1 Ventilador"></option>
+    <option value="1 Smart TV 43 polegadas"></option>
+    <option value="1 Smartphone"></option>
+    <option value="1 Bicicleta"></option>
+    <option value="1 Porco / Leitão"></option>
+    <option value="1 Bezerro Nelore"></option>
+    <option value="R$ 50,00"></option>
+    <option value="R$ 100,00"></option>
+    <option value="R$ 200,00"></option>
+    <option value="R$ 500,00"></option>
+    <option value="R$ 1.000,00"></option>
+    <option value="R$ 2.000,00"></option>
+    <option value="R$ 5.000,00"></option>
+  </datalist>
+
+  <!-- Modal de Criar / Editar Bingo da Noite -->
+  <div id="modal-create-round" class="modal-backdrop-custom" hidden>
+    <div class="modal-box-custom">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="modal-icon-badge" style="background:#eff6ff; color:#2563eb;">
+            <i data-lucide="gift" class="lucide-lg"></i>
+          </div>
+          <div>
+            <div class="d-flex align-items-center gap-2">
+              <h3 id="modal-round-title" class="fw-bold m-0 fs-5 text-dark">Configurar Bingo da Noite</h3>
+              <span id="modal-order-tag" class="badge bg-primary px-2 py-1 fw-bold" style="font-size:0.82rem;">Bingo #1</span>
+            </div>
+            <p class="text-muted m-0" style="font-size:0.82rem;">Defina o nome da rodada e os prêmios da disputa.</p>
+          </div>
+        </div>
+        <button id="btn-close-create-x" class="modal-close-btn" title="Fechar">✕</button>
+      </div>
+      
+      <form id="form-create-round" class="d-flex flex-column gap-3">
+        <input type="hidden" id="edit-round-id" value="" />
+        
+        <div class="form-field-card p-3">
+          <label class="form-label-clean mb-1" style="font-size:0.75rem;">Nome deste Bingo / Rodada</label>
+          <input type="text" id="cr-name" class="form-input-clean" style="font-size:1.02rem; font-weight:700;" placeholder="Ex.: 1º Bingo da Noite / Especial Quermesse" required />
+        </div>
+
+        <!-- Barra Superior: Prêmios em Disputa e Botões de Adicionar Outros -->
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pt-1 border-top">
+          <span class="fw-bold text-dark fs-6 d-flex align-items-center gap-1">
+            <i data-lucide="gift" class="lucide-sm text-primary"></i>
+            <span>Prêmios em Disputa nesta Rodada:</span>
+          </span>
+          <div class="d-flex align-items-center gap-1 flex-wrap" id="add-prizes-toolbar">
+            <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2 fw-semibold d-inline-flex align-items-center gap-1" id="btn-add-terno" style="font-size:0.75rem;">
+              <i data-lucide="plus" class="lucide-sm"></i> Terno
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2 fw-semibold d-inline-flex align-items-center gap-1" id="btn-add-cantos" style="font-size:0.75rem;">
+              <i data-lucide="plus" class="lucide-sm"></i> 4 Cantos
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2 fw-semibold d-inline-flex align-items-center gap-1" id="btn-add-cinquina" style="font-size:0.75rem;">
+              <i data-lucide="plus" class="lucide-sm"></i> Cinquina
+            </button>
+          </div>
+        </div>
+
+        <!-- Lista de Cards de Prêmios Ativos -->
+        <div class="d-flex flex-column gap-2" id="active-prizes-container">
+          
+          <!-- 🏆 1º Prêmio: Cartela Cheia (Principal - Sempre Presente) -->
+          <div class="form-field-card highlight-cheia p-3" id="card-prize-cheia">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="fw-bold text-success d-flex align-items-center gap-1" style="font-size:0.88rem;">
+                <i data-lucide="trophy" class="lucide-sm text-success"></i>
+                <span>1º Prêmio: Cartela Cheia (Principal)</span>
+              </span>
+              <div class="d-flex align-items-center gap-2">
+                <select class="form-select form-select-sm py-1 px-2 text-dark fw-semibold" style="font-size:0.78rem; width:auto; border-color:#86efac; background:#ffffff; cursor:pointer;" onchange="if(this.value){ document.getElementById('cr-cheia').value = this.value; this.value=''; }">
+                  <option value="">⚡ Sugestões Rápidas...</option>
+                  <option value="R$ 300,00">💵 R$ 300,00</option>
+                  <option value="R$ 500,00">💵 R$ 500,00</option>
+                  <option value="R$ 1.000,00">💵 R$ 1.000,00</option>
+                  <option value="R$ 2.000,00">💵 R$ 2.000,00</option>
+                  <option value="R$ 5.000,00">💵 R$ 5.000,00</option>
+                  <option value="1 Smart TV 43&quot;">📺 1 Smart TV 43"</option>
+                  <option value="1 Moto 0km">🛵 1 Moto 0km</option>
+                  <option value="1 Bezerro Nelore">🐂 1 Bezerro Nelore</option>
+                  <option value="1 Geladeira Frost Free">❄️ 1 Geladeira</option>
+                  <option value="1 Bicicleta Aro 29">🚲 1 Bicicleta</option>
+                </select>
+              </div>
+            </div>
+            <input type="text" id="cr-cheia" class="form-control fw-bold text-dark" style="font-size:1rem; border-color:#86efac; background:#ffffff;" placeholder="Ex.: R$ 1.000,00 ou 1 Moto 0km (pode deixar em branco e definir depois)" />
+          </div>
+
+          <!-- ⚡ Cinquina (Opcional - Pode ser removido) -->
+          <div class="form-field-card p-3" id="card-prize-cinquina" style="display:none;">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="fw-bold text-dark d-flex align-items-center gap-1" style="font-size:0.85rem;">
+                <i data-lucide="gift" class="lucide-sm text-primary"></i>
+                <span>Prêmio Cinquina</span>
+              </span>
+              <div class="d-flex align-items-center gap-2">
+                <select class="form-select form-select-sm text-muted py-1 px-2" style="font-size:0.75rem; width:auto; cursor:pointer;" onchange="if(this.value){ document.getElementById('cr-cinquina').value = this.value; this.value=''; }">
+                  <option value="">⚡ Sugestões...</option>
+                  <option value="1 Liquidificador">🍹 1 Liquidificador</option>
+                  <option value="1 Air Fryer">🍟 1 Air Fryer</option>
+                  <option value="1 Micro-ondas">📻 1 Micro-ondas</option>
+                  <option value="R$ 200,00">💵 R$ 200,00</option>
+                  <option value="R$ 300,00">💵 R$ 300,00</option>
+                  <option value="1 Batedeira Planetária">🥣 1 Batedeira</option>
+                  <option value="1 Smartphone">📱 1 Smartphone</option>
+                </select>
+                <button type="button" class="btn btn-sm btn-outline-danger py-1 px-2 fw-semibold d-inline-flex align-items-center gap-1" style="font-size:0.75rem;" onclick="removePrizeCard('cinquina')" title="Excluir Cinquina deste Bingo">
+                  <i data-lucide="trash-2" class="lucide-sm"></i> Apagar
+                </button>
+              </div>
+            </div>
+            <input type="text" id="cr-cinquina" class="form-control fw-semibold text-dark" style="font-size:0.92rem;" placeholder="Ex.: 1 Liquidificador ou R$ 200,00" />
+          </div>
+
+          <!-- 🍗 Terno (Opcional - Pode ser removido) -->
+          <div class="form-field-card p-3" id="card-prize-terno" style="display:none;">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="fw-bold text-dark d-flex align-items-center gap-1" style="font-size:0.85rem;">
+                <i data-lucide="gift" class="lucide-sm text-primary"></i>
+                <span>Prêmio Terno</span>
+              </span>
+              <div class="d-flex align-items-center gap-2">
+                <select class="form-select form-select-sm text-muted py-1 px-2" style="font-size:0.75rem; width:auto; cursor:pointer;" onchange="if(this.value){ document.getElementById('cr-terno').value = this.value; this.value=''; }">
+                  <option value="">⚡ Sugestões...</option>
+                  <option value="1 Frango Assado">🍗 1 Frango Assado</option>
+                  <option value="1 Sanduicheira">🥪 1 Sanduicheira</option>
+                  <option value="1 Caixa de Bombom">🍫 1 Caixa de Bombom</option>
+                  <option value="R$ 100,00">💵 R$ 100,00</option>
+                  <option value="R$ 150,00">💵 R$ 150,00</option>
+                  <option value="1 Panela de Pressão">🍲 1 Panela de Pressão</option>
+                </select>
+                <button type="button" class="btn btn-sm btn-outline-danger py-1 px-2 fw-semibold d-inline-flex align-items-center gap-1" style="font-size:0.75rem;" onclick="removePrizeCard('terno')" title="Excluir Terno deste Bingo">
+                  <i data-lucide="trash-2" class="lucide-sm"></i> Apagar
+                </button>
+              </div>
+            </div>
+            <input type="text" id="cr-terno" class="form-control fw-semibold text-dark" style="font-size:0.92rem;" placeholder="Ex.: 1 Frango Assado ou R$ 100,00" />
+          </div>
+
+          <!-- 🍫 4 Cantos (Opcional - Pode ser removido) -->
+          <div class="form-field-card p-3" id="card-prize-cantos" style="display:none;">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="fw-bold text-dark d-flex align-items-center gap-1" style="font-size:0.85rem;">
+                <i data-lucide="gift" class="lucide-sm text-primary"></i>
+                <span>Prêmio 4 Cantos</span>
+              </span>
+              <div class="d-flex align-items-center gap-2">
+                <select class="form-select form-select-sm text-muted py-1 px-2" style="font-size:0.75rem; width:auto; cursor:pointer;" onchange="if(this.value){ document.getElementById('cr-cantos').value = this.value; this.value=''; }">
+                  <option value="">⚡ Sugestões...</option>
+                  <option value="1 Caixa de Bombom">🍫 1 Caixa de Bombom</option>
+                  <option value="1 Cesta Básica">🧺 1 Cesta Básica</option>
+                  <option value="1 Fardo de Cerveja">🍺 1 Fardo de Cerveja</option>
+                  <option value="R$ 100,00">💵 R$ 100,00</option>
+                  <option value="R$ 200,00">💵 R$ 200,00</option>
+                  <option value="1 Ferro de Passar">👔 1 Ferro de Passar</option>
+                </select>
+                <button type="button" class="btn btn-sm btn-outline-danger py-1 px-2 fw-semibold d-inline-flex align-items-center gap-1" style="font-size:0.75rem;" onclick="removePrizeCard('cantos')" title="Excluir 4 Cantos deste Bingo">
+                  <i data-lucide="trash-2" class="lucide-sm"></i> Apagar
+                </button>
+              </div>
+            </div>
+            <input type="text" id="cr-cantos" class="form-control fw-semibold text-dark" style="font-size:0.92rem;" placeholder="Ex.: 1 Caixa de Bombom ou 1 Cesta Básica" />
+          </div>
+
+        </div>
+
+        <div class="d-flex gap-2 justify-content-end pt-3 mt-1 border-top">
+          <button type="button" id="btn-close-create" class="btn-min px-3">Cancelar</button>
+          <button type="submit" class="btn-min btn-min-primary px-4" id="btn-save-round-text">Salvar Bingo na Lista</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal de Patrocinadores -->
+  <div id="modal-sponsors" class="modal-backdrop-custom" hidden>
+    <div class="modal-box-custom">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="modal-icon-badge" style="background:#fef3c7; color:#b45309;">📢</div>
+          <div>
+            <h3 class="fw-bold m-0 fs-5 text-dark">Patrocinadores do Telão</h3>
+            <p class="text-muted m-0" style="font-size:0.82rem;">Adicione fotos e marcas para rodar nos comerciais.</p>
+          </div>
+        </div>
+        <button id="btn-close-sponsors-x" class="modal-close-btn" title="Fechar">✕</button>
+      </div>
+
+      <form id="form-add-sponsor" class="p-3 rounded-3 bg-light border mb-3 d-flex flex-column gap-2">
+        <input type="hidden" id="edit-sponsor-id" value="" />
+        
+        <div class="row g-2">
+          <div class="col-12 col-md-6">
+            <div class="form-field-card" style="background:#fff;">
+              <label class="form-label-clean">Nome do Patrocinador</label>
+              <input type="text" id="sp-name" class="form-input-clean" placeholder="Ex: Padaria Estrela" required />
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="form-field-card" style="background:#fff;">
+              <label class="form-label-clean">Slogan / Frase</label>
+              <input type="text" id="sp-desc" class="form-input-clean" placeholder="Ex: O melhor preço da cidade!" />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-field-card" style="background:#fff;">
+          <label class="form-label-clean">Foto / Logo do Patrocinador</label>
+          <div class="d-flex gap-2 align-items-center">
+            <input type="file" id="sp-file" class="form-control form-control-sm" accept="image/*" />
+            <span class="small text-muted">ou</span>
+            <input type="url" id="sp-url" class="form-control form-control-sm" placeholder="Link da imagem (https://...)" />
+          </div>
+        </div>
+
+        <div class="d-flex gap-2 pt-1">
+          <button type="submit" id="btn-save-sponsor" class="btn-min btn-min-primary flex-grow-1">+ Adicionar Patrocinador</button>
+          <button type="button" id="btn-cancel-edit-sp" class="btn-min" style="display:none;">Cancelar</button>
+        </div>
+      </form>
+
+      <h4 class="fs-6 fw-bold mb-2 text-dark">Patrocinadores Cadastrados (<span id="sp-count">0</span>):</h4>
+      <div id="sp-list" class="d-flex flex-column gap-2" style="max-height:200px; overflow-y:auto; padding-right:4px;"></div>
+
+      <div class="mt-3 d-flex justify-content-between align-items-center pt-2 border-top">
+        <button id="btn-add-sample-sponsors" class="btn-min" style="font-size:0.78rem;">Carregar Exemplos</button>
+        <button id="btn-close-sponsors" class="btn-min px-3">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Configuração de Propaganda / Intervalo no Telão -->
+  <div id="modal-ad-config" class="modal-backdrop-custom" hidden>
+    <div class="modal-box-custom" style="max-width:580px;">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="modal-icon-badge" style="background:#fffbeb; color:#b45309;"><i data-lucide="megaphone" class="lucide-lg"></i></div>
+          <div>
+            <h3 class="fw-bold m-0 fs-5 text-dark">Intervalo Comercial no Telão</h3>
+            <p class="text-muted m-0" style="font-size:0.82rem;">Escolha o anúncio e comunicado que aparecerá no telão.</p>
+          </div>
+        </div>
+        <button id="btn-close-ad-x" class="modal-close-btn" title="Fechar">✕</button>
+      </div>
+
+      <!-- Sugestões Rápidas de 1 Clique -->
+      <div class="mb-3">
+        <label class="form-label-clean mb-2">Sugestões Rápidas:</label>
+        <div class="d-flex flex-wrap gap-2">
+          <button type="button" class="btn-min py-1 px-2" style="font-size:0.78rem;" id="preset-ad-next">👉 Próxima Rodada</button>
+          <button type="button" class="btn-min py-1 px-2" style="font-size:0.78rem;" id="preset-ad-break">☕ Intervalo 15 Min</button>
+          <button type="button" class="btn-min py-1 px-2" style="font-size:0.78rem;" id="preset-ad-food">🍔 Alimentação</button>
+          <button type="button" class="btn-min py-1 px-2" style="font-size:0.78rem;" id="preset-ad-tickets">🎟️ Venda de Cartelas</button>
+          <button type="button" class="btn-min py-1 px-2" style="font-size:0.78rem;" id="preset-ad-sponsors">🏆 Patrocinadores</button>
+        </div>
+      </div>
+
+      <form id="form-ad-config" class="d-flex flex-column gap-2">
+        <!-- Seletor de Rodada Cadastrada na Fila (Opcional) -->
+        <div class="form-field-card" id="ad-queue-select-box">
+          <label class="form-label-clean">Escolher Bingo Cadastrado na Fila:</label>
+          <select id="ad-sel-queue" class="form-select form-select-sm">
+            <option value="">-- Personalizar texto abaixo ou escolher da fila --</option>
+          </select>
+        </div>
+
+        <div class="form-field-card">
+          <label class="form-label-clean">Título em Destaque no Telão:</label>
+          <input type="text" id="ad-custom-title" class="form-input-clean" placeholder="Ex.: 👉 A SEGUIR: Rodada #2 Especial" required />
+        </div>
+
+        <div class="form-field-card">
+          <label class="form-label-clean">Detalhes / Prêmios / Comunicado:</label>
+          <textarea id="ad-custom-desc" class="form-control form-control-sm" rows="2" placeholder="Ex.: 🏆 Cartela Cheia: R$ 1.000,00 • Terno: 1 Frango Assado"></textarea>
+        </div>
+
+        <div class="d-flex gap-2 justify-content-between align-items-center pt-3 mt-1 border-top">
+          <button type="button" id="btn-close-ad" class="btn-min px-3">Cancelar</button>
+          <button type="submit" class="btn-min btn-min-primary px-4 d-inline-flex align-items-center gap-1">
+            <i data-lucide="megaphone" class="lucide-sm"></i> Iniciar Intervalo no Telão
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script src="supabase-config.js"></script>
+  <script src="operator-key.js"></script>
+  <script src="dialog.js"></script>
+  <script src="sync.js"></script>
+
+  <script>
+    const DEFAULT_PRIZES = {
+      'Terno': '1 Frango Assado',
+      'Quatro Cantos': '1 Caixa de Bombom',
+      'Cinquina': '1 Liquidificador',
+      'Cartela Cheia': 'R$ 500,00'
+    };
+
+    const SAMPLE_SPONSORS = [
+      { id: '1', name: 'Supermercado Bom Preço', desc: 'Orgulho em apoiar a nossa comunidade!', img: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?w=800&auto=format&fit=crop&q=80' },
+      { id: '2', name: 'Posto Alvorada', desc: 'Combustível de qualidade e troca de óleo garantida.', img: 'https://images.unsplash.com/photo-1545454675-3531b543be5d?w=800&auto=format&fit=crop&q=80' },
+      { id: '3', name: 'Padaria & Confeitaria Estrela', desc: 'Pães quentinhos e bolos especiais todos os dias!', img: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=800&auto=format&fit=crop&q=80' }
+    ];
+
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function getAdMode() {
+      return localStorage.getItem('bingo.adMode') === '1';
+    }
+
+    function setAdMode(val) {
+      localStorage.setItem('bingo.adMode', val ? '1' : '0');
+      try {
+        const st = JSON.parse(localStorage.getItem('bingo.state') || '{}');
+        st.adMode = !!val;
+        localStorage.setItem('bingo.state', JSON.stringify(st));
+        window.BingoSync?.pushState(st);
+      } catch (e) {}
+      updateMenuAdButton();
+      window.BingoDialog?.toast(val ? 'Propaganda ativada no Telão!' : 'Propaganda desligada.', val ? 'warning' : 'info');
+    }
+
+    function loadRoundsList() {
+      try {
+        const saved = JSON.parse(localStorage.getItem('bingo.roundsList') || 'null');
+        if (Array.isArray(saved) && saved.length > 0) return saved;
+      } catch (e) {}
+      return [];
+    }
+
+    function saveRoundsList(list) {
+      localStorage.setItem('bingo.roundsList', JSON.stringify(list || []));
+      try {
+        const st = JSON.parse(localStorage.getItem('bingo.state') || '{}');
+        st.roundsList = list || [];
+        localStorage.setItem('bingo.state', JSON.stringify(st));
+        window.BingoSync?.pushState(st);
+      } catch (e) {}
+      renderScheduleList();
+    }
+
+    function loadActiveRoundId() {
+      return localStorage.getItem('bingo.activeRoundId') || 'round_1';
+    }
+
+    function loadSponsors() {
+      try {
+        const saved = JSON.parse(localStorage.getItem('bingo.sponsors') || 'null');
+        if (Array.isArray(saved) && saved.length > 0) return saved;
+        const st = JSON.parse(localStorage.getItem('bingo.state') || '{}');
+        if (Array.isArray(st.sponsors) && st.sponsors.length > 0) return st.sponsors;
+      } catch (e) {}
+      // Se não há nada salvo, usa os exemplos padrão e persiste
+      saveSponsors(SAMPLE_SPONSORS);
+      return SAMPLE_SPONSORS;
+    }
+
+    function saveSponsors(list) {
+      localStorage.setItem('bingo.sponsors', JSON.stringify(list || []));
+      try {
+        const st = JSON.parse(localStorage.getItem('bingo.state') || '{}');
+        st.sponsors = list || [];
+        localStorage.setItem('bingo.state', JSON.stringify(st));
+        window.BingoSync?.pushState(st);
+      } catch (e) {}
+    }
+
+    // Botão de Propaganda & Modal de Intervalo no Menu
+    const btnMenuAd = document.getElementById('btn-menu-ad');
+    const menuAdLabel = document.getElementById('menu-ad-label');
+    const modalAdConfig = document.getElementById('modal-ad-config');
+    const btnCloseAd = document.getElementById('btn-close-ad');
+    const btnCloseAdX = document.getElementById('btn-close-ad-x');
+    const formAdConfig = document.getElementById('form-ad-config');
+    const adSelQueue = document.getElementById('ad-sel-queue');
+    const adCustomTitle = document.getElementById('ad-custom-title');
+    const adCustomDesc = document.getElementById('ad-custom-desc');
+
+    function updateMenuAdButton() {
+      const adMode = getAdMode();
+      if (btnMenuAd) btnMenuAd.className = `btn-min btn-min-ad ${adMode ? 'active' : ''}`;
+      if (menuAdLabel) menuAdLabel.textContent = `Propaganda: ${adMode ? 'NO AR (Desativar)' : 'OFF (Ativar)'}`;
+    }
+
+    function openAdConfigModal() {
+      if (!modalAdConfig) return;
+      let queue = [];
+      try { queue = JSON.parse(localStorage.getItem('bingo.roundsQueue') || '[]'); } catch (e) {}
+      if (!queue.length) {
+        try {
+          const allRounds = JSON.parse(localStorage.getItem('bingo.roundsList') || '[]');
+          const activeId = localStorage.getItem('bingo.activeRoundId') || 'round_1';
+          const curIdx = allRounds.findIndex(r => r.id === activeId);
+          if (curIdx >= 0 && curIdx + 1 < allRounds.length) {
+            queue = allRounds.slice(curIdx + 1);
+          } else {
+            queue = allRounds;
+          }
+        } catch (e) {}
+      }
+
+      if (adSelQueue) {
+        adSelQueue.innerHTML = '<option value="">-- Personalizar texto abaixo ou escolher da fila --</option>';
+        queue.forEach((r, idx) => {
+          const opt = document.createElement('option');
+          opt.value = idx;
+          opt.textContent = `Bingo #${idx + 1}: ${r.name || 'Rodada'}`;
+          adSelQueue.appendChild(opt);
+        });
+      }
+
+      let savedNotice = null;
+      try { savedNotice = JSON.parse(localStorage.getItem('bingo.adNotice') || 'null'); } catch (e) {}
+      if (savedNotice && savedNotice.title) {
+        if (adCustomTitle) adCustomTitle.value = savedNotice.title;
+        if (adCustomDesc) adCustomDesc.value = savedNotice.desc || '';
+      } else if (queue.length > 0) {
+        const next = queue[0];
+        if (adCustomTitle) adCustomTitle.value = `👉 A SEGUIR: ${next.name || 'Próxima Rodada'}`;
+        const p = next.prizes || {};
+        const cheia = p['Cartela Cheia'] ? `🏆 Cartela Cheia: ${p['Cartela Cheia']}` : '';
+        const outros = [
+          p['Terno'] ? `Terno: ${p['Terno']}` : '',
+          p['Quatro Cantos'] ? `4 Cantos: ${p['Quatro Cantos']}` : '',
+          p['Cinquina'] ? `Cinquina: ${p['Cinquina']}` : ''
+        ].filter(Boolean).join(' • ');
+        if (adCustomDesc) adCustomDesc.value = `${cheia}${cheia && outros ? ' | ' : ''}${outros}`;
+      } else {
+        if (adCustomTitle) adCustomTitle.value = '👉 A SEGUIR: Próxima Rodada';
+        if (adCustomDesc) adCustomDesc.value = 'Preparem suas cartelas para o próximo sorteio!';
+      }
+
+      modalAdConfig.removeAttribute('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    btnMenuAd?.addEventListener('click', () => {
+      if (getAdMode()) {
+        setAdMode(false);
+      } else {
+        openAdConfigModal();
+      }
+    });
+
+    btnCloseAd?.addEventListener('click', () => modalAdConfig?.setAttribute('hidden', ''));
+    btnCloseAdX?.addEventListener('click', () => modalAdConfig?.setAttribute('hidden', ''));
+
+    // Presets Rápidos de 1 Clique para o Anúncio
+    document.getElementById('preset-ad-next')?.addEventListener('click', () => {
+      if (adCustomTitle) adCustomTitle.value = '👉 A SEGUIR: Próxima Rodada';
+      if (adCustomDesc) adCustomDesc.value = 'Preparem suas cartelas para o próximo sorteio do bingo!';
+    });
+    document.getElementById('preset-ad-break')?.addEventListener('click', () => {
+      if (adCustomTitle) adCustomTitle.value = '☕ INTERVALO DE 15 MINUTOS';
+      if (adCustomDesc) adCustomDesc.value = 'Momento de pausa! Logo mais retornaremos com mais sorteios!';
+    });
+    document.getElementById('preset-ad-food')?.addEventListener('click', () => {
+      if (adCustomTitle) adCustomTitle.value = '🍔 PRAÇA DE ALIMENTAÇÃO ABERTA';
+      if (adCustomDesc) adCustomDesc.value = 'Aproveite o intervalo para saborear nossos lanches e bebidas!';
+    });
+    document.getElementById('preset-ad-tickets')?.addEventListener('click', () => {
+      if (adCustomTitle) adCustomTitle.value = '🎟️ GARANTA SUAS CARTELAS!';
+      if (adCustomDesc) adCustomDesc.value = 'Adquira novas cartelas na mesa da organização para o próximo sorteio!';
+    });
+    document.getElementById('preset-ad-sponsors')?.addEventListener('click', () => {
+      if (adCustomTitle) adCustomTitle.value = '🏆 NOSSOS PATROCINADORES OFICIAIS';
+      if (adCustomDesc) adCustomDesc.value = 'Agradecemos a todos os parceiros que apoiam nosso evento!';
+    });
+
+    adSelQueue?.addEventListener('change', (e) => {
+      const val = e.target.value;
+      if (val === '') return;
+      let queue = [];
+      try { queue = JSON.parse(localStorage.getItem('bingo.roundsQueue') || '[]'); } catch (err) {}
+      if (!queue.length) {
+        try {
+          const allRounds = JSON.parse(localStorage.getItem('bingo.roundsList') || '[]');
+          const activeId = localStorage.getItem('bingo.activeRoundId') || 'round_1';
+          const curIdx = allRounds.findIndex(r => r.id === activeId);
+          if (curIdx >= 0 && curIdx + 1 < allRounds.length) queue = allRounds.slice(curIdx + 1);
+          else queue = allRounds;
+        } catch (e) {}
+      }
+      const item = queue[parseInt(val, 10)];
+      if (item) {
+        if (adCustomTitle) adCustomTitle.value = `👉 A SEGUIR: ${item.name || 'Próximo Bingo'}`;
+        const p = item.prizes || {};
+        const cheia = p['Cartela Cheia'] ? `🏆 Cartela Cheia: ${p['Cartela Cheia']}` : '';
+        const outros = [
+          p['Terno'] ? `Terno: ${p['Terno']}` : '',
+          p['Quatro Cantos'] ? `4 Cantos: ${p['Quatro Cantos']}` : '',
+          p['Cinquina'] ? `Cinquina: ${p['Cinquina']}` : ''
+        ].filter(Boolean).join(' • ');
+        if (adCustomDesc) adCustomDesc.value = `${cheia}${cheia && outros ? ' | ' : ''}${outros}`;
+      }
+    });
+
+    formAdConfig?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const title = adCustomTitle?.value.trim() || '👉 A SEGUIR: Próxima Rodada';
+      const desc = adCustomDesc?.value.trim() || '';
+      const notice = { title, desc };
+      localStorage.setItem('bingo.adNotice', JSON.stringify(notice));
+      try {
+        const st = JSON.parse(localStorage.getItem('bingo.state') || '{}');
+        st.adNotice = notice;
+        st.adMode = true;
+        localStorage.setItem('bingo.state', JSON.stringify(st));
+        window.BingoSync?.pushState(st);
+      } catch (e) {}
+
+      setAdMode(true);
+      modalAdConfig?.setAttribute('hidden', '');
+    });
+
+    // ====== Ativar um Bingo Selecionado ======
+    async function activateRound(roundId) {
+      const list = loadRoundsList();
+
+      // Antes de trocar, guarda o ranking (vencedores) da rodada que está
+      // ativa agora dentro dela mesma na lista. Sem isso, os vencedores
+      // registrados numa rodada "sumiam" ao trocar de bingo pelo menu: o
+      // ranking exibido é sempre o da rodada ativa, e a troca sobrescrevia
+      // com o ranking (vazio) da nova rodada — tanto local quanto na nuvem.
+      const outgoingId = loadActiveRoundId();
+      if (outgoingId && outgoingId !== roundId) {
+        const outgoingIdx = list.findIndex((r) => r.id === outgoingId);
+        if (outgoingIdx >= 0) {
+          let outgoingRanking = [];
+          try { outgoingRanking = JSON.parse(localStorage.getItem('bingo.ranking') || '[]'); } catch (e) {}
+          list[outgoingIdx].ranking = outgoingRanking;
+        }
+      }
+
+      const target = list.find((r) => r.id === roundId);
+      if (!target) return;
+
+      localStorage.setItem('bingo.activeRoundId', roundId);
+      localStorage.setItem('bingo.roundsList', JSON.stringify(list));
+      const roundPrizes = target.prizes || {};
+      const stateToLoad = {
+        roundId: target.id,
+        roundName: target.name,
+        drawn: target.drawn || [],
+        last: target.last || null,
+        gameOver: target.gameOver || false,
+        firstTs: target.firstTs || null,
+        lastTs: target.lastTs || null,
+        prizes: roundPrizes,
+        roundsList: list,
+        activeRoundId: roundId,
+        adMode: getAdMode()
+      };
+      localStorage.setItem('bingo.state', JSON.stringify(stateToLoad));
+      localStorage.setItem('bingo.prizes', JSON.stringify(roundPrizes));
+      localStorage.setItem('bingo.ranking', JSON.stringify(target.ranking || []));
+
+      if (window.BingoSync) {
+        await BingoSync.pushState(stateToLoad);
+        await BingoSync.pushRanking(target.ranking || []);
+      }
+      renderScheduleList();
+    }
+
+    // ====== Excluir um Bingo da Lista com Aviso Padronizado ======
+    async function deleteRound(roundId) {
+      const list = loadRoundsList();
+      const target = list.find((r) => r.id === roundId);
+      if (!target) return;
+
+      const ok = await BingoDialog.confirm({
+        title: 'Excluir Bingo',
+        message: `Deseja realmente remover "<b>${esc(target.name)}</b>"?<br>Todo o histórico de pedras e ganhadores deste bingo será apagado.`,
+        confirmText: 'Sim, Excluir Bingo',
+        cancelText: 'Cancelar',
+        danger: true
+      });
+
+      if (!ok) return;
+
+      const newList = list.filter((r) => r.id !== roundId);
+      saveRoundsList(newList);
+
+      if (loadActiveRoundId() === roundId) {
+        if (newList.length > 0) {
+          await activateRound(newList[0].id);
+        } else {
+          localStorage.removeItem('bingo.activeRoundId');
+        }
+      }
+      renderScheduleList();
+      BingoDialog.toast(`"${target.name}" foi excluído.`, 'info');
+    }
+
+    // ====== Renderização da Lista de Bingos da Noite ======
+    function renderScheduleList() {
+      const list = loadRoundsList();
+      const activeId = loadActiveRoundId();
+      const scheduleContainer = document.getElementById('schedule-list');
+      const totalBadge = document.getElementById('rounds-total-badge');
+
+      if (totalBadge) totalBadge.textContent = `${list.length} bingo${list.length === 1 ? '' : 's'}`;
+      if (!scheduleContainer) return;
+
+      if (!list.length) {
+        scheduleContainer.innerHTML = `
+          <div class="text-center py-4 bg-white rounded-3 border">
+            <div class="mb-2 text-muted"><i data-lucide="inbox" class="lucide-xl"></i></div>
+            <div class="fw-bold text-dark">Nenhum bingo agendado para a noite.</div>
+            <div class="text-muted small mb-3">Clique no botão abaixo para cadastrar a primeira rodada.</div>
+            <button class="btn-min btn-min-primary d-inline-flex align-items-center gap-1 mx-auto" onclick="document.getElementById('btn-open-create-modal').click()">
+              <i data-lucide="plus-circle" class="lucide-sm"></i> Criar 1º Bingo da Noite
+            </button>
+          </div>
+        `;
+        if (window.lucide) lucide.createIcons();
+        return;
+      }
+
+      scheduleContainer.innerHTML = list.map((round, idx) => {
+        const isActive = round.id === activeId;
+        const drawnCount = Array.isArray(round.drawn) ? round.drawn.length : 0;
+        const isFinished = round.gameOver || drawnCount === 75;
+        const customName = round.name ? esc(round.name.replace(/^Bingo\s*#?\d+\s*[-–•:]*\s*/i, '').trim()) : '';
+
+        let statusBadge = '';
+        if (isActive) {
+          statusBadge = '<span class="badge bg-success-subtle text-success border border-success-subtle fw-bold" style="font-size:0.75rem;">● Em Andamento (Ativo)</span>';
+        } else if (isFinished) {
+          statusBadge = '<span class="badge bg-secondary-subtle text-secondary border fw-bold" style="font-size:0.75rem;">Concluído</span>';
+        } else {
+          statusBadge = `<span class="badge bg-light text-muted border" style="font-size:0.75rem;">○ Na Fila</span>`;
+        }
+
+        const p = round.prizes || DEFAULT_PRIZES;
+
+        return `
+          <div class="bingo-schedule-card ${isActive ? 'active-round' : ''}" data-round-id="${round.id}">
+            <div class="info-area">
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="badge ${isActive ? 'bg-primary' : 'bg-dark'} px-2 py-1" style="font-size:0.8rem; font-weight:800;">Bingo #${idx + 1}</span>
+                ${customName ? `<span class="fw-bold text-dark" style="font-size:1.05rem;">• ${customName}</span>` : ''}
+                ${statusBadge}
+                <span class="text-muted small">• <b>${drawnCount}/75</b> sorteadas</span>
+              </div>
+              
+              <!-- Prêmios Deste Bingo (Apenas os preenchidos) -->
+              <div class="d-flex align-items-center gap-1 flex-wrap mt-1">
+                ${p['Cartela Cheia'] && p['Cartela Cheia'].trim() ? `<span class="prize-tag cheia"><i data-lucide="trophy" class="lucide-sm text-success"></i> Cheia: <b>${esc(p['Cartela Cheia'])}</b></span>` : ''}
+                ${p['Terno'] && p['Terno'].trim() ? `<span class="prize-tag"><i data-lucide="gift" class="lucide-sm text-primary"></i> Terno: ${esc(p['Terno'])}</span>` : ''}
+                ${p['Quatro Cantos'] && p['Quatro Cantos'].trim() ? `<span class="prize-tag"><i data-lucide="gift" class="lucide-sm text-primary"></i> 4 Cantos: ${esc(p['Quatro Cantos'])}</span>` : ''}
+                ${p['Cinquina'] && p['Cinquina'].trim() ? `<span class="prize-tag"><i data-lucide="gift" class="lucide-sm text-primary"></i> Cinquina: ${esc(p['Cinquina'])}</span>` : ''}
+                ${!p['Cartela Cheia'] && !p['Terno'] && !p['Quatro Cantos'] && !p['Cinquina'] ? '<span class="text-muted small">Prêmio livre a anunciar</span>' : ''}
+              </div>
+            </div>
+
+            <!-- Grupo de Botões Minimalistas ao Lado -->
+            <div class="schedule-actions">
+              <div class="btn-group-min">
+                <button class="btn-min-item" data-action-edit-round="${round.id}" title="Editar nome e prêmios deste bingo">
+                  <i data-lucide="pencil" class="lucide-sm"></i>
+                </button>
+                <button class="btn-min-item" data-action-play-auto="${round.id}" title="Iniciar / Abrir Sorteio Automático">
+                  <i data-lucide="play" class="lucide-sm"></i> Auto
+                </button>
+                <button class="btn-min-item" data-action-play-manual="${round.id}" title="Iniciar / Abrir Marcação Manual">
+                  <i data-lucide="hand" class="lucide-sm"></i> Manual
+                </button>
+                <button class="btn-min-item" data-action-open-tv="${round.id}" title="Abrir Telão / TV deste Bingo">
+                  <i data-lucide="tv" class="lucide-sm"></i> Telão
+                </button>
+                <button class="btn-min-item" data-action-open-check="${round.id}" title="Mesa de Conferência">
+                  <i data-lucide="clipboard-check" class="lucide-sm"></i> Conferir
+                </button>
+                <button class="btn-min-item danger-hover" data-action-delete-round="${round.id}" title="Excluir este bingo permanentemente">
+                  <i data-lucide="trash-2" class="lucide-sm"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // Lógica Dinâmica de Prêmios Ativos no Modal
+    function setPrizeCardState(key, active, value = '') {
+      const card = document.getElementById(`card-prize-${key}`);
+      const input = document.getElementById(`cr-${key}`);
+      const btnAdd = document.getElementById(`btn-add-${key}`);
+      if (card) card.style.display = active ? 'block' : 'none';
+      if (btnAdd) btnAdd.style.display = active ? 'none' : 'inline-flex';
+      if (input) {
+        // Sempre reflete o valor pedido quando ativo (inclusive vazio) — antes,
+        // um valor vazio era ignorado e podia deixar texto antigo no campo.
+        input.value = active ? (value || '') : '';
+      }
+      if (window.lucide) lucide.createIcons();
+    }
+
+    window.removePrizeCard = function(key) {
+      setPrizeCardState(key, false);
+    };
+
+    // Ao adicionar uma categoria, o card fica visível e pronto pra digitar —
+    // sem texto de brinde pré-preenchido. As opções em "Sugestões..." continuam
+    // disponíveis pra quem quiser um atalho, mas o padrão agora é em branco.
+    document.getElementById('btn-add-terno')?.addEventListener('click', () => {
+      setPrizeCardState('terno', true, '');
+      document.getElementById('cr-terno')?.focus();
+    });
+    document.getElementById('btn-add-cantos')?.addEventListener('click', () => {
+      setPrizeCardState('cantos', true, '');
+      document.getElementById('cr-cantos')?.focus();
+    });
+    document.getElementById('btn-add-cinquina')?.addEventListener('click', () => {
+      setPrizeCardState('cinquina', true, '');
+      document.getElementById('cr-cinquina')?.focus();
+    });
+
+    // Delegação de cliques nos botões dos cards
+    document.getElementById('schedule-list')?.addEventListener('click', async (e) => {
+      const btnEdit = e.target.closest('button[data-action-edit-round]');
+      if (btnEdit) {
+        const id = btnEdit.dataset.actionEditRound;
+        const list = loadRoundsList();
+        const round = list.find(r => r.id === id);
+        if (!round) return;
+
+        const idx = list.indexOf(round);
+        document.getElementById('edit-round-id').value = round.id;
+        if (modalOrderTag) modalOrderTag.textContent = `Editar Bingo #${idx + 1}`;
+        if (modalRoundTitle) modalRoundTitle.textContent = `Editar Bingo da Noite`;
+        if (btnSaveRoundText) btnSaveRoundText.textContent = `Salvar Alterações`;
+
+        document.getElementById('cr-name').value = round.name ? round.name.replace(/^Bingo\s*#?\d+\s*[-–•:]*\s*/i, '').trim() : '';
+        const p = round.prizes || {};
+        document.getElementById('cr-cheia').value = p['Cartela Cheia'] || '';
+
+        // Mostra somente os prêmios que esse bingo realmente tem
+        setPrizeCardState('terno', !!(p['Terno'] && p['Terno'].trim()), p['Terno'] || '');
+        setPrizeCardState('cantos', !!(p['Quatro Cantos'] && p['Quatro Cantos'].trim()), p['Quatro Cantos'] || '');
+        setPrizeCardState('cinquina', !!(p['Cinquina'] && p['Cinquina'].trim()), p['Cinquina'] || '');
+
+        modalCreate?.removeAttribute('hidden');
+        if (window.lucide) lucide.createIcons();
+        return;
+      }
+
+      const btnAuto = e.target.closest('button[data-action-play-auto]');
+      if (btnAuto) {
+        const id = btnAuto.dataset.actionPlayAuto;
+        await activateRound(id);
+        window.location.href = 'automatico.html';
+        return;
+      }
+
+      const btnManual = e.target.closest('button[data-action-play-manual]');
+      if (btnManual) {
+        const id = btnManual.dataset.actionPlayManual;
+        await activateRound(id);
+        window.location.href = 'manual.html';
+        return;
+      }
+
+      const btnTv = e.target.closest('button[data-action-open-tv]');
+      if (btnTv) {
+        const id = btnTv.dataset.actionOpenTv;
+        await activateRound(id);
+        window.open('projetor.html', '_blank');
+        return;
+      }
+
+      const btnCheck = e.target.closest('button[data-action-open-check]');
+      if (btnCheck) {
+        const id = btnCheck.dataset.actionOpenCheck;
+        await activateRound(id);
+        window.location.href = 'check.html';
+        return;
+      }
+
+      const btnDel = e.target.closest('button[data-action-delete-round]');
+      if (btnDel) {
+        const id = btnDel.dataset.actionDeleteRound;
+        await deleteRound(id);
+      }
+    });
+
+    // Início Rápido / Bingo Avulso (Sorteio Único sem Brindes Pré-fixados)
+    async function startQuickRound(targetPage = 'manual.html') {
+      const list = loadRoundsList();
+      let quick = list.find((r) => r.id === 'round_avulso');
+      
+      if (!quick) {
+        quick = {
+          id: 'round_avulso',
+          name: 'Bingo Avulso',
+          // As 4 categorias entram "configuradas" (aparecem nos painéis), mas
+          // com o brinde em branco — não os textos padrão (Frango Assado etc.).
+          // Um objeto vazio {} aqui reaparecia preenchido com os padrões,
+          // porque o merge de estado usa DEFAULT_PRIZES como base; precisa das
+          // chaves presentes (mesmo vazias) pra realmente ficar em branco.
+          prizes: { 'Terno': '', 'Quatro Cantos': '', 'Cinquina': '', 'Cartela Cheia': '' },
+          drawn: [],
+          last: null,
+          gameOver: false,
+          firstTs: null,
+          lastTs: null,
+          ranking: []
+        };
+        list.push(quick);
+        saveRoundsList(list);
+      }
+
+      await activateRound('round_avulso');
+
+      if (targetPage === 'projetor.html') {
+        window.open('projetor.html', '_blank');
+      } else {
+        window.location.href = targetPage;
+      }
+    }
+
+    document.getElementById('btn-quick-auto')?.addEventListener('click', () => startQuickRound('automatico.html'));
+    document.getElementById('btn-quick-manual')?.addEventListener('click', () => startQuickRound('manual.html'));
+    document.getElementById('btn-quick-tv')?.addEventListener('click', () => startQuickRound('projetor.html'));
+    document.getElementById('btn-quick-check')?.addEventListener('click', () => startQuickRound('check.html'));
+
+    // Modal de Criação / Edição de Bingo
+    const modalCreate = document.getElementById('modal-create-round');
+    const modalRoundTitle = document.getElementById('modal-round-title');
+    const modalOrderTag = document.getElementById('modal-order-tag');
+    const btnSaveRoundText = document.getElementById('btn-save-round-text');
+    const btnOpenCreate = document.getElementById('btn-open-create-modal');
+    const btnCloseCreate = document.getElementById('btn-close-create');
+    const btnCloseCreateX = document.getElementById('btn-close-create-x');
+    const formCreate = document.getElementById('form-create-round');
+
+    btnOpenCreate?.addEventListener('click', () => {
+      const list = loadRoundsList();
+      const nextNum = list.length + 1;
+      document.getElementById('edit-round-id').value = '';
+      if (modalOrderTag) modalOrderTag.textContent = `Bingo #${nextNum}`;
+      if (modalRoundTitle) modalRoundTitle.textContent = `Configurar Bingo da Noite`;
+      if (btnSaveRoundText) btnSaveRoundText.textContent = `Salvar Bingo na Lista`;
+
+      document.getElementById('cr-name').value = '';
+      document.getElementById('cr-name').placeholder = `Ex.: Bingo #${nextNum} - Especial`;
+      // As 4 categorias já vêm no bingo novo, mas sem brinde escrito —
+      // o operador digita (ou usa "Sugestões...") ou deixa em branco.
+      document.getElementById('cr-cheia').value = '';
+      setPrizeCardState('terno', true, '');
+      setPrizeCardState('cantos', true, '');
+      setPrizeCardState('cinquina', true, '');
+
+      modalCreate?.removeAttribute('hidden');
+      if (window.lucide) lucide.createIcons();
+    });
+
+    btnCloseCreate?.addEventListener('click', () => modalCreate?.setAttribute('hidden', ''));
+    btnCloseCreateX?.addEventListener('click', () => modalCreate?.setAttribute('hidden', ''));
+
+    formCreate?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const editId = document.getElementById('edit-round-id').value.trim();
+      const name = document.getElementById('cr-name').value.trim() || `Bingo #${loadRoundsList().length + 1}`;
+      const terno = document.getElementById('cr-terno').value.trim();
+      const cantos = document.getElementById('cr-cantos').value.trim();
+      const cinq = document.getElementById('cr-cinquina').value.trim();
+      const cheia = document.getElementById('cr-cheia').value.trim();
+
+      const list = loadRoundsList();
+      const prizes = { 'Terno': terno, 'Quatro Cantos': cantos, 'Cinquina': cinq, 'Cartela Cheia': cheia };
+
+      if (editId) {
+        const item = list.find((r) => r.id === editId);
+        if (item) {
+          item.name = name;
+          item.prizes = prizes;
+          if (loadActiveRoundId() === editId) {
+            localStorage.setItem('bingo.prizes', JSON.stringify(prizes));
+            try {
+              const st = JSON.parse(localStorage.getItem('bingo.state') || '{}');
+              st.roundName = name;
+              st.prizes = prizes;
+              localStorage.setItem('bingo.state', JSON.stringify(st));
+              window.BingoSync?.pushState(st);
+            } catch (err) {}
+          }
+        }
+      } else {
+        const newRound = {
+          id: 'round_' + Date.now(),
+          name: name,
+          prizes: prizes,
+          drawn: [],
+          last: null,
+          gameOver: false,
+          firstTs: null,
+          lastTs: null,
+          ranking: []
+        };
+        list.push(newRound);
+      }
+
+      saveRoundsList(list);
+      modalCreate?.setAttribute('hidden', '');
+      BingoDialog.toast(`Bingo "${name}" salvo na programação!`, 'success');
+    });
+
+    // Modal de Patrocinadores
+    const modalSponsors = document.getElementById('modal-sponsors');
+    const btnEditSponsors = document.getElementById('btn-edit-sponsors');
+    const btnCloseSponsors = document.getElementById('btn-close-sponsors');
+    const btnCloseSponsorsX = document.getElementById('btn-close-sponsors-x');
+    const formAddSponsor = document.getElementById('form-add-sponsor');
+    const editSponsorId = document.getElementById('edit-sponsor-id');
+    const btnSaveSponsor = document.getElementById('btn-save-sponsor');
+    const btnCancelEditSp = document.getElementById('btn-cancel-edit-sp');
+    const spList = document.getElementById('sp-list');
+    const spCount = document.getElementById('sp-count');
+
+    function resetSponsorForm() {
+      if (editSponsorId) editSponsorId.value = '';
+      if (formAddSponsor) formAddSponsor.reset();
+      if (btnSaveSponsor) {
+        btnSaveSponsor.textContent = '+ Adicionar Patrocinador';
+        btnSaveSponsor.className = 'btn-min btn-min-primary flex-grow-1';
+      }
+      if (btnCancelEditSp) btnCancelEditSp.style.display = 'none';
+    }
+
+    btnCancelEditSp?.addEventListener('click', resetSponsorForm);
+
+    function renderSponsorsList() {
+      const list = loadSponsors();
+      if (spCount) spCount.textContent = list.length;
+      if (!spList) return;
+      if (!list.length) {
+        spList.innerHTML = '<div class="text-muted small text-center py-3">Nenhum patrocinador cadastrado.</div>';
+        return;
+      }
+      spList.innerHTML = list.map((sp, idx) => `
+        <div class="sponsor-card-item">
+          <div class="d-flex align-items-center gap-3 min-w-0 flex-grow-1">
+            <img src="${sp.img || 'favicon.svg'}" class="sponsor-preview-thumb" alt="${esc(sp.name)}">
+            <div class="min-w-0 flex-grow-1">
+              <div class="fw-bold text-dark text-truncate" style="font-size:0.92rem;">${esc(sp.name)}</div>
+              <div class="text-muted text-truncate" style="font-size:0.8rem;">${esc(sp.desc || 'Apoiador oficial')}</div>
+            </div>
+          </div>
+          <div class="d-flex align-items-center gap-2 flex-shrink-0">
+            <button class="btn-min py-1 px-3 d-inline-flex align-items-center gap-1" style="font-size:0.78rem;" data-edit-sponsor="${idx}" title="Editar este patrocinador">
+              <i data-lucide="edit" class="lucide-sm"></i> Editar
+            </button>
+            <button class="btn-min btn-min-danger py-1 px-2 d-inline-flex align-items-center" data-del-sponsor="${idx}" title="Excluir este patrocinador">
+              <i data-lucide="trash-2" class="lucide-sm"></i>
+            </button>
+          </div>
+        </div>
+      `).join('');
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    btnEditSponsors?.addEventListener('click', () => {
+      resetSponsorForm();
+      renderSponsorsList();
+      modalSponsors?.removeAttribute('hidden');
+    });
+    btnCloseSponsors?.addEventListener('click', () => {
+      resetSponsorForm();
+      modalSponsors?.setAttribute('hidden', '');
+    });
+    btnCloseSponsorsX?.addEventListener('click', () => {
+      resetSponsorForm();
+      modalSponsors?.setAttribute('hidden', '');
+    });
+
+    // Redimensiona/comprime a foto do patrocinador antes de guardar. Sem
+    // isso, uma foto de celular (várias MB) ia direto pro JSON do estado
+    // sincronizado a cada sorteio, o que infla o payload enviado ao Supabase
+    // a cada jogada e pode estourar o limite de tamanho da requisição —
+    // nesse caso a sincronização falha silenciosamente (fica só local, chip
+    // fica "⚠️ Erro de sincronização"). Redimensionando pra no máximo
+    // 1280px e comprimindo em JPEG, o resultado normalmente fica na casa
+    // das dezenas/poucas centenas de KB, o que é seguro.
+    function compressImageFile(file, { maxDim = 1280, quality = 0.82 } = {}) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const img = new Image();
+          img.onload = () => {
+            try {
+              let { width, height } = img;
+              if (width > maxDim || height > maxDim) {
+                if (width >= height) {
+                  height = Math.round(height * (maxDim / width));
+                  width = maxDim;
+                } else {
+                  width = Math.round(width * (maxDim / height));
+                  height = maxDim;
+                }
+              }
+              const canvas = document.createElement('canvas');
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, width, height);
+              // JPEG comprime bem mais que PNG para fotos; perde
+              // transparência, mas foto de patrocinador não costuma precisar.
+              resolve(canvas.toDataURL('image/jpeg', quality));
+            } catch (e) {
+              resolve(ev.target.result); // fallback: usa a imagem original
+            }
+          };
+          img.onerror = () => resolve(ev.target.result);
+          img.src = ev.target.result;
+        };
+        reader.onerror = () => resolve(null);
+        reader.readAsDataURL(file);
+      });
+    }
+
+    formAddSponsor?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const editId = editSponsorId?.value.trim();
+      const name = document.getElementById('sp-name').value.trim();
+      const desc = document.getElementById('sp-desc').value.trim();
+      const file = document.getElementById('sp-file').files?.[0];
+      const url = document.getElementById('sp-url').value.trim();
+
+      const list = loadSponsors();
+      let existingImg = 'favicon.svg';
+
+      if (editId) {
+        const item = list.find((s) => s.id === editId);
+        if (item && item.img) existingImg = item.img;
+      }
+
+      let img = url || existingImg;
+      if (file) {
+        img = await compressImageFile(file);
+      }
+
+      if (editId) {
+        const item = list.find((s) => s.id === editId);
+        if (item) {
+          item.name = name;
+          item.desc = desc;
+          if (file || url) item.img = img;
+        }
+        BingoDialog.toast(`Patrocinador "${name}" atualizado!`, 'success');
+      } else {
+        list.push({ id: String(Date.now()), name, desc, img });
+        BingoDialog.toast(`Patrocinador "${name}" cadastrado!`, 'success');
+      }
+
+      saveSponsors(list);
+      resetSponsorForm();
+      renderSponsorsList();
+    });
+
+    spList?.addEventListener('click', async (e) => {
+      const editBtn = e.target.closest('button[data-edit-sponsor]');
+      if (editBtn) {
+        const idx = parseInt(editBtn.dataset.editSponsor, 10);
+        const list = loadSponsors();
+        const sp = list[idx];
+        if (!sp) return;
+
+        if (editSponsorId) editSponsorId.value = sp.id || '';
+        document.getElementById('sp-name').value = sp.name || '';
+        document.getElementById('sp-desc').value = sp.desc || '';
+        document.getElementById('sp-url').value = sp.img && !sp.img.startsWith('data:') ? sp.img : '';
+        
+        if (btnSaveSponsor) {
+          btnSaveSponsor.textContent = '💾 Salvar Alterações do Patrocinador';
+          btnSaveSponsor.className = 'btn-min btn-min-dark flex-grow-1';
+        }
+        if (btnCancelEditSp) btnCancelEditSp.style.display = '';
+        return;
+      }
+
+      const delBtn = e.target.closest('button[data-del-sponsor]');
+      if (delBtn) {
+        const idx = parseInt(delBtn.dataset.delSponsor, 10);
+        const list = loadSponsors();
+        const sp = list[idx];
+        if (!sp) return;
+
+        const ok = await BingoDialog.confirm({
+          title: 'Excluir Patrocinador?',
+          message: `Deseja realmente remover o patrocinador "<b>${esc(sp.name)}</b>"?`,
+          confirmText: 'Sim, Remover',
+          cancelText: 'Cancelar',
+          danger: true
+        });
+
+        if (ok) {
+          list.splice(idx, 1);
+          saveSponsors(list);
+          resetSponsorForm();
+          renderSponsorsList();
+          BingoDialog.toast(`Patrocinador "${sp.name}" removido.`, 'info');
+        }
+      }
+    });
+
+    document.getElementById('btn-add-sample-sponsors')?.addEventListener('click', () => {
+      saveSponsors(SAMPLE_SPONSORS);
+      resetSponsorForm();
+      renderSponsorsList();
+      BingoDialog.toast('Patrocinadores de exemplo carregados!', 'success');
+    });
+
+    window.addEventListener('load', () => {
+      renderScheduleList();
+      updateMenuAdButton();
+      if (window.lucide) lucide.createIcons();
+    });
+
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'bingo.roundsList' || e.key === 'bingo.activeRoundId' || e.key === 'bingo.adMode') {
+        renderScheduleList();
+        updateMenuAdButton();
+      }
+    });
+
+    async function initMenuCloudSync() {
+      if (!window.BingoSync) return;
+      BingoSync.init();
+      if (!BingoSync.ready()) return;
+
+      try {
+        const remoteState = await BingoSync.pullState();
+        if (remoteState) {
+          const st = JSON.parse(localStorage.getItem('bingo.state') || '{}');
+          const merged = BingoSync.mergeState(st, remoteState);
+          localStorage.setItem('bingo.state', JSON.stringify(merged));
+          if (Array.isArray(merged.roundsList) && merged.roundsList.length > 0) {
+            localStorage.setItem('bingo.roundsList', JSON.stringify(merged.roundsList));
+          }
+          if (merged.activeRoundId) localStorage.setItem('bingo.activeRoundId', merged.activeRoundId);
+          if (typeof merged.adMode === 'boolean') localStorage.setItem('bingo.adMode', merged.adMode ? '1' : '0');
+          if (merged.prizes) localStorage.setItem('bingo.prizes', JSON.stringify(merged.prizes));
+          if (merged.sponsors) localStorage.setItem('bingo.sponsors', JSON.stringify(merged.sponsors));
+          renderScheduleList();
+          updateMenuAdButton();
+        }
+        BingoSync.subscribe(async () => {
+          const rs = await BingoSync.pullState();
+          if (rs) {
+            const cur = JSON.parse(localStorage.getItem('bingo.state') || '{}');
+            const m = BingoSync.mergeState(cur, rs);
+            localStorage.setItem('bingo.state', JSON.stringify(m));
+            if (Array.isArray(m.roundsList) && m.roundsList.length > 0) {
+              localStorage.setItem('bingo.roundsList', JSON.stringify(m.roundsList));
+            }
+            if (m.activeRoundId) localStorage.setItem('bingo.activeRoundId', m.activeRoundId);
+            if (typeof m.adMode === 'boolean') localStorage.setItem('bingo.adMode', m.adMode ? '1' : '0');
+            if (m.prizes) localStorage.setItem('bingo.prizes', JSON.stringify(m.prizes));
+            if (m.sponsors) localStorage.setItem('bingo.sponsors', JSON.stringify(m.sponsors));
+            renderScheduleList();
+            updateMenuAdButton();
+          }
+        });
+      } catch (e) {}
+    }
+
+    document.addEventListener('DOMContentLoaded', initMenuCloudSync);
+  </script>
+</body>
+</html>

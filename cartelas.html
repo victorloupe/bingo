@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bingo 75 — Gerador & Impressor de Cartelas Oficiais Antifraude</title>
+  
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    .card-preview-box {
+      max-width: 380px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 2px solid #1e3a8a;
+      border-radius: 0;
+      overflow: hidden;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    }
+    .card-preview-header {
+      background: #eff6ff;
+      padding: 10px;
+      text-align: center;
+      border-bottom: 1.5px solid #bfdbfe;
+    }
+    .card-preview-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 3px;
+      padding: 8px;
+      background: #f8fafc;
+    }
+    .card-preview-cell-header {
+      color: #ffffff;
+      font-weight: 900;
+      font-size: 1.1rem;
+      text-align: center;
+      padding: 4px 0;
+      border-radius: 0;
+    }
+    .card-preview-cell {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 0;
+      aspect-ratio: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.25rem;
+      color: #0f172a;
+    }
+    .card-preview-cell.free {
+      background: #fef08a;
+      border-color: #facc15;
+      color: #854d0e;
+      font-size: 0.75rem;
+      font-weight: 900;
+      flex-direction: column;
+      gap: 1px;
+      padding: 2px;
+    }
+    .card-preview-footer {
+      padding: 8px 12px;
+      background: #ffffff;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="tv-shell">
+    <!-- Cabeçalho -->
+    <header class="tv-header">
+      <div class="d-flex align-items-center gap-2">
+        <h1 class="app-title">
+          <span>Bingo 75</span>
+          <span class="badge-sub">EMISSÃO DE CARTELAS</span>
+        </h1>
+        <span class="badge-round" id="batch-status-badge">Nenhum lote ativo</span>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <a href="check.html" class="btn btn-outline-primary btn-sm lift d-inline-flex align-items-center gap-1">
+          <i data-lucide="search" class="lucide-sm"></i> Mesa de Conferência
+        </a>
+        <a href="menu.html" class="btn btn-outline-secondary btn-sm lift d-inline-flex align-items-center gap-1">
+          <i data-lucide="home" class="lucide-sm"></i> Início
+        </a>
+      </div>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main class="row g-3 flex-grow-1">
+      <!-- Coluna Esquerda: Configuração e Geração do Lote -->
+      <div class="col-12 col-lg-6">
+        <div class="p-3 rounded-3 h-100 d-flex flex-column" style="background:#ffffff; border:1.5px solid var(--border); box-shadow:var(--shadow-sm); border-radius:var(--radius-md);">
+          <div class="d-flex align-items-center justify-content-between mb-2 pb-2 border-bottom">
+            <h2 class="h6 m-0 fw-bold fs-5 d-flex align-items-center gap-1">
+              <i data-lucide="printer" class="lucide text-primary"></i>
+              <span>Configurar & Gerar Lote de Cartelas</span>
+            </h2>
+            <span class="badge bg-primary px-3 py-1">Antifraude Ativo</span>
+          </div>
+
+          <form id="form-generator" class="d-flex flex-column gap-2 flex-grow-1">
+            <!-- Linha 1: Nome do Evento e Descrição da Rodada lado a lado -->
+            <div class="row g-2">
+              <div class="col-12 col-md-6">
+                <div class="form-field-card p-2">
+                  <label class="form-label-clean" style="font-size:0.7rem; margin-bottom:2px;">Nome do Evento / Paróquia / Festa:</label>
+                  <input type="text" id="event-name" class="form-input-clean" style="font-size:0.85rem;" value="GRANDE BINGO BENEFICENTE" placeholder="Ex: Festa do Padroeiro 2026" required />
+                </div>
+              </div>
+              <div class="col-12 col-md-6">
+                <div class="form-field-card p-2">
+                  <label class="form-label-clean" style="font-size:0.7rem; margin-bottom:2px;">Descrição da Rodada:</label>
+                  <input type="text" id="round-name" class="form-input-clean" style="font-size:0.85rem;" value="Rodada Oficial - Especial" placeholder="Ex: 1ª Rodada - Frango & Eletros" required />
+                </div>
+              </div>
+            </div>
+
+            <!-- Linha 2: 4 Configurações compactas em grade 4 colunas -->
+            <div class="row g-2">
+              <div class="col-6 col-md-3">
+                <div class="form-field-card p-2">
+                  <label class="form-label-clean" style="font-size:0.68rem; margin-bottom:2px;">Qtd Cartelas:</label>
+                  <select id="card-count" class="form-select form-select-sm py-0 px-1" style="font-size:0.78rem; height:28px;">
+                    <option value="12">12 cartelas (3 fls)</option>
+                    <option value="20">20 cartelas (5 fls)</option>
+                    <option value="40">40 cartelas (10 fls)</option>
+                    <option value="80" selected>80 cartelas (20 fls)</option>
+                    <option value="100">100 cartelas (25 fls)</option>
+                    <option value="200">200 cartelas (50 fls)</option>
+                    <option value="500">500 cartelas (125 fls)</option>
+                    <option value="1000">1.000 cartelas</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="form-field-card p-2">
+                  <label class="form-label-clean" style="font-size:0.68rem; margin-bottom:2px;">Série Inicial:</label>
+                  <input type="number" id="start-serial" class="form-input-clean" style="font-size:0.82rem; height:28px;" value="1" min="1" max="99999" required />
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="form-field-card p-2">
+                  <label class="form-label-clean" style="font-size:0.68rem; margin-bottom:2px;">Diagramação:</label>
+                  <select id="cards-per-page" class="form-select form-select-sm py-0 px-1" style="font-size:0.78rem; height:28px;">
+                    <option value="4" selected>4 por folha A4</option>
+                    <option value="2">2 por folha A4</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="form-field-card p-2">
+                  <label class="form-label-clean" style="font-size:0.68rem; margin-bottom:2px;">Tema de Cores:</label>
+                  <select id="color-theme" class="form-select form-select-sm py-0 px-1" style="font-size:0.78rem; height:28px;">
+                    <option value="blue" selected>Azul Real</option>
+                    <option value="green">Verde Esmeralda</option>
+                    <option value="red">Vinho</option>
+                    <option value="amber">Laranja</option>
+                    <option value="bw">Preto & Branco</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- Associação com os Bingos da Noite (Compacto) -->
+            <div class="form-field-card p-2">
+              <div class="d-flex align-items-center justify-content-between mb-1">
+                <label class="form-label-clean mb-0" style="font-size:0.68rem;">Associar Lote a qual(is) Bingo(s):</label>
+                <div class="d-flex gap-1">
+                  <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none fw-bold" id="btn-select-all-rounds" style="font-size:0.7rem;">Marcar Todos</button>
+                  <span class="text-muted" style="font-size:0.7rem;">•</span>
+                  <button type="button" class="btn btn-sm btn-link p-0 text-decoration-none text-secondary" id="btn-clear-rounds" style="font-size:0.7rem;">Limpar</button>
+                </div>
+              </div>
+              <div id="rounds-checklist" class="d-flex flex-wrap gap-1 pt-0">
+                <!-- Checkboxes dos bingos inseridos via JS -->
+              </div>
+            </div>
+
+            <!-- Botões de Ação do Formulário de Configuração (Compactos e Alinhados à Direita) -->
+            <div class="d-flex justify-content-end align-items-center gap-2 py-1">
+              <button type="submit" class="btn btn-primary btn-sm fw-bold py-1 px-3 lift d-inline-flex align-items-center gap-1" id="btn-generate" style="font-size:0.8rem; height:32px;">
+                <i data-lucide="sparkles" class="lucide-sm"></i> Gerar & Salvar Lote
+              </button>
+              <button type="button" class="btn btn-success btn-sm fw-bold py-1 px-3 lift d-inline-flex align-items-center gap-1" id="btn-download-pdf" disabled style="font-size:0.8rem; height:32px;">
+                <i data-lucide="printer" class="lucide-sm"></i> Baixar PDF do Lote Atual
+              </button>
+            </div>
+
+            <!-- Caixa de Gerenciamento de Todos os Lotes Cadastrados (Com Scroll Interno e Expansão) -->
+            <div class="p-2 rounded-2 d-flex flex-column flex-grow-1" style="background:#f8fafc; border:1.5px solid #cbd5e1; min-height:160px;">
+              <div class="d-flex justify-content-between align-items-center mb-1 pb-1 border-bottom">
+                <span class="fw-bold text-dark fs-6 d-flex align-items-center gap-1">
+                  <i data-lucide="layers" class="lucide-sm text-primary"></i>
+                  <span>Lotes de Cartelas Cadastrados</span>
+                </span>
+                <span class="badge bg-primary" id="batches-count-pill" style="font-size:0.72rem;">0 Lotes</span>
+              </div>
+
+              <!-- Lista com scroll isolado exclusivamente aqui -->
+              <div id="batches-list" class="d-flex flex-column gap-2 flex-grow-1" style="max-height: 250px; overflow-y: auto; padding-right: 4px;">
+                <!-- Itens dos lotes gerados via JS -->
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Coluna Direita: Pré-Visualizador ao Vivo & Auditoria -->
+      <div class="col-12 col-lg-6">
+        <div class="p-3 rounded-3 h-100 d-flex flex-column" style="background:#ffffff; border:1.5px solid var(--border); box-shadow:var(--shadow-sm); border-radius:var(--radius-md);">
+          <div class="d-flex align-items-center justify-content-between mb-2 pb-2 border-bottom">
+            <h2 class="h6 m-0 fw-bold fs-5 d-flex align-items-center gap-1">
+              <i data-lucide="eye" class="lucide text-primary"></i>
+              <span>Pré-Visualização da Cartela</span>
+            </h2>
+            <div class="d-flex align-items-center gap-1">
+              <button type="button" class="btn-min py-1 px-2" id="btn-prev-card" title="Cartela Anterior">◀</button>
+              <span class="small fw-bold px-2" id="card-nav-lbl">0 de 0</span>
+              <button type="button" class="btn-min py-1 px-2" id="btn-next-card" title="Próxima Cartela">▶</button>
+            </div>
+          </div>
+
+          <!-- Caixa Visual da Cartela -->
+          <div class="d-flex align-items-center justify-content-center flex-grow-1 py-2">
+            <div id="card-preview" class="card-preview-box w-100">
+              <div class="card-preview-header" id="pv-header-box">
+                <div class="fw-bold fs-6 text-uppercase" id="pv-event">GRANDE BINGO BENEFICENTE</div>
+                <div class="text-muted small" id="pv-round">Rodada Oficial</div>
+              </div>
+
+              <div class="card-preview-grid">
+                <div class="card-preview-cell-header pv-head-cell">B</div>
+                <div class="card-preview-cell-header pv-head-cell">I</div>
+                <div class="card-preview-cell-header pv-head-cell">N</div>
+                <div class="card-preview-cell-header pv-head-cell">G</div>
+                <div class="card-preview-cell-header pv-head-cell">O</div>
+
+                <!-- 25 Células geradas via script -->
+                <div id="pv-cells" class="contents" style="display:contents;"></div>
+              </div>
+
+              <div class="card-preview-footer">
+                <span class="fw-bold" id="pv-serial">SÉRIE Nº 0001</span>
+                <span class="text-muted font-monospace" id="pv-auth">AUT: 0000-0000</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Informações de Segurança e Estatísticas do Lote -->
+          <div class="p-2 rounded-2 mt-2" style="background:#f8fafc; border:1px solid #e2e8f0; font-size:0.8rem;">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="d-flex align-items-center gap-1">
+                <i data-lucide="shield-check" class="lucide-sm text-success"></i>
+                <b>Autenticação Criptográfica:</b> Ativada
+              </span>
+              <span id="pv-total-info" class="text-muted">Total: 0 cartelas registradas</span>
+            </div>
+            <div class="text-muted mt-1" style="font-size:0.75rem;">
+              Todas as cartelas geradas neste lote são sincronizadas com a nuvem (quando há internet) para que a Mesa de Conferência encontre a cartela por número de série mesmo em outro aparelho.
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Rodapé -->
+    <footer class="tv-footer">
+      <div class="footer-controls">
+        <div class="toolbar-group">
+          <a class="btn-tool d-inline-flex align-items-center gap-1" href="menu.html" title="Menu Principal">
+            <i data-lucide="home" class="lucide"></i> Início
+          </a>
+          <a class="btn-tool d-inline-flex align-items-center gap-1" href="automatico.html" title="Modo Automático">
+            <i data-lucide="play" class="lucide"></i> Auto
+          </a>
+          <a class="btn-tool d-inline-flex align-items-center gap-1" href="manual.html" title="Modo Manual">
+            <i data-lucide="hand" class="lucide"></i> Manual
+          </a>
+          <a class="btn-tool btn-tool-primary d-inline-flex align-items-center gap-1" href="check.html" title="Mesa de Conferência">
+            <i data-lucide="search" class="lucide"></i> Conferência
+          </a>
+          <a class="btn-tool d-inline-flex align-items-center gap-1" href="projetor.html" target="_blank" style="background:#fffbeb; border-color:#f59e0b; color:#b45309; font-weight:800;" title="Abrir Telão">
+            <i data-lucide="tv" class="lucide"></i> Telão
+          </a>
+        </div>
+        <div class="toolbar-group ms-auto">
+          <button type="button" class="btn-tool btn-tool-icon" id="btn-full" title="Tela Cheia (F)"><i data-lucide="maximize" class="lucide"></i></button>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="supabase-config.js"></script>
+  <script src="operator-key.js"></script>
+  <script src="dialog.js"></script>
+  <script src="sync.js"></script>
+  <script src="cartelas.js"></script>
+
+  <script>
+    const THEME_PALETTES = {
+      blue: { primary: '#1e3a8a', headerBg: '#1e3a8a', cardBg: '#eff6ff', border: '#1e3a8a' },
+      green: { primary: '#14532d', headerBg: '#14532d', cardBg: '#f0fdf4', border: '#14532d' },
+      red: { primary: '#991b1b', headerBg: '#991b1b', cardBg: '#fef2f2', border: '#991b1b' },
+      amber: { primary: '#9a3412', headerBg: '#9a3412', cardBg: '#fff7ed', border: '#9a3412' },
+      bw: { primary: '#0f172a', headerBg: '#0f172a', cardBg: '#f8fafc', border: '#0f172a' }
+    };
+
+    let currentBatch = null;
+    let currentPreviewIndex = 0;
+
+    const formGenerator = document.getElementById('form-generator');
+    const btnDownloadPdf = document.getElementById('btn-download-pdf');
+    const pvCells = document.getElementById('pv-cells');
+    const pvEvent = document.getElementById('pv-event');
+    const pvRound = document.getElementById('pv-round');
+    const pvSerial = document.getElementById('pv-serial');
+    const pvAuth = document.getElementById('pv-auth');
+    const cardNavLbl = document.getElementById('card-nav-lbl');
+    const batchStatusBadge = document.getElementById('batch-status-badge');
+    const pvTotalInfo = document.getElementById('pv-total-info');
+    const cardPreview = document.getElementById('card-preview');
+    const batchesListContainer = document.getElementById('batches-list');
+    const batchesCountPill = document.getElementById('batches-count-pill');
+    const roundsChecklist = document.getElementById('rounds-checklist');
+
+    function esc(str) {
+      if (str == null) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Carrega a lista de Bingos da Noite para o Checklist
+    function renderRoundsChecklist() {
+      let rounds = [];
+      try {
+        rounds = JSON.parse(localStorage.getItem('bingo.roundsList') || '[]');
+      } catch (e) {}
+
+      if (!roundsChecklist) return;
+
+      if (!rounds.length) {
+        roundsChecklist.innerHTML = `
+          <label class="d-inline-flex align-items-center gap-1 p-1 px-2 rounded border bg-white text-dark" style="font-size:0.72rem;">
+            <input type="checkbox" name="assigned_rounds" value="all" checked class="form-check-input m-0" style="width:13px; height:13px;" />
+            <span class="fw-bold text-primary">Todos os Bingos (Lote Geral)</span>
+          </label>
+        `;
+        return;
+      }
+
+      roundsChecklist.innerHTML = rounds.map((r, idx) => `
+        <label class="d-inline-flex align-items-center gap-1 p-1 px-2 rounded border bg-white text-dark" style="font-size:0.72rem; cursor:pointer;">
+          <input type="checkbox" name="assigned_rounds" value="${esc(r.id)}" ${idx === 0 ? 'checked' : ''} class="round-check-input form-check-input m-0" style="width:13px; height:13px; cursor:pointer;" />
+          <span class="fw-semibold">${esc(r.name || `Bingo #${idx + 1}`)}</span>
+        </label>
+      `).join('');
+    }
+
+    document.getElementById('btn-select-all-rounds')?.addEventListener('click', () => {
+      document.querySelectorAll('.round-check-input').forEach(chk => chk.checked = true);
+    });
+
+    document.getElementById('btn-clear-rounds')?.addEventListener('click', () => {
+      document.querySelectorAll('.round-check-input').forEach(chk => chk.checked = false);
+    });
+
+    function getSelectedAssignedRounds() {
+      const inputs = document.querySelectorAll('input[name="assigned_rounds"]:checked');
+      const selectedIds = Array.from(inputs).map(inp => inp.value);
+      let rounds = [];
+      try { rounds = JSON.parse(localStorage.getItem('bingo.roundsList') || '[]'); } catch (e) {}
+
+      if (!rounds.length || selectedIds.includes('all')) {
+        return { ids: ['all'], names: ['Todos os Bingos'] };
+      }
+
+      const names = selectedIds.map(id => {
+        const r = rounds.find(item => item.id === id);
+        return r ? (r.name || 'Bingo') : 'Bingo';
+      });
+
+      return { ids: selectedIds, names };
+    }
+
+    // Renderiza a lista de todos os lotes com scroll interno
+    function renderBatchesList() {
+      const batches = BingoCardsEngine.Storage.getAllBatches();
+      if (batchesCountPill) batchesCountPill.textContent = `${batches.length} Lote${batches.length === 1 ? '' : 's'}`;
+      if (!batchesListContainer) return;
+
+      if (!batches.length) {
+        batchesListContainer.innerHTML = `
+          <div class="text-center py-3 text-muted small bg-white rounded border">
+            Nenhum lote gerado ainda. Preencha o formulário acima e clique em <b>Gerar & Salvar Lote</b>.
+          </div>
+        `;
+        return;
+      }
+
+      batchesListContainer.innerHTML = batches.map(batch => {
+        const isSelected = currentBatch && currentBatch.id === batch.id;
+        const assignedText = Array.isArray(batch.assignedRoundNames) && batch.assignedRoundNames.length > 0
+          ? batch.assignedRoundNames.join(', ')
+          : (batch.roundName || 'Todos os Bingos');
+
+        return `
+          <div class="p-2 bg-white rounded border d-flex justify-content-between align-items-center gap-2 ${isSelected ? 'border-primary shadow-sm' : ''}" style="${isSelected ? 'background:#f0fdf4 !important; border-color:#22c55e !important;' : ''}">
+            <div style="min-width:0; flex-grow:1;">
+              <div class="d-flex align-items-center gap-1">
+                <span class="fw-bold text-dark text-truncate" style="font-size:0.82rem;">${esc(batch.eventName || 'Bingo')}</span>
+                <span class="badge bg-light text-dark border" style="font-size:0.68rem;">${batch.totalCards} cartelas</span>
+                ${isSelected ? '<span class="badge bg-success" style="font-size:0.65rem;">● Visualizando</span>' : ''}
+              </div>
+              <div class="text-muted text-truncate" style="font-size:0.72rem;">
+                <b>Válido para:</b> <span class="text-primary fw-semibold">${esc(assignedText)}</span>
+              </div>
+              <div class="text-muted" style="font-size:0.68rem;">
+                Séries: #${String(batch.startSerial).padStart(4, '0')} até #${String(batch.endSerial).padStart(4, '0')} • ${new Date(batch.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </div>
+            </div>
+            <div class="d-flex gap-1 flex-shrink-0 align-items-center">
+              <button type="button" class="btn btn-sm btn-primary py-1 px-2 fw-bold d-inline-flex align-items-center gap-1" style="font-size:0.75rem; border-radius:6px;" onclick="selectBatchForPreview('${batch.id}')" title="Visualizar Cartelas deste Lote">
+                <i data-lucide="eye" class="lucide-sm"></i> Ver
+              </button>
+              <button type="button" class="btn btn-sm btn-success py-1 px-2 fw-bold d-inline-flex align-items-center gap-1" style="font-size:0.75rem; border-radius:6px;" onclick="downloadSpecificBatchPdf('${batch.id}')" title="Baixar Arquivo PDF deste Lote">
+                <i data-lucide="printer" class="lucide-sm"></i> PDF
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-danger py-1 px-2 d-inline-flex align-items-center justify-content-center" style="font-size:0.75rem; border-radius:6px;" onclick="deleteSpecificBatch('${batch.id}')" title="Excluir este Lote">
+                <i data-lucide="trash-2" class="lucide-sm"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // Ações nos lotes
+    window.selectBatchForPreview = function(batchId) {
+      const batches = BingoCardsEngine.Storage.getAllBatches();
+      const b = batches.find(item => item.id === batchId);
+      if (!b) return;
+
+      currentBatch = b;
+      currentPreviewIndex = 0;
+      if (document.getElementById('event-name')) document.getElementById('event-name').value = b.eventName || '';
+      if (document.getElementById('round-name')) document.getElementById('round-name').value = b.roundName || '';
+      if (document.getElementById('color-theme') && b.colorTheme) document.getElementById('color-theme').value = b.colorTheme;
+      if (document.getElementById('cards-per-page') && b.cardsPerPage) document.getElementById('cards-per-page').value = b.cardsPerPage;
+
+      updatePreview();
+      renderBatchesList();
+      btnDownloadPdf.removeAttribute('disabled');
+      batchStatusBadge.textContent = `${b.totalCards} Cartelas Ativas (#${b.startSerial}-#${b.endSerial})`;
+      batchStatusBadge.className = 'badge-round bg-success text-white';
+      pvTotalInfo.textContent = `Lote: ${b.totalCards} cartelas registradas`;
+      BingoDialog.toast(`Visualizando Lote "${b.eventName}" (#${b.startSerial}-#${b.endSerial})`, 'info');
+    };
+
+    window.downloadSpecificBatchPdf = async function(batchId) {
+      const batches = BingoCardsEngine.Storage.getAllBatches();
+      const b = batches.find(item => item.id === batchId);
+      if (!b) return;
+
+      const cardsPerPage = parseInt(document.getElementById('cards-per-page')?.value, 10) || b.cardsPerPage || 4;
+      const colorTheme = document.getElementById('color-theme')?.value || b.colorTheme || 'blue';
+
+      try {
+        BingoDialog.toast('Gerando PDF do lote...', 'info');
+        await BingoCardsEngine.generatePDF(b, { cardsPerPage, colorTheme });
+        BingoDialog.toast('Download do PDF concluído!', 'success');
+      } catch (err) {
+        BingoDialog.alert({ title: 'Erro ao gerar PDF', message: String(err.message || err), type: 'error' });
+      }
+    };
+
+    window.deleteSpecificBatch = async function(batchId) {
+      const batches = BingoCardsEngine.Storage.getAllBatches();
+      const b = batches.find(item => item.id === batchId);
+      if (!b) return;
+
+      const ok = await BingoDialog.confirm({
+        title: 'Excluir Lote de Cartelas?',
+        message: `Deseja excluir o lote "<b>${esc(b.eventName)} - ${esc(b.roundName)}</b>" com <b>${b.totalCards} cartelas</b>?<br><br><span class="text-danger">⚠️ As cartelas deste lote não serão mais autenticadas na conferência!</span>`,
+        confirmText: 'Sim, Excluir Lote',
+        cancelText: 'Cancelar',
+        danger: true,
+        icon: '🗑️'
+      });
+
+      if (!ok) return;
+
+      BingoCardsEngine.Storage.deleteBatch(batchId);
+      const remaining = BingoCardsEngine.Storage.getAllBatches();
+      if (remaining.length > 0) {
+        currentBatch = remaining[0];
+        currentPreviewIndex = 0;
+      } else {
+        currentBatch = null;
+      }
+      loadSavedBatch();
+      BingoDialog.toast('Lote excluído do sistema.', 'info');
+    };
+
+    // Carrega lote salvo se existir
+    function loadSavedBatch() {
+      const batches = BingoCardsEngine.Storage.getAllBatches();
+      if (batches.length > 0) {
+        currentBatch = batches[0];
+        document.getElementById('event-name').value = currentBatch.eventName || 'GRANDE BINGO BENEFICENTE';
+        document.getElementById('round-name').value = currentBatch.roundName || 'Rodada Oficial';
+        if (currentBatch.colorTheme && document.getElementById('color-theme')) document.getElementById('color-theme').value = currentBatch.colorTheme;
+        if (currentBatch.cardsPerPage && document.getElementById('cards-per-page')) document.getElementById('cards-per-page').value = currentBatch.cardsPerPage;
+
+        currentPreviewIndex = 0;
+        updatePreview();
+        renderBatchesList();
+        btnDownloadPdf.removeAttribute('disabled');
+        batchStatusBadge.textContent = `${currentBatch.totalCards} Cartelas Ativas (#${currentBatch.startSerial}-#${currentBatch.endSerial})`;
+        batchStatusBadge.className = 'badge-round bg-success text-white';
+        pvTotalInfo.textContent = `Lote Ativo: ${currentBatch.totalCards} cartelas registradas`;
+      } else {
+        const demoCard = BingoCardsEngine.generateSingleCard(1);
+        currentBatch = {
+          id: 'demo',
+          eventName: 'GRANDE BINGO BENEFICENTE',
+          roundName: 'Demonstração de Cartela',
+          totalCards: 1,
+          startSerial: 1,
+          endSerial: 1,
+          cards: [demoCard]
+        };
+        currentPreviewIndex = 0;
+        updatePreview();
+        renderBatchesList();
+      }
+    }
+
+    function updatePreview() {
+      if (!currentBatch || !currentBatch.cards.length) return;
+      const card = currentBatch.cards[currentPreviewIndex];
+      if (!card) return;
+
+      const curTheme = document.getElementById('color-theme')?.value || 'blue';
+      const pal = THEME_PALETTES[curTheme] || THEME_PALETTES.blue;
+      const curEventName = document.getElementById('event-name')?.value.trim() || currentBatch.eventName || 'GRANDE BINGO BENEFICENTE';
+      const curRoundName = document.getElementById('round-name')?.value.trim() || currentBatch.roundName || 'Rodada Oficial';
+
+      if (cardPreview) cardPreview.style.borderColor = pal.border;
+      pvEvent.textContent = curEventName;
+      pvEvent.style.color = pal.primary;
+      pvRound.textContent = curRoundName;
+      pvSerial.style.color = pal.primary;
+
+      document.querySelectorAll('.pv-head-cell').forEach(el => {
+        el.style.background = pal.headerBg;
+      });
+
+      pvSerial.textContent = `SÉRIE Nº ${card.formattedSerial}`;
+      pvAuth.textContent = `AUT: ${card.authCode}`;
+      cardNavLbl.textContent = `${currentPreviewIndex + 1} de ${currentBatch.cards.length}`;
+
+      pvCells.innerHTML = '';
+      for (let r = 0; r < 5; r++) {
+        for (let c = 0; c < 5; c++) {
+          const cell = document.createElement('div');
+          const val = card.grid[r][c];
+          if (val === 'FREE') {
+            cell.className = 'card-preview-cell free';
+            cell.innerHTML = `
+              <img src="favicon.svg" alt="Logo" style="width:28px; height:28px; object-fit:contain;" />
+              <span style="font-size:0.62rem; font-weight:900; line-height:1; margin-top:2px;">GRÁTIS</span>
+            `;
+          } else {
+            cell.className = 'card-preview-cell';
+            cell.textContent = val;
+          }
+          pvCells.appendChild(cell);
+        }
+      }
+    }
+
+    document.getElementById('event-name')?.addEventListener('input', updatePreview);
+    document.getElementById('round-name')?.addEventListener('input', updatePreview);
+    document.getElementById('color-theme')?.addEventListener('change', updatePreview);
+
+    // Gerar e Salvar Lote
+    formGenerator.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const count = parseInt(document.getElementById('card-count').value, 10) || 80;
+      const startSerial = parseInt(document.getElementById('start-serial').value, 10) || 1;
+      const eventName = document.getElementById('event-name').value.trim() || 'GRANDE BINGO BENEFICENTE';
+      const roundName = document.getElementById('round-name').value.trim() || 'Rodada Oficial';
+      const cardsPerPage = parseInt(document.getElementById('cards-per-page').value, 10) || 4;
+      const colorTheme = document.getElementById('color-theme').value || 'blue';
+      const assigned = getSelectedAssignedRounds();
+
+      const btnGen = document.getElementById('btn-generate');
+      btnGen.disabled = true;
+      btnGen.textContent = '⏳ Gerando combinações...';
+
+      setTimeout(() => {
+        // Seed aleatório e imprevisível (não é o timestamp de geração, que
+        // um atacante poderia adivinhar/testar por força bruta) — é o
+        // "segredo" usado no hash antifraude de cada cartela do lote.
+        // Ele não é impresso na cartela nem exibido na tela, então quem só
+        // vê o PDF/a cartela impressa não tem como recalcular o código.
+        const randomSeed = (window.crypto && crypto.getRandomValues)
+          ? Array.from(crypto.getRandomValues(new Uint8Array(12))).map(b => b.toString(16).padStart(2, '0')).join('')
+          : ('LOTE_' + Date.now() + '_' + Math.random().toString(36).slice(2));
+
+        const batch = BingoCardsEngine.generateBatch({
+          count,
+          startSerial,
+          eventName,
+          roundName,
+          seed: randomSeed
+        });
+
+        batch.cardsPerPage = cardsPerPage;
+        batch.colorTheme = colorTheme;
+        batch.assignedRoundIds = assigned.ids;
+        batch.assignedRoundNames = assigned.names;
+
+        BingoCardsEngine.Storage.saveBatch(batch);
+        currentBatch = batch;
+        currentPreviewIndex = 0;
+        updatePreview();
+        renderBatchesList();
+
+        btnDownloadPdf.removeAttribute('disabled');
+        btnGen.disabled = false;
+        btnGen.textContent = '🎲 Gerar & Salvar Lote';
+
+        batchStatusBadge.textContent = `${batch.totalCards} Cartelas Ativas (#${batch.startSerial}-#${batch.endSerial})`;
+        batchStatusBadge.className = 'badge-round bg-success text-white';
+        pvTotalInfo.textContent = `Lote Ativo: ${batch.totalCards} cartelas registradas`;
+
+        BingoDialog.toast(`Lote com ${count} cartelas salvo e associado a [${assigned.names.join(', ')}] com sucesso!`, 'success');
+      }, 100);
+    });
+
+    // Baixar PDF
+    btnDownloadPdf.addEventListener('click', async () => {
+      if (!currentBatch || !currentBatch.cards.length) return;
+      const cardsPerPage = parseInt(document.getElementById('cards-per-page').value, 10) || currentBatch.cardsPerPage || 4;
+      const colorTheme = document.getElementById('color-theme').value || currentBatch.colorTheme || 'blue';
+
+      btnDownloadPdf.disabled = true;
+      btnDownloadPdf.textContent = '⏳ Gerando PDF...';
+
+      try {
+        await BingoCardsEngine.generatePDF(currentBatch, { cardsPerPage, colorTheme });
+        BingoDialog.toast('Download do PDF de cartelas iniciado!', 'success');
+      } catch (err) {
+        BingoDialog.alert({ title: 'Erro ao gerar PDF', message: String(err.message || err), type: 'error' });
+      } finally {
+        btnDownloadPdf.disabled = false;
+        btnDownloadPdf.textContent = '🖨️ Baixar PDF do Lote Atual';
+      }
+    });
+
+    // Navegação de Cartelas
+    document.getElementById('btn-prev-card').addEventListener('click', () => {
+      if (!currentBatch || !currentBatch.cards.length) return;
+      currentPreviewIndex = (currentPreviewIndex - 1 + currentBatch.cards.length) % currentBatch.cards.length;
+      updatePreview();
+    });
+
+    document.getElementById('btn-next-card').addEventListener('click', () => {
+      if (!currentBatch || !currentBatch.cards.length) return;
+      currentPreviewIndex = (currentPreviewIndex + 1) % currentBatch.cards.length;
+      updatePreview();
+    });
+
+    // Tela Cheia
+    document.getElementById('btn-full')?.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen?.();
+      } else {
+        document.exitFullscreen?.();
+      }
+    });
+
+    renderRoundsChecklist();
+    loadSavedBatch();
+
+    // Ativa a sincronização com a nuvem para que os lotes de cartelas
+    // gerados aqui fiquem disponíveis para a Mesa de Conferência mesmo em
+    // outro aparelho/navegador (ver Storage.saveBatch/deleteBatch em
+    // cartelas.js). Sem chave de operador ou sem internet, tudo continua
+    // funcionando normalmente, só localmente.
+    window.BingoSync?.init();
+  </script>
+</body>
+</html>
