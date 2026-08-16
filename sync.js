@@ -323,97 +323,15 @@
 
   function mergeState(local, remote) {
     if (!remote) return local;
-    if (!local) return remote;
-
-    const rDrawn = Array.isArray(remote.drawn) ? remote.drawn : [];
-    const lDrawn = Array.isArray(local.drawn) ? local.drawn : [];
-    const mergedPrizes = Object.assign({}, remote.prizes || {}, local.prizes || {});
-    
-    // Sponsors: Prioriza lista com itens
-    const sponsors = (Array.isArray(remote.sponsors) && remote.sponsors.length > 0)
-      ? remote.sponsors
-      : (Array.isArray(local.sponsors) && local.sponsors.length > 0 ? local.sponsors : []);
-    
-    const adMode = typeof remote.adMode === 'boolean' 
-      ? remote.adMode 
-      : (typeof local.adMode === 'boolean' ? local.adMode : (localStorage.getItem('bingo.adMode') === '1'));
-    const conferenceMode = typeof remote.conferenceMode === 'boolean' 
-      ? remote.conferenceMode 
-      : (typeof local.conferenceMode === 'boolean' ? local.conferenceMode : (localStorage.getItem('bingo.conferenceMode') === '1'));
-    const roundsList = (Array.isArray(remote.roundsList) && remote.roundsList.length > 0)
-      ? remote.roundsList
-      : (Array.isArray(local.roundsList) && local.roundsList.length > 0 ? local.roundsList : []);
-    const nextRound = remote.nextRound || local.nextRound || null;
-    const roundsQueue = (Array.isArray(remote.roundsQueue) && remote.roundsQueue.length > 0)
-      ? remote.roundsQueue
-      : (Array.isArray(local.roundsQueue) && local.roundsQueue.length > 0 ? local.roundsQueue : []);
-    
-    let base = local;
-    const rLastTs = Number(remote.lastTs) || 0;
-    const lLastTs = Number(local.lastTs) || 0;
-
-    const isLocalPristine = !local.activeRoundId || (lDrawn.length === 0 && !lLastTs && !local.firstTs && !local.gameOver);
-    if (isLocalPristine && remote.activeRoundId) {
-      return Object.assign({}, remote, {
-        sponsors,
-        adMode,
-        conferenceMode,
-        adNotice: remote.adNotice || local.adNotice || null,
-        roundsQueue
-      });
-    }
-
-    const sameRound = (local.activeRoundId === remote.activeRoundId);
-
-    if (sameRound) {
-      if (rLastTs > 0 && lLastTs > 0) {
-        base = rLastTs >= lLastTs ? remote : local;
-      } else if (lDrawn.length > 0 && rDrawn.length === 0) {
-        base = local;
-      } else if (rDrawn.length > 0 && lDrawn.length === 0) {
-        base = remote;
-      } else if (rDrawn.length >= lDrawn.length) {
-        base = remote;
-      } else {
-        base = local;
-      }
-    } else {
-      // Se as rodadas são diferentes, a rodada com lastTs mais recente ou a remota com dados tem preferência
-      if (rLastTs >= lLastTs || rDrawn.length > 0 || !local.activeRoundId) {
-        base = remote;
-      } else {
-        base = local;
-      }
-    }
-
-    const activeRoundId = base.activeRoundId || remote.activeRoundId || local.activeRoundId || 'round_1';
-    const roundName = base.roundName || remote.roundName || local.roundName || 'Rodada 1';
-
-    return Object.assign({}, base, {
-      activeRoundId,
-      roundName,
-      roundsList,
-      prizes: mergedPrizes,
-      sponsors,
-      adMode,
-      conferenceMode,
-      adNotice: remote.adNotice || local.adNotice || null,
-      nextRound,
-      roundsQueue
-    });
+    // O banco de dados online é a fonte única da verdade absoluta.
+    // Qualquer dado remoto substitui caches locais defasados.
+    return remote;
   }
 
   function mergeRanking(local, remote) {
-    const lList = Array.isArray(local) ? local : [];
-    const rList = Array.isArray(remote) ? remote : [];
-    if (lList.length === 0) return rList;
-    if (rList.length === 0) return lList;
-
-    const key = (r) => (r.name || r.player || '').trim().toLowerCase() + '|' + (r.type || '').trim().toLowerCase();
-    const map = new Map();
-    lList.forEach((r) => map.set(key(r), r));
-    rList.forEach((r) => map.set(key(r), r));
-    return Array.from(map.values()).sort((a, b) => new Date(a.ts || 0) - new Date(b.ts || 0));
+    // O ranking online do banco é a lista completa e definitiva
+    if (Array.isArray(remote)) return remote;
+    return Array.isArray(local) ? local : [];
   }
 
   let remoteCallbackTimer = null;

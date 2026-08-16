@@ -707,7 +707,17 @@
     // outro aparelho/navegador (ver Storage.saveBatch/deleteBatch em
     // cartelas.js). Sem chave de operador ou sem internet, tudo continua
     // funcionando normalmente, só localmente.
-    window.BingoSync?.init();
+    if (window.BingoSync) {
+      BingoSync.init();
+      if (BingoSync.ready()) {
+        BingoSync.pullCardBatches?.().then((remoteBatches) => {
+          if (Array.isArray(remoteBatches)) {
+            BingoCardsEngine.Storage.mergeRemoteBatches(remoteBatches);
+            loadSavedBatch();
+          }
+        }).catch(() => {});
+      }
+    }
   </script>
 </body>
 </html>

@@ -1062,77 +1062,60 @@ document.addEventListener('keydown', (e)=>{
 document.getElementById('btn-help')?.addEventListener('click', ()=> document.getElementById('shortcuts')?.removeAttribute('hidden'));
 document.getElementById('btn-close-shortcuts')?.addEventListener('click', ()=> document.getElementById('shortcuts')?.setAttribute('hidden',''));
 
-// ====== Sincronização Supabase ======
-async function initCloudSync(){
-  if(!window.BingoSync) return;
-  BingoSync.init();
-  if(!BingoSync.ready()) return;
-
-  const [remoteState, remoteRanking] = await Promise.all([BingoSync.pullState(), BingoSync.pullRanking()]);
-
-  if(remoteState){
-    const localState = { activeRoundId: roundId, roundName, drawn, last, gameOver, firstTs, lastTs, prizes, adMode };
-    const merged = BingoSync.mergeState(localState, remoteState);
-    drawn = merged.drawn || [];
-    last = merged.last ?? null;
-    gameOver = !!merged.gameOver;
-    firstTs = merged.firstTs ?? null;
-    lastTs = merged.lastTs ?? null;
-    if(merged.roundName) roundName = merged.roundName;
-    if(merged.activeRoundId) roundId = merged.activeRoundId;
-    if(typeof merged.adMode==='boolean') {
-      adMode = merged.adMode;
+// ====== Sincronização Supabase (Dados Online Prioritários) ======
+function applyRemoteState(remoteState, remoteRanking) {
+  if (remoteState) {
+    drawn = Array.isArray(remoteState.drawn) ? remoteState.drawn : [];
+    last = remoteState.last ?? null;
+    gameOver = !!remoteState.gameOver;
+    firstTs = remoteState.firstTs ?? null;
+    lastTs = remoteState.lastTs ?? null;
+    if (remoteState.roundName) roundName = remoteState.roundName;
+    if (remoteState.activeRoundId) roundId = remoteState.activeRoundId;
+    if (typeof remoteState.adMode === 'boolean') {
+      adMode = remoteState.adMode;
       localStorage.setItem('bingo.adMode', adMode ? '1' : '0');
     }
-    if(merged.prizes) prizes = Object.assign({}, DEFAULT_PRIZES, merged.prizes);
-    if(merged.adNotice) localStorage.setItem('bingo.adNotice', JSON.stringify(merged.adNotice));
-    if(Array.isArray(merged.sponsors) && merged.sponsors.length > 0) localStorage.setItem('bingo.sponsors', JSON.stringify(merged.sponsors));
-    if(Array.isArray(merged.roundsQueue) && merged.roundsQueue.length > 0) localStorage.setItem('bingo.roundsQueue', JSON.stringify(merged.roundsQueue));
+    if (remoteState.prizes) prizes = Object.assign({}, DEFAULT_PRIZES, remoteState.prizes);
+    if (remoteState.adNotice) localStorage.setItem('bingo.adNotice', JSON.stringify(remoteState.adNotice));
+    if (Array.isArray(remoteState.sponsors)) localStorage.setItem('bingo.sponsors', JSON.stringify(remoteState.sponsors));
+    if (Array.isArray(remoteState.roundsQueue)) localStorage.setItem('bingo.roundsQueue', JSON.stringify(remoteState.roundsQueue));
+    if (Array.isArray(remoteState.roundsList)) localStorage.setItem('bingo.roundsList', JSON.stringify(remoteState.roundsList));
 
-    localStorage.setItem('bingo.state', JSON.stringify(merged));
-    if (Array.isArray(merged.roundsList) && merged.roundsList.length > 0) {
-      localStorage.setItem('bingo.roundsList', JSON.stringify(merged.roundsList));
-    }
+    localStorage.setItem('bingo.activeRoundId', roundId);
+    localStorage.setItem('bingo.prizes', JSON.stringify(prizes));
+    localStorage.setItem('bingo.state', JSON.stringify(remoteState));
   }
-  if(remoteRanking){
-    const mergedRanking = BingoSync.mergeRanking(LS.loadRanking(), remoteRanking);
-    localStorage.setItem('bingo.ranking', JSON.stringify(mergedRanking || []));
+
+  if (Array.isArray(remoteRanking)) {
+    localStorage.setItem('bingo.ranking', JSON.stringify(remoteRanking));
   }
 
   updateUI();
+}
 
-  BingoSync.subscribe(async ()=>{
-    const rs = await BingoSync.pullState();
-    if(rs){
-      const localState = { activeRoundId: roundId, roundName, drawn, last, gameOver, firstTs, lastTs, prizes, adMode };
-      const merged = BingoSync.mergeState(localState, rs);
-      drawn = merged.drawn || [];
-      last = merged.last ?? null;
-      gameOver = !!merged.gameOver;
-      firstTs = merged.firstTs ?? null;
-      lastTs = merged.lastTs ?? null;
-      if(merged.roundName) roundName = merged.roundName;
-      if(merged.activeRoundId) roundId = merged.activeRoundId;
-      if(typeof merged.adMode==='boolean') {
-        adMode = merged.adMode;
-        localStorage.setItem('bingo.adMode', adMode ? '1' : '0');
-      }
-      if(merged.prizes) prizes = Object.assign({}, DEFAULT_PRIZES, merged.prizes);
-      if(merged.adNotice) localStorage.setItem('bingo.adNotice', JSON.stringify(merged.adNotice));
-      if(Array.isArray(merged.sponsors) && merged.sponsors.length > 0) localStorage.setItem('bingo.sponsors', JSON.stringify(merged.sponsors));
-      if(Array.isArray(merged.roundsQueue) && merged.roundsQueue.length > 0) localStorage.setItem('bingo.roundsQueue', JSON.stringify(merged.roundsQueue));
+async function initCloudSync() {
+  if (!window.BingoSync) return;
+  BingoSync.init();
+  if (!BingoSync.ready()) return;
 
-      localStorage.setItem('bingo.state', JSON.stringify(merged));
-      if (Array.isArray(merged.roundsList) && merged.roundsList.length > 0) {
-        localStorage.setItem('bingo.roundsList', JSON.stringify(merged.roundsList));
-      }
+  const [remoteState, remoteRanking] = await Promise.all([
+    BingoSync.pullState(),
+    BingoSync.pullRanking()
+  ]);
+
+  if (remoteState || remoteRanking) {
+    applyRemoteState(remoteState, remoteRanking);
+  }
+
+  BingoSync.subscribe(async () => {
+    const [rs, rr] = await Promise.all([
+      BingoSync.pullState(),
+      BingoSync.pullRanking()
+    ]);
+    if (rs || rr) {
+      applyRemoteState(rs, rr);
     }
-    const rr = await BingoSync.pullRanking();
-    if(rr){
-      const mergedR = BingoSync.mergeRanking(LS.loadRanking(), rr);
-      localStorage.setItem('bingo.ranking', JSON.stringify(mergedR || []));
-    }
-    updateUI();
   });
 }
 

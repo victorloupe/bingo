@@ -609,7 +609,7 @@
     localStorage.setItem('bingo.conferenceMode', conferenceMode ? '1' : '0');
 
     if (newState.prizes) prizes = Object.assign({}, DEFAULT_PRIZES, newState.prizes);
-    if (Array.isArray(newState.sponsors) && newState.sponsors.length > 0) {
+    if (Array.isArray(newState.sponsors)) {
       sponsors = newState.sponsors;
       lastRenderedSlideIndex = -1;
     }

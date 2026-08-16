@@ -1291,9 +1291,8 @@
         window.BingoSync.pushState(st);
       }
 
-      if (remoteRanking) {
-        const merged = BingoSync.mergeRanking(LS.loadRanking(), remoteRanking);
-        localStorage.setItem('bingo.ranking', JSON.stringify(merged || []));
+      if (Array.isArray(remoteRanking)) {
+        localStorage.setItem('bingo.ranking', JSON.stringify(remoteRanking));
       }
       renderDrawnChips();
       updateRankingTable();
@@ -1302,18 +1301,16 @@
         syncCardBatches();
         const rs = await BingoSync.pullState();
         if (rs) {
-          const cur = LS.state();
-          const merged = BingoSync.mergeState(cur, rs);
-          merged.conferenceMode = conferenceActive;
-          localStorage.setItem('bingo.state', JSON.stringify(merged));
-          if (merged.prizes) localStorage.setItem('bingo.prizes', JSON.stringify(merged.prizes));
-          if (merged.sponsors) localStorage.setItem('bingo.sponsors', JSON.stringify(merged.sponsors));
-          if (typeof merged.adMode === 'boolean') localStorage.setItem('bingo.adMode', merged.adMode ? '1' : '0');
-          if (merged.adNotice) localStorage.setItem('bingo.adNotice', JSON.stringify(merged.adNotice));
+          rs.conferenceMode = conferenceActive;
+          localStorage.setItem('bingo.state', JSON.stringify(rs));
+          if (rs.prizes) localStorage.setItem('bingo.prizes', JSON.stringify(rs.prizes));
+          if (rs.sponsors) localStorage.setItem('bingo.sponsors', JSON.stringify(rs.sponsors));
+          if (typeof rs.adMode === 'boolean') localStorage.setItem('bingo.adMode', rs.adMode ? '1' : '0');
+          if (rs.adNotice) localStorage.setItem('bingo.adNotice', JSON.stringify(rs.adNotice));
         }
         const rr = await BingoSync.pullRanking();
-        if (rr) {
-          localStorage.setItem('bingo.ranking', JSON.stringify(BingoSync.mergeRanking(LS.loadRanking(), rr)));
+        if (Array.isArray(rr)) {
+          localStorage.setItem('bingo.ranking', JSON.stringify(rr));
         }
         renderDrawnChips();
         updateRankingTable();
