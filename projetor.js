@@ -554,9 +554,10 @@
     roundsQueue = Array.isArray(newState.roundsQueue) ? newState.roundsQueue : [];
     adNotice = newState.adNotice ?? null;
     
-    // adMode é persistente
+    // adMode
     if (typeof newState.adMode === 'boolean') {
       adMode = newState.adMode;
+      localStorage.setItem('bingo.adMode', adMode ? '1' : '0');
     } else {
       adMode = localStorage.getItem('bingo.adMode') === '1';
     }
@@ -589,7 +590,11 @@
       if (Array.isArray(localSponsors) && localSponsors.length > 0) sponsors = localSponsors;
       const localQueue = JSON.parse(localStorage.getItem('bingo.roundsQueue') || 'null');
       if (Array.isArray(localQueue)) roundsQueue = localQueue;
-      if (localStorage.getItem('bingo.adMode') === '1') adMode = true;
+      if (typeof st.adMode === 'boolean') {
+        adMode = st.adMode;
+      } else {
+        adMode = localStorage.getItem('bingo.adMode') === '1';
+      }
       handleStateChange(st);
     } catch (e) {}
   }

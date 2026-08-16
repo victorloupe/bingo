@@ -65,6 +65,20 @@
   async function pushState(state) {
     if (!ready()) return;
     const isAd = typeof state.adMode === 'boolean' ? state.adMode : (localStorage.getItem('bingo.adMode') === '1');
+    const isConference = typeof state.conferenceMode === 'boolean' ? state.conferenceMode : (localStorage.getItem('bingo.conferenceMode') === '1');
+
+    let adNoticeObj = {};
+    if (state.adNotice && typeof state.adNotice === 'object') {
+      adNoticeObj = Object.assign({}, state.adNotice);
+    } else {
+      try {
+        adNoticeObj = JSON.parse(localStorage.getItem('bingo.adNotice') || '{}') || {};
+      } catch (e) { adNoticeObj = {}; }
+    }
+    // Grava flags dinâmicas junto no ad_notice (jsonb) para garantir propagação perfeita
+    adNoticeObj._conferenceMode = isConference;
+    adNoticeObj._adMode = isAd;
+
     const payload = {
       room: ROOM,
       active_round_id: state.activeRoundId || 'round_1',
@@ -80,7 +94,7 @@
       prizes: state.prizes || {},
       sponsors: state.sponsors || [],
       ad_mode: isAd,
-      ad_notice: state.adNotice || (JSON.parse(localStorage.getItem('bingo.adNotice') || 'null')) || {}
+      ad_notice: adNoticeObj
     };
 
     const str = JSON.stringify(payload);
@@ -226,7 +240,19 @@
       const { data, error } = await client.from('bingo_state').select('*').eq('room', ROOM).maybeSingle();
       if (error || !data) return null;
       const nRound = (data.next_round && typeof data.next_round === 'object' && data.next_round.name) ? data.next_round : null;
-      const nNotice = (data.ad_notice && typeof data.ad_notice === 'object' && (data.ad_notice.title || data.ad_notice.desc)) ? data.ad_notice : null;
+      
+      const rawNotice = (data.ad_notice && typeof data.ad_notice === 'object') ? data.ad_notice : null;
+      const confMode = rawNotice && typeof rawNotice._conferenceMode === 'boolean' ? rawNotice._conferenceMode : false;
+      const adModeVal = typeof data.ad_mode === 'boolean' ? data.ad_mode : (rawNotice && typeof rawNotice._adMode === 'boolean' ? rawNotice._adMode : false);
+
+      let cleanNotice = null;
+      if (rawNotice && (rawNotice.title || rawNotice.desc)) {
+        cleanNotice = {
+          title: rawNotice.title || '',
+          desc: rawNotice.desc || ''
+        };
+      }
+
       return {
         activeRoundId: data.active_round_id || 'round_1',
         roundName: data.round_name || 'Rodada 1',
@@ -240,8 +266,9 @@
         lastTs: data.last_ts,
         prizes: data.prizes || {},
         sponsors: Array.isArray(data.sponsors) ? data.sponsors : [],
-        adMode: !!data.ad_mode,
-        adNotice: nNotice
+        adMode: adModeVal,
+        adNotice: cleanNotice,
+        conferenceMode: confMode
       };
     } catch (e) {
       return null;
@@ -272,12 +299,12 @@
     const mergedPrizes = Object.assign({}, remote.prizes || {}, local.prizes || {});
     const sponsors = (remote.sponsors && remote.sponsors.length) ? remote.sponsors : (local.sponsors || []);
     
-    const adMode = typeof remote.adMode !== 'undefined' ? remote.adMode : (localStorage.getItem('bingo.adMode') === '1');
+    const adMode = typeof remote.adMode === 'boolean' ? remote.adMode : (typeof local.adMode === 'boolean' ? local.adMode : (localStorage.getItem('bingo.adMode') === '1'));
+    const conferenceMode = typeof remote.conferenceMode === 'boolean' ? remote.conferenceMode : (typeof local.conferenceMode === 'boolean' ? local.conferenceMode : (localStorage.getItem('bingo.conferenceMode') === '1'));
     const roundsList = (local.roundsList && local.roundsList.length) ? local.roundsList : (remote.roundsList || []);
     const nextRound = local.nextRound || remote.nextRound || null;
     const roundsQueue = (local.roundsQueue && local.roundsQueue.length) ? local.roundsQueue : (remote.roundsQueue || []);
 
-    // Prioridade para a rodada ativada localmente pelo operador
     const activeRoundId = local.activeRoundId || remote.activeRoundId || 'round_1';
     const roundName = local.roundName || remote.roundName || 'Rodada 1';
 
@@ -285,21 +312,16 @@
     const rLastTs = Number(remote.lastTs) || 0;
     const lLastTs = Number(local.lastTs) || 0;
 
-    // Um dispositivo que ainda não tem "activeRoundId" salvo no localStorage
-    // (ex.: telão ou Mesa de Conferência aberta pela primeira vez num
-    // computador novo, localStorage vazio) ou que ainda está em estado virgem
-    // (nenhuma pedra sorteada localmente e sem timestamp de início de jogo)
-    // não tem de fato uma rodada em andamento localmente. Nestes casos, adota
-    // a nuvem por completo para garantir sincronização instantânea.
     const isLocalPristine = !local.activeRoundId || (lDrawn.length === 0 && !lLastTs && !local.firstTs && !local.gameOver);
     if (isLocalPristine && remote.activeRoundId) {
       return Object.assign({}, remote, {
         sponsors: (remote.sponsors && remote.sponsors.length) ? remote.sponsors : (local.sponsors || []),
-        adMode: typeof remote.adMode !== 'undefined' ? remote.adMode : (localStorage.getItem('bingo.adMode') === '1')
+        adMode,
+        conferenceMode,
+        adNotice: remote.adNotice || local.adNotice || null
       });
     }
 
-    // Só mescla pedras sorteadas se ambas as pontas estiverem na MESMA rodada ativa
     const sameRound = (local.activeRoundId === remote.activeRoundId);
 
     if (sameRound) {
@@ -315,7 +337,6 @@
         base = local;
       }
     } else {
-      // Rodadas diferentes: preserva a rodada ativada localmente
       base = local;
     }
 
@@ -326,6 +347,7 @@
       prizes: mergedPrizes,
       sponsors,
       adMode,
+      conferenceMode,
       adNotice: remote.adNotice || local.adNotice || null,
       nextRound,
       roundsQueue
@@ -333,12 +355,8 @@
   }
 
   function mergeRanking(local, remote) {
-    if (!remote) return local || [];
-    const key = (r) => (r.name || '').trim().toLowerCase() + '|' + r.type;
-    const map = new Map();
-    (local || []).forEach((r) => map.set(key(r), r));
-    (remote || []).forEach((r) => { if (!map.has(key(r))) map.set(key(r), r); });
-    return Array.from(map.values()).sort((a, b) => new Date(a.ts) - new Date(b.ts));
+    if (Array.isArray(remote)) return remote;
+    return local || [];
   }
 
   let remoteCallbackTimer = null;
