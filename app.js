@@ -86,7 +86,7 @@ const formPrizes = document.getElementById('form-prizes');
 
 // ====== Persistência ======
 const LS = {
-  save(){
+  save(force = false){
     localStorage.setItem('bingo.adMode', adMode ? '1' : '0');
     let roundsList = [];
     try { roundsList = JSON.parse(localStorage.getItem('bingo.roundsList') || '[]'); } catch(e){}
@@ -153,7 +153,7 @@ const LS = {
     };
     localStorage.setItem('bingo.state', JSON.stringify(data));
     localStorage.setItem('bingo.prizes', JSON.stringify(prizes));
-    window.BingoSync?.pushState(data, true);
+    window.BingoSync?.pushState(data, true, force);
   },
   load(){
     try{
@@ -213,9 +213,9 @@ const LS = {
 };
 
 function syncAdModeWithRetry(expectedAdMode) {
-  [250, 1200].forEach((delay) => {
+  [250, 1200, 3000].forEach((delay) => {
     setTimeout(() => {
-      if (adMode === expectedAdMode) LS.save();
+      if (adMode === expectedAdMode) LS.save(true);
     }, delay);
   });
 }
@@ -1239,6 +1239,12 @@ async function initCloudSync() {
 
   window.addEventListener('storage', (e)=>{
     if(e.key==='bingo.ranking' || e.key==='bingo.state' || e.key==='bingo.prizes' || e.key==='bingo.roundsList' || e.key==='bingo.activeRoundId'){
+      // Outra aba (menu, conferência, cartelas) pode gravar um estado que ela
+      // baixou da nuvem alguns instantes atrás. Se isso chegar logo depois de
+      // um clique daqui, desfazia a ação recém-feita — era assim que o botão
+      // de Propaganda voltava sozinho para OFF. Mesma proteção já usada na
+      // sincronização com a nuvem.
+      if(Date.now() - lastUserActionTs < 3000) return;
       LS.load();
       if(gameOver) stopAuto();
       updateUI();
