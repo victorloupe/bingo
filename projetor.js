@@ -3,6 +3,27 @@
 // ============================================================
 
 (function () {
+  // ====== Auto-atualização ======
+  // O telão costuma ficar aberto por horas/dias num computador separado, sem
+  // ninguém para apertar F5. Isso significa que ele pode continuar rodando
+  // uma versão em cache do JS mesmo depois de uma correção ser publicada —
+  // o indicador de "Sincronizado" não pega esse tipo de desatualização, pois
+  // só reflete a conexão com o banco, não a versão do código. Por isso essa
+  // página confere periodicamente version.json (sempre sem cache) e recarrega
+  // sozinha quando percebe que uma versão mais nova foi publicada.
+  const APP_VERSION = '3.0';
+  function checkForUpdates() {
+    fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && data.v && data.v !== APP_VERSION) {
+          location.reload();
+        }
+      })
+      .catch(() => {});
+  }
+  setInterval(checkForUpdates, 90000);
+
   const LETTERS = ['B', 'I', 'N', 'G', 'O'];
   const ranges = { B: [1, 15], I: [16, 30], N: [31, 45], G: [46, 60], O: [61, 75] };
   const letterFor = (n) => (n <= 15 ? 'B' : n <= 30 ? 'I' : n <= 45 ? 'N' : n <= 60 ? 'G' : 'O');
