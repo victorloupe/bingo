@@ -65,6 +65,7 @@
   let previousRankingCount = 0;
   let previousDrawnLength = 0;
   let previousLast = null;
+  let rankingList = [];
 
   // Elementos DOM
   const elStatDrawn = document.getElementById('stat-drawn');
@@ -235,8 +236,7 @@
 
   function updateAdCarousel() {
     if (!adOverlay) return;
-    const isAd = (typeof adMode === 'boolean') ? adMode : (localStorage.getItem('bingo.adMode') === '1');
-    if (!isAd) {
+    if (!adMode) {
       adOverlay.setAttribute('hidden', '');
       adOverlay.style.setProperty('display', 'none', 'important');
       if (adIntervalTimer) { clearInterval(adIntervalTimer); adIntervalTimer = null; }
@@ -252,10 +252,7 @@
     if (adLastRound) adLastRound.textContent = roundName || 'Rodada 1';
 
     // Banner de Intervalo / Próxima Rodada / Comunicado Personalizado
-    let customNotice = adNotice;
-    if (!customNotice) {
-      try { customNotice = JSON.parse(localStorage.getItem('bingo.adNotice') || 'null'); } catch (e) {}
-    }
+    const customNotice = adNotice;
 
     if (customNotice && (customNotice.title || customNotice.desc) && adNextBanner) {
       adNextBanner.style.display = 'flex';
@@ -304,11 +301,8 @@
     if (!elPrizesGrid) return;
     elPrizesGrid.innerHTML = '';
 
-    let ranking = [];
-    try { ranking = JSON.parse(localStorage.getItem('bingo.ranking') || '[]'); } catch (e) {}
-
     const winnersMap = {};
-    ranking.forEach((r) => {
+    (rankingList || []).forEach((r) => {
       if (r.type && !winnersMap[r.type]) winnersMap[r.type] = r;
     });
 
@@ -422,13 +416,11 @@
     elHistory.scrollLeft = elHistory.scrollWidth;
   }
 
-  function renderRanking() {
-    let list = [];
-    try {
-      list = JSON.parse(localStorage.getItem('bingo.ranking') || '[]');
-    } catch (e) {
-      list = [];
+  function renderRanking(newList) {
+    if (Array.isArray(newList)) {
+      rankingList = newList;
     }
+    const list = rankingList || [];
 
     if (list.length > previousRankingCount) {
       const newest = list[list.length - 1];
@@ -579,26 +571,30 @@
     roundsQueue = Array.isArray(newState.roundsQueue) ? newState.roundsQueue : [];
     adNotice = newState.adNotice ?? null;
     
-    // adMode
+    // adMode (online)
     if (typeof newState.adMode === 'boolean') {
       adMode = newState.adMode;
     } else if (newState.adNotice && typeof newState.adNotice._adMode === 'boolean') {
       adMode = newState.adNotice._adMode;
     } else {
-      adMode = localStorage.getItem('bingo.adMode') === '1';
+      adMode = false;
     }
-    localStorage.setItem('bingo.adMode', adMode ? '1' : '0');
 
-    const newConf = typeof newState.conferenceMode === 'boolean' ? newState.conferenceMode : false;
+    // conferenceMode (online)
+    const newConf = typeof newState.conferenceMode === 'boolean' 
+      ? newState.conferenceMode 
+      : (newState.adNotice && typeof newState.adNotice._conferenceMode === 'boolean' ? newState.adNotice._conferenceMode : false);
+
     if (newConf && !previousConferenceMode) {
       try { playDrawDing(); } catch (e) {}
     }
     conferenceMode = newConf;
     previousConferenceMode = newConf;
-    localStorage.setItem('bingo.conferenceMode', conferenceMode ? '1' : '0');
 
-    if (newState.prizes) prizes = Object.assign({}, DEFAULT_PRIZES, newState.prizes);
-    if (Array.isArray(newState.sponsors)) {
+    if (newState.prizes && Object.keys(newState.prizes).length > 0) {
+      prizes = Object.assign({}, DEFAULT_PRIZES, newState.prizes);
+    }
+    if (Array.isArray(newState.sponsors) && newState.sponsors.length > 0) {
       const newSpJson = JSON.stringify(newState.sponsors);
       if (newSpJson !== lastSponsorsJson) {
         lastSponsorsJson = newSpJson;
@@ -619,32 +615,12 @@
     updateUI(isNewBall);
   }
 
-  function loadLocalState() {
-    try {
-      const st = JSON.parse(localStorage.getItem('bingo.state') || '{}');
-      const localPrizes = JSON.parse(localStorage.getItem('bingo.prizes') || 'null');
-      if (localPrizes) prizes = Object.assign({}, DEFAULT_PRIZES, localPrizes);
-      const localSponsors = JSON.parse(localStorage.getItem('bingo.sponsors') || 'null');
-      if (Array.isArray(localSponsors) && localSponsors.length > 0) sponsors = localSponsors;
-      const localQueue = JSON.parse(localStorage.getItem('bingo.roundsQueue') || 'null');
-      if (Array.isArray(localQueue)) roundsQueue = localQueue;
-      const localNotice = JSON.parse(localStorage.getItem('bingo.adNotice') || 'null');
-      if (localNotice) adNotice = localNotice;
-      
-      adMode = (typeof st.adMode === 'boolean') ? st.adMode : (localStorage.getItem('bingo.adMode') === '1');
-      st.adMode = adMode;
-      conferenceMode = typeof st.conferenceMode === 'boolean' ? st.conferenceMode : false;
-      st.conferenceMode = conferenceMode;
-      handleStateChange(st);
-    } catch (e) {}
-  }
+  // ====== Sincronização em Nuvem (Supabase 100% Online em Tempo Real) ======
+  let lastStateSyncJson = '';
+  let lastRankingSyncJson = '';
 
-  // ====== Sincronização em Nuvem (Supabase) ======
-  async function initSync() {
-    if (!window.BingoSync) return;
-    BingoSync.init();
-    if (!BingoSync.ready()) return;
-
+  async function fetchAndApplyRemote() {
+    if (!window.BingoSync || !BingoSync.ready()) return;
     try {
       const [remoteState, remoteRanking] = await Promise.all([
         BingoSync.pullState(),
@@ -652,40 +628,35 @@
       ]);
 
       if (remoteState) {
-        localStorage.setItem('bingo.state', JSON.stringify(remoteState));
-        if (remoteState.prizes) localStorage.setItem('bingo.prizes', JSON.stringify(remoteState.prizes));
-        if (remoteState.sponsors) localStorage.setItem('bingo.sponsors', JSON.stringify(remoteState.sponsors));
-        if (remoteState.adNotice) localStorage.setItem('bingo.adNotice', JSON.stringify(remoteState.adNotice));
-        if (typeof remoteState.adMode === 'boolean') localStorage.setItem('bingo.adMode', remoteState.adMode ? '1' : '0');
-        handleStateChange(remoteState);
+        const sJson = JSON.stringify(remoteState);
+        if (sJson !== lastStateSyncJson) {
+          lastStateSyncJson = sJson;
+          handleStateChange(remoteState);
+        }
       }
 
-      if (remoteRanking) {
-        localStorage.setItem('bingo.ranking', JSON.stringify(remoteRanking));
-        renderRanking();
+      if (Array.isArray(remoteRanking)) {
+        const rJson = JSON.stringify(remoteRanking);
+        if (rJson !== lastRankingSyncJson) {
+          lastRankingSyncJson = rJson;
+          renderRanking(remoteRanking);
+        }
       }
-
-      BingoSync.subscribe(async () => {
-        const [rs, rr] = await Promise.all([
-          BingoSync.pullState(),
-          BingoSync.pullRanking()
-        ]);
-        if (rs) {
-          localStorage.setItem('bingo.state', JSON.stringify(rs));
-          if (rs.prizes) localStorage.setItem('bingo.prizes', JSON.stringify(rs.prizes));
-          if (rs.sponsors) localStorage.setItem('bingo.sponsors', JSON.stringify(rs.sponsors));
-          if (rs.adNotice) localStorage.setItem('bingo.adNotice', JSON.stringify(rs.adNotice));
-          if (typeof rs.adMode === 'boolean') localStorage.setItem('bingo.adMode', rs.adMode ? '1' : '0');
-          handleStateChange(rs);
-        }
-        if (rr) {
-          localStorage.setItem('bingo.ranking', JSON.stringify(rr));
-          renderRanking();
-        }
-      });
     } catch (e) {
-      console.warn('[Projetor] Erro na sincronização com a nuvem:', e);
+      console.warn('[Projetor] Erro na sincronização online:', e);
     }
+  }
+
+  async function initSync() {
+    if (!window.BingoSync) return;
+    BingoSync.init();
+    if (!BingoSync.ready()) return;
+
+    await fetchAndApplyRemote();
+
+    BingoSync.subscribe(() => {
+      fetchAndApplyRemote();
+    });
   }
 
   // ====== Relógio ======
@@ -761,17 +732,6 @@
     if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
     if (e.key === 'f' || e.key === 'F') { toggleFull(); }
     if (e.key === 'm' || e.key === 'M') { btnSoundToggle?.click(); }
-    if (e.key === 'p' || e.key === 'P') {
-      adMode = !adMode;
-      localStorage.setItem('bingo.adMode', adMode ? '1' : '0');
-      updateAdCarousel();
-    }
-  });
-
-  window.addEventListener('storage', (e) => {
-    if (e.key === 'bingo.state' || e.key === 'bingo.ranking' || e.key === 'bingo.prizes' || e.key === 'bingo.sponsors' || e.key === 'bingo.adMode' || e.key === 'bingo.conferenceMode' || e.key === 'bingo.adNotice') {
-      loadLocalState();
-    }
   });
 
   window.addEventListener('online', () => {
@@ -779,8 +739,8 @@
   });
 
   function startProjector() {
-    loadLocalState();
     startClock();
+    updateUI();
     initSync();
     if (window.lucide) lucide.createIcons();
   }

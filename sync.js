@@ -114,14 +114,14 @@
   }
 
   let pushTimer = null;
-  function pushState(state, immediate = false) {
+  function pushState(state, immediate = true) {
     if (pushTimer) clearTimeout(pushTimer);
     if (immediate) {
       return doPushState(state);
     }
     pushTimer = setTimeout(() => {
       doPushState(state);
-    }, 120);
+    }, 50);
   }
 
   async function doPushState(state) {
@@ -424,23 +424,31 @@
   function subscribe(onRemoteChange) {
     if (!ready()) return;
     
-    // Throttled notification handler to prevent rapid event bounce
     const handleRemoteChange = () => {
       if (remoteCallbackTimer) clearTimeout(remoteCallbackTimer);
       remoteCallbackTimer = setTimeout(() => {
         if (onRemoteChange) onRemoteChange();
-      }, 150);
+      }, 50);
     };
 
-    client
-      .channel('bingo-sync-' + ROOM)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'bingo_state', filter: `room=eq.${ROOM}` }, handleRemoteChange)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'bingo_ranking', filter: `room=eq.${ROOM}` }, handleRemoteChange)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'bingo_card_batches', filter: `room=eq.${ROOM}` }, handleRemoteChange)
-      .subscribe();
+    try {
+      const chanName = 'bingo-sync-' + ROOM + '-' + Math.random().toString(36).slice(2, 7);
+      client
+        .channel(chanName)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'bingo_state', filter: `room=eq.${ROOM}` }, handleRemoteChange)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'bingo_ranking', filter: `room=eq.${ROOM}` }, handleRemoteChange)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'bingo_card_batches', filter: `room=eq.${ROOM}` }, handleRemoteChange)
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            setStatus('online');
+          }
+        });
+    } catch(e) {}
 
-    // Heartbeat de polling periódico (garante sincronização contínua mesmo se WebSocket oscilar/reconectar)
-    setInterval(handleRemoteChange, 2500);
+    // Polling rápido e contínuo de 800ms (garante sincronização mesmo se WebSocket for bloqueado ou oscilar)
+    setInterval(() => {
+      if (onRemoteChange) onRemoteChange();
+    }, 800);
   }
 
   window.addEventListener('online', () => setStatus(configured ? 'online' : 'disabled'));
