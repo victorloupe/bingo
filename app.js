@@ -122,6 +122,9 @@ const LS = {
     const nextRound = rIndex >= 0 && rIndex + 1 < roundsList.length ? roundsList[rIndex + 1] : null;
     let adNotice = null;
     try { adNotice = JSON.parse(localStorage.getItem('bingo.adNotice') || 'null'); } catch (e) {}
+    if (!adNotice || typeof adNotice !== 'object') adNotice = {};
+    adNotice._adMode = adMode;
+    adNotice._conferenceMode = false;
     let sponsors = [];
     try { sponsors = JSON.parse(localStorage.getItem('bingo.sponsors') || '[]'); } catch (e) {}
     let roundsQueue = [];
@@ -208,6 +211,14 @@ const LS = {
     try{ return JSON.parse(localStorage.getItem('bingo.ranking')||'[]'); }catch(e){ return []; }
   }
 };
+
+function syncAdModeWithRetry(expectedAdMode) {
+  [250, 1200].forEach((delay) => {
+    setTimeout(() => {
+      if (adMode === expectedAdMode) LS.save();
+    }, delay);
+  });
+}
 
 // ====== Voz ======
 function scoreVoice(v){
@@ -824,6 +835,7 @@ btnAdToggle?.addEventListener('click', () => {
   adMode = !adMode;
   updateAdButton();
   LS.save();
+  syncAdModeWithRetry(adMode);
   if (adMode) {
     BingoDialog.toast('Intervalo comercial ATIVADO no telão!', 'success');
   } else {
@@ -894,6 +906,7 @@ formAdConfig?.addEventListener('submit', (e) => {
   adMode = true;
   updateAdButton();
   LS.save();
+  syncAdModeWithRetry(true);
   modalAdConfig?.setAttribute('hidden', '');
   BingoDialog.toast('Intervalo comercial iniciado no telão com sucesso!', 'success');
 });
