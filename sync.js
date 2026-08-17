@@ -62,7 +62,7 @@
       (typeof window !== 'undefined' && window.BINGO_OPERATOR_KEY) ||
       (window.SUPABASE_CONFIG && window.SUPABASE_CONFIG.operatorKey) ||
       localStorage.getItem('bingo.operatorKey') ||
-      'fb90cfc60a7eadaf52693d50b3817a8fb3e323053b029b3e'
+      null
     );
   }
 
