@@ -10,7 +10,6 @@
   const ROOM = roomFromUrl || localStorage.getItem('bingo.room') || 'default';
   let client = null;
   let configured = false;
-  let pushTimer = null;
   let statusResetTimer = null;
   let lastPushStateJson = '';
   let lastPushRankingJson = '';
@@ -118,6 +117,34 @@
 
   function ready() {
     return configured && navigator.onLine;
+  }
+
+  function room() {
+    return ROOM;
+  }
+
+  function buildRoomUrl(target = window.location.href, absolute = false) {
+    try {
+      const url = new URL(target, window.location.href);
+      url.searchParams.set('sala', ROOM);
+      return absolute ? url.href : (url.pathname.split('/').pop() + url.search + url.hash);
+    } catch (e) {
+      return target;
+    }
+  }
+
+  function decorateRoomLinks(root = document) {
+    if (!root || !root.querySelectorAll) return;
+    root.querySelectorAll('a[href]').forEach((link) => {
+      const href = link.getAttribute('href') || '';
+      if (!/\.html(\?|#|$)/i.test(href)) return;
+      try {
+        const url = new URL(href, window.location.href);
+        if (url.origin !== window.location.origin) return;
+        url.searchParams.set('sala', ROOM);
+        link.setAttribute('href', url.pathname.split('/').pop() + url.search + url.hash);
+      } catch (e) {}
+    });
   }
 
   function operatorKey() {
@@ -528,8 +555,14 @@
   window.addEventListener('online', () => setStatus(configured ? 'online' : 'disabled'));
   window.addEventListener('offline', () => setStatus('offline'));
 
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => decorateRoomLinks());
+  } else {
+    decorateRoomLinks();
+  }
+
   window.BingoSync = {
     init, ready, pushState, pushRanking, pullState, pullRanking, mergeState, mergeRanking, subscribe,
-    pushCardBatch, deleteCardBatchRemote, pullCardBatches
+    pushCardBatch, deleteCardBatchRemote, pullCardBatches, room, buildRoomUrl, decorateRoomLinks
   };
 })();

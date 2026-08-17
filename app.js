@@ -1119,7 +1119,7 @@ document.addEventListener('keydown', (e)=>{
   else if(e.key==='u' || e.key==='U'){ undo(); }
   else if(e.key==='r' || e.key==='R'){ btnReset?.click(); }
   else if(e.key==='m' || e.key==='M'){ btnVoice?.click(); }
-  else if(e.key==='p' || e.key==='P'){ window.open('projetor.html', '_blank'); }
+  else if(e.key==='p' || e.key==='P'){ window.open(window.BingoSync?.buildRoomUrl('projetor.html') || 'projetor.html', '_blank'); }
   else if(e.key==='f' || e.key==='F'){ toggleFull(); }
 });
 

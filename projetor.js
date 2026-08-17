@@ -708,7 +708,7 @@
   // Modal de Compartilhamento
   btnShare?.addEventListener('click', () => {
     if (!modalShare) return;
-    const currentUrl = window.location.href;
+    const currentUrl = window.BingoSync?.buildRoomUrl('projetor.html', true) || window.location.href;
     if (shareLinkInput) shareLinkInput.value = currentUrl;
     modalShare.removeAttribute('hidden');
 

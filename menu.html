@@ -976,7 +976,7 @@
       if (btnTv) {
         const id = btnTv.dataset.actionOpenTv;
         await activateRound(id);
-        window.open('projetor.html', '_blank');
+        window.open(window.BingoSync?.buildRoomUrl('projetor.html') || 'projetor.html', '_blank');
         return;
       }
 
@@ -1024,7 +1024,7 @@
       await activateRound('round_avulso');
 
       if (targetPage === 'projetor.html') {
-        window.open('projetor.html', '_blank');
+        window.open(window.BingoSync?.buildRoomUrl('projetor.html') || 'projetor.html', '_blank');
       } else {
         window.location.href = targetPage;
       }
