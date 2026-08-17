@@ -3,11 +3,29 @@
 // ============================================================
 (function () {
   const urlParams = (typeof window !== 'undefined' && window.location && window.location.search) ? new URLSearchParams(window.location.search) : null;
-  const roomFromUrl = urlParams && (urlParams.get('sala') || urlParams.get('room') || urlParams.get('token'));
-  if (roomFromUrl) {
+  const rawRoomFromUrl = urlParams && (urlParams.get('sala') || urlParams.get('room') || urlParams.get('token'));
+  const roomFromUrl = (rawRoomFromUrl && rawRoomFromUrl !== 'default') ? rawRoomFromUrl : null;
+
+  if (rawRoomFromUrl === 'default') {
+    try { localStorage.removeItem('bingo.room'); } catch (e) {}
+  } else if (roomFromUrl) {
     try { localStorage.setItem('bingo.room', roomFromUrl); } catch (e) {}
   }
-  const ROOM = roomFromUrl || localStorage.getItem('bingo.room') || 'default';
+
+  const savedRoom = localStorage.getItem('bingo.room');
+  const ROOM = roomFromUrl || (savedRoom && savedRoom !== 'default' ? savedRoom : 'default');
+
+  // Limpa ?sala=default ou ?room=default da barra de navegação se estiver presente
+  if (typeof window !== 'undefined' && window.history && window.history.replaceState && urlParams) {
+    if (urlParams.get('sala') === 'default' || urlParams.get('room') === 'default') {
+      urlParams.delete('sala');
+      urlParams.delete('room');
+      const newSearch = urlParams.toString() ? '?' + urlParams.toString() : '';
+      const newUrl = window.location.pathname + newSearch + window.location.hash;
+      window.history.replaceState(null, '', newUrl);
+    }
+  }
+
   let client = null;
   let configured = false;
   let statusResetTimer = null;
@@ -37,7 +55,9 @@
       chip.textContent = STATUS_LABEL[status] || '☁️';
       chip.title = (status === 'error' && lastErrorMsg)
         ? 'Erro de sincronização: ' + lastErrorMsg + ' (Clique para ver diagnóstico)'
-        : 'Sincronização com a nuvem (Sala: ' + ROOM + '): ' + (STATUS_LABEL[status] || status);
+        : (ROOM !== 'default')
+          ? 'Sincronização com a nuvem (Sala: ' + ROOM + '): ' + (STATUS_LABEL[status] || status)
+          : 'Sincronização com a nuvem: ' + (STATUS_LABEL[status] || status);
       chip.className = chip.className.replace(/\bsync-\S+/g, '').trim() + ' sync-' + status;
       chip.style.cursor = 'pointer';
     }
@@ -68,7 +88,8 @@
       }
     } else if (currentStatus === 'online') {
       if (window.BingoDialog?.toast) {
-        window.BingoDialog.toast(`☁️ Sincronização Ativa na Sala "${ROOM}". Tudo conectado e atualizado!`, 'success');
+        const roomMsg = (ROOM !== 'default') ? ` na Sala "${ROOM}"` : '';
+        window.BingoDialog.toast(`☁️ Sincronização em Nuvem Ativa${roomMsg}. Tudo conectado e atualizado!`, 'success');
       }
     } else if (currentStatus === 'offline') {
       if (window.BingoDialog?.toast) {
@@ -126,7 +147,12 @@
   function buildRoomUrl(target = window.location.href, absolute = false) {
     try {
       const url = new URL(target, window.location.href);
-      url.searchParams.set('sala', ROOM);
+      if (ROOM && ROOM !== 'default') {
+        url.searchParams.set('sala', ROOM);
+      } else {
+        url.searchParams.delete('sala');
+        url.searchParams.delete('room');
+      }
       return absolute ? url.href : (url.pathname.split('/').pop() + url.search + url.hash);
     } catch (e) {
       return target;
@@ -135,6 +161,7 @@
 
   function decorateRoomLinks(root = document) {
     if (!root || !root.querySelectorAll) return;
+    if (!ROOM || ROOM === 'default') return; // Padrão limpo: não adiciona parâmetro de sala nos links internos
     root.querySelectorAll('a[href]').forEach((link) => {
       const href = link.getAttribute('href') || '';
       if (!/\.html(\?|#|$)/i.test(href)) return;
