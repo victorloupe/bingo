@@ -223,47 +223,29 @@
 
     if (adImg) {
       adImg.onerror = () => { adImg.src = 'favicon.svg'; };
+      adImg.src = cur.img || 'favicon.svg';
     }
-
-    if (force || currentAdIndex !== lastRenderedSlideIndex) {
-      lastRenderedSlideIndex = currentAdIndex;
-      if (adSlideBox) {
-        adSlideBox.style.transition = 'opacity 0.2s ease';
-        adSlideBox.style.opacity = '0.35';
-        setTimeout(() => {
-          if (adImg) adImg.src = cur.img || 'favicon.svg';
-          if (adName) adName.textContent = cur.name || 'Patrocinador Oficial';
-          if (adDesc) adDesc.textContent = cur.desc || 'Apoio aos nossos eventos';
-          if (adSlideBox) adSlideBox.style.opacity = '1';
-        }, 120);
-      } else {
-        if (adImg) adImg.src = cur.img || 'favicon.svg';
-        if (adName) adName.textContent = cur.name || 'Patrocinador Oficial';
-        if (adDesc) adDesc.textContent = cur.desc || 'Apoio aos nossos eventos';
-      }
-    } else {
-      // Mesma imagem já renderizada: apenas atualiza textos sem piscar/fade de opacidade
-      if (adImg && adImg.src !== (cur.img || 'favicon.svg') && !adImg.src.endsWith(cur.img || 'favicon.svg')) {
-        adImg.src = cur.img || 'favicon.svg';
-      }
-      if (adName && adName.textContent !== cur.name) adName.textContent = cur.name || 'Patrocinador Oficial';
-      if (adDesc && adDesc.textContent !== cur.desc) adDesc.textContent = cur.desc || 'Apoio aos nossos eventos';
+    if (adName) adName.textContent = cur.name || 'Patrocinador Oficial';
+    if (adDesc) adDesc.textContent = cur.desc || 'Apoio aos nossos eventos';
+    if (adSlideBox) {
+      adSlideBox.style.opacity = '1';
     }
+    lastRenderedSlideIndex = currentAdIndex;
   }
 
   function updateAdCarousel() {
     if (!adOverlay) return;
-    const isAd = typeof adMode === 'boolean' ? adMode : (localStorage.getItem('bingo.adMode') === '1');
+    const isAd = (typeof adMode === 'boolean') ? adMode : (localStorage.getItem('bingo.adMode') === '1');
     if (!isAd) {
       adOverlay.setAttribute('hidden', '');
-      adOverlay.style.display = 'none';
+      adOverlay.style.setProperty('display', 'none', 'important');
       if (adIntervalTimer) { clearInterval(adIntervalTimer); adIntervalTimer = null; }
       lastRenderedSlideIndex = -1;
       return;
     }
 
     adOverlay.removeAttribute('hidden');
-    adOverlay.style.display = 'flex';
+    adOverlay.style.setProperty('display', 'flex', 'important');
 
     if (adLastBall) adLastBall.textContent = last != null ? `${letterFor(last)} - ${last}` : '—';
     if (adTotalDrawn) adTotalDrawn.textContent = `${drawn.length}/75`;

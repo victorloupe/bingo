@@ -110,19 +110,39 @@
       } catch (e) {}
     }
 
+    // Drawn & Last & ActiveRound & RoundName & Prizes: preserva se state não passar explicitamente
+    let drawnVal = Array.isArray(state.drawn) ? state.drawn : null;
+    let lastVal = typeof state.last !== 'undefined' ? state.last : undefined;
+    let activeRoundIdVal = state.activeRoundId || null;
+    let roundNameVal = state.roundName || null;
+    let prizesVal = (state.prizes && typeof state.prizes === 'object' && Object.keys(state.prizes).length > 0) ? state.prizes : null;
+    let nextRoundVal = (state.nextRound && typeof state.nextRound === 'object') ? state.nextRound : null;
+
+    if (!drawnVal || lastVal === undefined || !activeRoundIdVal || !roundNameVal || !prizesVal) {
+      try {
+        const savedSt = JSON.parse(localStorage.getItem('bingo.state') || '{}');
+        if (!drawnVal && Array.isArray(savedSt.drawn)) drawnVal = savedSt.drawn;
+        if (lastVal === undefined && typeof savedSt.last !== 'undefined') lastVal = savedSt.last;
+        if (!activeRoundIdVal) activeRoundIdVal = savedSt.activeRoundId || localStorage.getItem('bingo.activeRoundId') || 'round_1';
+        if (!roundNameVal) roundNameVal = savedSt.roundName || 'Rodada 1';
+        if (!prizesVal && savedSt.prizes) prizesVal = savedSt.prizes;
+        if (!nextRoundVal && savedSt.nextRound) nextRoundVal = savedSt.nextRound;
+      } catch (e) {}
+    }
+
     const payload = {
       room: ROOM,
-      active_round_id: state.activeRoundId || 'round_1',
-      round_name: state.roundName || 'Rodada 1',
+      active_round_id: activeRoundIdVal || 'round_1',
+      round_name: roundNameVal || 'Rodada 1',
       rounds_list: roundsListVal || [],
-      next_round: state.nextRound || {},
+      next_round: nextRoundVal || {},
       rounds_queue: roundsQueueVal || [],
-      drawn: state.drawn || [],
-      last: state.last ?? null,
-      game_over: !!state.gameOver,
+      drawn: drawnVal || [],
+      last: lastVal ?? null,
+      game_over: typeof state.gameOver === 'boolean' ? state.gameOver : false,
       first_ts: state.firstTs ?? null,
       last_ts: state.lastTs ?? null,
-      prizes: state.prizes || {},
+      prizes: prizesVal || {},
       sponsors: sponsorsList || [],
       ad_mode: isAd,
       ad_notice: adNoticeObj
