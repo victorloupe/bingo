@@ -11,7 +11,7 @@
   // só reflete a conexão com o banco, não a versão do código. Por isso essa
   // página confere periodicamente version.json (sempre sem cache) e recarrega
   // sozinha quando percebe que uma versão mais nova foi publicada.
-  const APP_VERSION = '3.0';
+  const APP_VERSION = '3.1';
   function checkForUpdates() {
     fetch('version.json?t=' + Date.now(), { cache: 'no-store' })
       .then((res) => (res.ok ? res.json() : null))

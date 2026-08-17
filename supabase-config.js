@@ -15,12 +15,15 @@
 // Enquanto os campos abaixo estiverem vazios, o app funciona 100% local
 // (offline), exatamente como antes.
 //
-// IMPORTANTE: NÃO coloque a "operatorKey" (chave de operador) aqui. Este
-// arquivo é carregado em TODAS as páginas — inclusive o telão/projetor,
-// visto por todos no evento — e vai para o repositório Git. A chave de
-// operador é secreta e deve viver só em "operator-key.js" (fora do git,
-// veja .gitignore), carregado apenas nas páginas do operador.
+// "operatorKey" fica aqui de propósito (bingo local, sem exigência de
+// segurança forte) para não precisar configurar "operator-key.js" em cada
+// computador. Isso significa que qualquer pessoa que veja este arquivo
+// (ele é público no repositório) consegue gravar dados via
+// bingo_push_state/bingo_push_ranking. Se um dia precisar reforçar isso,
+// basta apagar o valor abaixo e voltar a usar "operator-key.js" (veja
+// operator-key.example.js e .gitignore).
 window.SUPABASE_CONFIG = {
   url: 'https://eaepaaicvaxoopjekuyu.supabase.co',
-  anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVhZXBhYWljdmF4b29wamVrdXl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4MzI0ODksImV4cCI6MjEwMjQwODQ4OX0.BZQoXR60cLc6l8iTlX3wMpR02rfqONCZg-LnWk9NeDg'
+  anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVhZXBhYWljdmF4b29wamVrdXl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY4MzI0ODksImV4cCI6MjEwMjQwODQ4OX0.BZQoXR60cLc6l8iTlX3wMpR02rfqONCZg-LnWk9NeDg',
+  operatorKey: '28e939340ff1fb1fc37d1841228ff6c344ac47938b3606d0'
 };
