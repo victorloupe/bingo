@@ -113,9 +113,14 @@
         <a href="cartelas.html" class="btn-min d-inline-flex align-items-center gap-1" style="background:#f0fdf4; border-color:#86efac; color:#15803d; font-weight:800;" title="Gerar e Imprimir Cartelas em PDF com Antifraude">
           <i data-lucide="ticket" class="lucide"></i> Gerar Cartelas PDF
         </a>
-        <button id="btn-menu-ad" class="btn-min btn-min-ad d-inline-flex align-items-center gap-1">
-          <i data-lucide="megaphone" class="lucide"></i> <span id="menu-ad-label">Propaganda: OFF</span>
-        </button>
+        <div class="d-inline-flex align-items-center gap-1">
+          <button id="btn-menu-ad" class="btn-min btn-min-ad d-inline-flex align-items-center gap-1" title="Ligar/Desligar propaganda no telão">
+            <i data-lucide="megaphone" class="lucide"></i> <span id="menu-ad-label">Propaganda: OFF</span>
+          </button>
+          <button id="btn-menu-ad-config" class="btn-min px-2" title="Personalizar comunicado ou escolher rodada da propaganda" style="background:#fffbeb; border-color:#fde68a; color:#b45309;">
+            <i data-lucide="settings" class="lucide-xs"></i>
+          </button>
+        </div>
         <button id="btn-edit-sponsors" class="btn-min d-inline-flex align-items-center gap-1">
           <i data-lucide="image" class="lucide"></i> Patrocinadores
         </button>
@@ -634,11 +639,11 @@
     }
 
     btnMenuAd?.addEventListener('click', () => {
-      if (getAdMode()) {
-        setAdMode(false);
-      } else {
-        openAdConfigModal();
-      }
+      setAdMode(!getAdMode());
+    });
+
+    document.getElementById('btn-menu-ad-config')?.addEventListener('click', () => {
+      openAdConfigModal();
     });
 
     btnCloseAd?.addEventListener('click', () => modalAdConfig?.setAttribute('hidden', ''));
@@ -1382,7 +1387,11 @@
       } catch (e) {}
     }
 
-    document.addEventListener('DOMContentLoaded', initMenuCloudSync);
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initMenuCloudSync);
+    } else {
+      initMenuCloudSync();
+    }
   </script>
 </body>
 </html>

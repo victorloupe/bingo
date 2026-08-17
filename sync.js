@@ -271,10 +271,9 @@
       const { data, error } = await client.from('bingo_state').select('*').eq('room', ROOM).maybeSingle();
       if (error || !data) return null;
       const nRound = (data.next_round && typeof data.next_round === 'object' && data.next_round.name) ? data.next_round : null;
-      
       const rawNotice = (data.ad_notice && typeof data.ad_notice === 'object') ? data.ad_notice : null;
       const confMode = rawNotice && typeof rawNotice._conferenceMode === 'boolean' ? rawNotice._conferenceMode : false;
-      const adModeVal = (rawNotice && typeof rawNotice._adMode === 'boolean') ? rawNotice._adMode : (typeof data.ad_mode === 'boolean' ? data.ad_mode : false);
+      const adModeVal = (data.ad_mode === true) || (rawNotice && rawNotice._adMode === true);
 
       let cleanNotice = null;
       if (rawNotice && (rawNotice.title || rawNotice.desc)) {

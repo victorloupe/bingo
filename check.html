@@ -1350,14 +1350,20 @@
       }
     });
 
-    document.addEventListener('DOMContentLoaded', async () => {
+    async function startCheckPage() {
       renderDrawnChips();
       updateRankingTable();
       updateVictorySelectOptions();
       if (window.BingoSync) BingoSync.init();
       setConferenceBroadcast(true);
       await syncFromCloud();
-    });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', startCheckPage);
+    } else {
+      startCheckPage();
+    }
   </script>
 </body>
 </html>

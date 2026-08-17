@@ -794,10 +794,16 @@
     initSync();
   });
 
-  document.addEventListener('DOMContentLoaded', () => {
+  function startProjector() {
     loadLocalState();
     startClock();
     initSync();
     if (window.lucide) lucide.createIcons();
-  });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startProjector);
+  } else {
+    startProjector();
+  }
 })();
