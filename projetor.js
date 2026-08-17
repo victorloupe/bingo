@@ -734,13 +734,53 @@
     if (e.key === 'm' || e.key === 'M') { btnSoundToggle?.click(); }
   });
 
+  function loadLocalState() {
+    try {
+      const st = JSON.parse(localStorage.getItem('bingo.state') || '{}');
+      const localPrizes = JSON.parse(localStorage.getItem('bingo.prizes') || 'null');
+      if (localPrizes) prizes = Object.assign({}, DEFAULT_PRIZES, localPrizes);
+      const localSponsors = JSON.parse(localStorage.getItem('bingo.sponsors') || 'null');
+      if (Array.isArray(localSponsors) && localSponsors.length > 0) sponsors = localSponsors;
+      const localQueue = JSON.parse(localStorage.getItem('bingo.roundsQueue') || 'null');
+      if (Array.isArray(localQueue)) roundsQueue = localQueue;
+      const localNotice = JSON.parse(localStorage.getItem('bingo.adNotice') || 'null');
+      if (localNotice) adNotice = localNotice;
+      
+      const localRanking = JSON.parse(localStorage.getItem('bingo.ranking') || '[]');
+      if (Array.isArray(localRanking)) rankingList = localRanking;
+
+      if (typeof st.adMode === 'boolean') {
+        adMode = st.adMode;
+      } else {
+        adMode = localStorage.getItem('bingo.adMode') === '1';
+      }
+      st.adMode = adMode;
+
+      if (typeof st.conferenceMode === 'boolean') {
+        conferenceMode = st.conferenceMode;
+      } else {
+        conferenceMode = localStorage.getItem('bingo.conferenceMode') === '1';
+      }
+      st.conferenceMode = conferenceMode;
+
+      handleStateChange(st);
+      renderRanking(rankingList);
+    } catch (e) {}
+  }
+
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'bingo.state' || e.key === 'bingo.ranking' || e.key === 'bingo.prizes' || e.key === 'bingo.sponsors' || e.key === 'bingo.adMode' || e.key === 'bingo.conferenceMode' || e.key === 'bingo.adNotice') {
+      loadLocalState();
+    }
+  });
+
   window.addEventListener('online', () => {
     initSync();
   });
 
   function startProjector() {
+    loadLocalState();
     startClock();
-    updateUI();
     initSync();
     if (window.lucide) lucide.createIcons();
   }
