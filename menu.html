@@ -523,7 +523,7 @@
         try { adNotice = JSON.parse(localStorage.getItem('bingo.adNotice') || 'null'); } catch (e) {}
         st.adNotice = adNotice;
         localStorage.setItem('bingo.state', JSON.stringify(st));
-        window.BingoSync?.pushState(st);
+        window.BingoSync?.pushState(st, true);
       } catch (e) {}
       updateMenuAdButton();
       window.BingoDialog?.toast(boolVal ? 'Propaganda ativada no Telão!' : 'Propaganda desligada.', boolVal ? 'warning' : 'info');

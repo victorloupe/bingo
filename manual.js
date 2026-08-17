@@ -143,7 +143,7 @@ const LS = {
     };
     localStorage.setItem('bingo.state', JSON.stringify(data));
     localStorage.setItem('bingo.prizes', JSON.stringify(prizes));
-    window.BingoSync?.pushState(data);
+    window.BingoSync?.pushState(data, true);
   },
   load(){
     try{

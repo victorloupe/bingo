@@ -32,6 +32,15 @@
   let lastPushStateJson = '';
   let lastPushRankingJson = '';
   let broadcastChannel = null;
+  let realtimeChannel = null;
+
+  // Barramento local nativo do navegador para sincronização ultra-rápida entre abas (<1ms)
+  let localBus = null;
+  try {
+    if (typeof window !== 'undefined' && window.BroadcastChannel) {
+      localBus = new BroadcastChannel('bingo75_bus_' + ROOM);
+    }
+  } catch (e) {}
 
   const STATUS_LABEL = {
     disabled: '💻 Local apenas',
@@ -112,21 +121,6 @@
     try {
       client = window.supabase.createClient(cfg.url, cfg.anonKey);
       configured = true;
-
-      // Canal de Broadcast em Tempo Real dedicado para a sala
-      if (!broadcastChannel) {
-        broadcastChannel = client.channel('bingo-broadcast-' + ROOM, {
-          config: {
-            broadcast: { self: false }
-          }
-        });
-        broadcastChannel.subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
-            setStatus('online');
-          }
-        });
-      }
-
       setStatus(navigator.onLine ? 'online' : 'offline');
       return true;
     } catch (e) {
@@ -280,28 +274,20 @@
     if (str === lastPushStateJson) return; // Não envia se não houve alteração real
     lastPushStateJson = str;
 
-    // Transmissão ultrarrápida via Realtime Broadcast (< 20ms)
-    const broadcastPayload = {
-      activeRoundId: payload.active_round_id,
-      roundName: payload.round_name,
-      roundsList: payload.rounds_list,
-      nextRound: payload.next_round,
-      roundsQueue: payload.rounds_queue,
-      drawn: payload.drawn,
-      last: payload.last,
-      gameOver: payload.game_over,
-      firstTs: payload.first_ts,
-      lastTs: payload.last_ts,
-      prizes: payload.prizes,
-      sponsors: payload.sponsors,
-      adMode: payload.ad_mode,
-      adNotice: payload.ad_notice,
-      conferenceMode: isConference
-    };
-
-    if (broadcastChannel) {
+    // 1. Transmissão instantânea via Barramento Local do Navegador (< 1ms para todas as abas)
+    if (localBus) {
       try {
-        broadcastChannel.send({
+        localBus.postMessage({
+          type: 'state_update',
+          payload: broadcastPayload
+        });
+      } catch (e) {}
+    }
+
+    // 2. Transmissão via Realtime Broadcast Supabase (< 20ms para outros aparelhos)
+    if (realtimeChannel) {
+      try {
+        realtimeChannel.send({
           type: 'broadcast',
           event: 'state_update',
           payload: broadcastPayload
@@ -344,7 +330,7 @@
   }
 
   let pushRankingTimer = null;
-  function pushRanking(list, immediate = false) {
+  function pushRanking(list, immediate = true) {
     if (pushRankingTimer) clearTimeout(pushRankingTimer);
     if (immediate) {
       return doPushRanking(list);
@@ -359,6 +345,25 @@
     const str = JSON.stringify(list || []);
     if (str === lastPushRankingJson) return;
     lastPushRankingJson = str;
+
+    if (localBus) {
+      try {
+        localBus.postMessage({
+          type: 'ranking_update',
+          payload: list || []
+        });
+      } catch (e) {}
+    }
+
+    if (realtimeChannel) {
+      try {
+        realtimeChannel.send({
+          type: 'broadcast',
+          event: 'ranking_update',
+          payload: list || []
+        });
+      } catch (e) {}
+    }
 
     const key = operatorKey();
     if (!key) {
@@ -537,10 +542,38 @@
 
   let remoteCallbackTimer = null;
   function subscribe(onRemoteChange, onDirectStateChange, onDirectRankingChange) {
+    // 1. Escuta no Barramento Local (comunicação instantânea <1ms entre abas no mesmo PC)
+    if (localBus) {
+      localBus.onmessage = (e) => {
+        if (e && e.data) {
+          if (e.data.type === 'state_update') {
+            if (onDirectStateChange && e.data.payload) onDirectStateChange(e.data.payload);
+            else if (onRemoteChange) onRemoteChange();
+          } else if (e.data.type === 'ranking_update') {
+            if (onDirectRankingChange && e.data.payload) onDirectRankingChange(e.data.payload);
+            else if (onRemoteChange) onRemoteChange();
+          }
+        }
+      };
+    }
+
     if (!ready()) return;
-    
-    if (broadcastChannel) {
-      broadcastChannel
+
+    const handleRemoteChange = () => {
+      if (remoteCallbackTimer) clearTimeout(remoteCallbackTimer);
+      remoteCallbackTimer = setTimeout(() => {
+        if (onRemoteChange) onRemoteChange();
+      }, 50);
+    };
+
+    // 2. Escuta no Supabase Realtime (comunicação em rede entre aparelhos diferentes)
+    try {
+      if (realtimeChannel) {
+        try { client.removeChannel(realtimeChannel); } catch (e) {}
+      }
+      const chanName = 'bingo-sync-' + ROOM + '-' + Math.random().toString(36).slice(2, 7);
+      realtimeChannel = client.channel(chanName, { config: { broadcast: { self: false } } });
+      realtimeChannel
         .on('broadcast', { event: 'state_update' }, (response) => {
           if (onDirectStateChange && response.payload) {
             onDirectStateChange(response.payload);
@@ -554,20 +587,7 @@
           } else if (onRemoteChange) {
             onRemoteChange();
           }
-        });
-    }
-
-    const handleRemoteChange = () => {
-      if (remoteCallbackTimer) clearTimeout(remoteCallbackTimer);
-      remoteCallbackTimer = setTimeout(() => {
-        if (onRemoteChange) onRemoteChange();
-      }, 50);
-    };
-
-    try {
-      const chanName = 'bingo-sync-' + ROOM + '-' + Math.random().toString(36).slice(2, 7);
-      client
-        .channel(chanName)
+        })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'bingo_state', filter: `room=eq.${ROOM}` }, handleRemoteChange)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'bingo_ranking', filter: `room=eq.${ROOM}` }, handleRemoteChange)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'bingo_card_batches', filter: `room=eq.${ROOM}` }, handleRemoteChange)

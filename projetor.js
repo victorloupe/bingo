@@ -216,7 +216,14 @@
 
   // ====== Modo Propaganda / Comercial Slider ======
   function renderCurrentSlide(force = false) {
-    const spList = sponsors && sponsors.length ? sponsors : SAMPLE_SPONSORS;
+    let spList = sponsors;
+    if (!Array.isArray(spList) || spList.length === 0) {
+      try {
+        const localSp = JSON.parse(localStorage.getItem('bingo.sponsors') || '[]');
+        if (Array.isArray(localSp) && localSp.length > 0) spList = localSp;
+      } catch (e) {}
+    }
+    if (!Array.isArray(spList) || spList.length === 0) spList = SAMPLE_SPONSORS;
     if (!spList.length) return;
     if (currentAdIndex >= spList.length) currentAdIndex = 0;
     const cur = spList[currentAdIndex];
@@ -571,14 +578,17 @@
     roundsQueue = Array.isArray(newState.roundsQueue) ? newState.roundsQueue : [];
     adNotice = newState.adNotice ?? null;
     
-    // adMode (online)
+    // adMode (online + local)
+    let newAdMode = false;
     if (typeof newState.adMode === 'boolean') {
-      adMode = newState.adMode;
+      newAdMode = newState.adMode;
+    } else if (typeof newState.ad_mode === 'boolean') {
+      newAdMode = newState.ad_mode;
     } else if (newState.adNotice && typeof newState.adNotice._adMode === 'boolean') {
-      adMode = newState.adNotice._adMode;
-    } else {
-      adMode = false;
+      newAdMode = newState.adNotice._adMode;
     }
+    adMode = newAdMode;
+    try { localStorage.setItem('bingo.adMode', adMode ? '1' : '0'); } catch(e){}
 
     // conferenceMode (online)
     const newConf = typeof newState.conferenceMode === 'boolean' 
