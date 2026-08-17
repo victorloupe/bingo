@@ -163,9 +163,14 @@ ON CONFLICT (room) DO UPDATE SET
   ad_notice       = EXCLUDED.ad_notice,
   updated_at      = NOW();
 
--- 3. Exibe o status confirmando o reset
+-- 3. Garante que a chave de operador do Supabase esteja 100% sincronizada com o arquivo operator-key.js
+INSERT INTO bingo_admin_key (id, secret)
+VALUES (true, 'fb90cfc60a7eadaf52693d50b3817a8fb3e323053b029b3e')
+ON CONFLICT (id) DO UPDATE SET secret = EXCLUDED.secret;
+
+-- 4. Exibe o status confirmando o reset
 SELECT 
-  'Sucesso! Todos os dados antigos foram apagados e novas rodadas padrão foram criadas.' AS resultado,
+  'Sucesso! Todos os dados antigos foram apagados, novas rodadas criadas e chave de sincronização configurada.' AS resultado,
   room,
   active_round_id,
   round_name,

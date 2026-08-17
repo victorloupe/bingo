@@ -234,33 +234,39 @@ selVoice?.addEventListener('change', (e)=>{
 });
 
 function sayLetter(L){ return L==='O' ? 'Ó' : L; }
+let speechTimer = null;
 function speakLongShort(L, n, force = false){
   if(muted && !force) return;
   if(!('speechSynthesis' in window)) return;
-  try{ speechSynthesis.cancel(); speechSynthesis.resume(); }catch(e){}
   
-  const voices = speechSynthesis.getVoices();
-  const voiceName = selVoice?.value || selectedVoiceName || localStorage.getItem('bingo.voice');
-  const chosen = voices.find(v=> v.name === voiceName) || voices.find(v=>/pt-BR/i.test(v.lang)) || voices[0];
-  
-  const savedRate = parseFloat(localStorage.getItem('bingo.rate') || '1.0');
-  const actualRate = isNaN(savedRate) ? rate : savedRate;
-  
-  const mk = (text)=>{ 
-    const u = new SpeechSynthesisUtterance(text); 
-    if(chosen){ u.voice=chosen; u.lang=chosen.lang; } 
-    u.rate = actualRate; 
-    u.pitch = pitch; 
-    return u; 
-  };
-  
-  const u1 = mk(`Letra ${sayLetter(L)}, número ${n}`);
-  const u2 = mk(`${sayLetter(L)} ${n}`);
-  
-  u1.onend = ()=>{
-    try{ speechSynthesis.speak(u2); }catch(e){}
-  };
-  speechSynthesis.speak(u1);
+  if (speechTimer) clearTimeout(speechTimer);
+  speechTimer = setTimeout(() => {
+    try{
+      speechSynthesis.cancel();
+      const voices = speechSynthesis.getVoices();
+      const voiceName = selVoice?.value || selectedVoiceName || localStorage.getItem('bingo.voice');
+      const chosen = voices.find(v=> v.name === voiceName) || voices.find(v=>/pt-BR/i.test(v.lang)) || voices[0];
+      
+      const savedRate = parseFloat(localStorage.getItem('bingo.rate') || '1.0');
+      const actualRate = isNaN(savedRate) ? rate : savedRate;
+      
+      const mk = (text)=>{ 
+        const u = new SpeechSynthesisUtterance(text); 
+        if(chosen){ u.voice=chosen; u.lang=chosen.lang; } 
+        u.rate = actualRate; 
+        u.pitch = pitch; 
+        return u; 
+      };
+      
+      const u1 = mk(`Letra ${sayLetter(L)}, número ${n}`);
+      const u2 = mk(`${sayLetter(L)} ${n}`);
+      
+      u1.onend = ()=>{
+        try{ speechSynthesis.speak(u2); }catch(e){}
+      };
+      speechSynthesis.speak(u1);
+    }catch(e){}
+  }, 20);
 }
 if('speechSynthesis' in window){
   speechSynthesis.onvoiceschanged = loadVoices;
@@ -353,38 +359,80 @@ function renderPrizes(){
   }
 }
 
-// ====== Renderização da Grade Interativa ======
+// ====== Renderização da Grade Interativa (Construção única + Delegação de eventos) ======
+let gridBuilt = false;
+
+function initGrid(){
+  if (!elGrid || gridBuilt) return;
+  elGrid.innerHTML = '';
+
+  for(const L of LETTERS){
+    const [a,b] = ranges[L];
+    const col = document.createElement('div');
+    col.className = `col`;
+    col.dataset.letter = L;
+    
+    const header = document.createElement('header');
+    header.innerHTML = `<span class="letter">${L}</span><span class="sub" data-sub="${L}">0/15</span>`;
+    
+    const body = document.createElement('div');
+    body.className = 'body';
+
+    for(let n = a; n <= b; n++){
+      const cell = document.createElement('button');
+      cell.type = 'button';
+      cell.className = 'cell tabnum';
+      cell.textContent = n;
+      cell.dataset.num = String(n);
+      cell.setAttribute('aria-pressed', 'false');
+      cell.setAttribute('title', `Clique para marcar o número ${n}`);
+      body.appendChild(cell);
+    }
+
+    col.appendChild(header);
+    col.appendChild(body);
+    elGrid.appendChild(col);
+  }
+
+  // Event Delegation no grid: captura cliques instantâneos sem recriar nós no DOM
+  elGrid.addEventListener('click', (e) => {
+    const btn = e.target.closest('button.cell');
+    if (!btn) return;
+    const numStr = btn.dataset.num;
+    if (numStr) {
+      const n = parseInt(numStr, 10);
+      if (!isNaN(n)) selectNumber(n);
+    }
+  });
+
+  gridBuilt = true;
+}
+
 function renderColumns(){
   if(!elGrid) return;
-  elGrid.innerHTML = '';
+  if(!gridBuilt) initGrid();
+  
   const drawnSet = new Set(drawn);
 
   for(const L of LETTERS){
     const [a,b] = ranges[L];
-    const numsAll = Array.from({length: b-a+1}, (_,i)=>a+i);
-    const sortedCount = numsAll.filter(n=> drawnSet.has(n)).length;
+    let count = 0;
 
-    const col = document.createElement('div');
-    col.className = `col`;
-    const header = document.createElement('header');
-    header.innerHTML = `<span class="letter">${L}</span><span class="sub">${sortedCount}/15</span>`;
-    const body = document.createElement('div');
-    body.className = 'body';
-
-    for(const n of numsAll){
+    for(let n = a; n <= b; n++){
       const isDrawn = drawnSet.has(n);
-      const cell = document.createElement('button');
-      cell.type = 'button';
-      cell.className = 'cell tabnum' + (isDrawn ? ' drawn' : '') + (n===last? ' last' : '');
-      cell.textContent = n;
-      cell.setAttribute('aria-pressed', isDrawn ? 'true' : 'false');
-      cell.setAttribute('title', isDrawn ? `Número ${n} marcado` : `Clique para marcar o número ${n}`);
-      cell.addEventListener('click', () => selectNumber(n));
-      body.appendChild(cell);
+      if (isDrawn) count++;
+      const cell = elGrid.querySelector(`button.cell[data-num="${n}"]`);
+      if (cell) {
+        const isLast = (n === last);
+        cell.classList.toggle('drawn', isDrawn);
+        cell.classList.toggle('last', isLast);
+        cell.setAttribute('aria-pressed', isDrawn ? 'true' : 'false');
+        cell.setAttribute('title', isDrawn ? `Número ${n} marcado` : `Clique para marcar o número ${n}`);
+      }
     }
 
-    col.appendChild(header); col.appendChild(body);
-    elGrid.appendChild(col);
+    const subEl = elGrid.querySelector(`.sub[data-sub="${L}"]`);
+    if (subEl) subEl.textContent = `${count}/15`;
   }
 }
 
@@ -511,14 +559,16 @@ function renderAuditorPanel() {
 
   let html = '';
 
-  // Se houver cartelas que BINGARAM (24/24)
-  if (audit.hasBingou) {
+  // 1. Se houver BATIDAS (Cartela Cheia, Cinquina, 4 Cantos, Terno)
+  if (audit.hasBingou && audit.batidasCards && audit.batidasCards.length > 0) {
+    const isCheia = audit.bingouCards.length > 0;
+    const bannerClass = isCheia ? 'auditor-bingou-banner' : 'auditor-batida-banner';
     html += `
-      <div class="auditor-bingou-banner">
+      <div class="${bannerClass}">
         <div class="d-flex align-items-center gap-1 min-w-0">
-          <span style="font-size:0.85rem; line-height:1;">🏆</span>
-          <strong style="font-size:0.75rem; letter-spacing:0.3px;">BINGOU!</strong>
-          <span class="auditor-bingou-serial-pill">${audit.bingouCards.map(c => '#' + c.formattedSerial).join(', ')}</span>
+          <span style="font-size:0.9rem; line-height:1;">${isCheia ? '🏆' : '⚡'}</span>
+          <strong style="font-size:0.75rem; letter-spacing:0.3px; color:#ffffff !important;">${isCheia ? 'BINGOU!' : 'BATIDA!'}</strong>
+          <span class="auditor-bingou-serial-pill">${audit.batidasCards.map(c => '#' + c.formattedSerial + ' (' + c.category + ')').join(', ')}</span>
         </div>
         <a href="check.html" class="auditor-btn-conferir">
           <i data-lucide="check-square" class="lucide-xs"></i> Conferir
@@ -527,26 +577,29 @@ function renderAuditorPanel() {
     `;
   }
 
-  // Se houver cartelas ARMADAS (23/24)
-  if (audit.hasArmada) {
+  // 2. Se houver cartelas ARMADAS (garante no mínimo 2 linhas com scroll suave)
+  if (audit.hasArmada && audit.armadaCards && audit.armadaCards.length > 0) {
     html += `
-      <div class="d-flex align-items-center justify-content-between" style="line-height:1; margin-bottom:1px;">
-        <span class="text-danger fw-bold d-flex align-items-center gap-1" style="font-size:0.68rem;">
-          <i data-lucide="flame" class="lucide-xs text-danger"></i> ${audit.armadaCards.length} armada${audit.armadaCards.length > 1 ? 's' : ''} (falta 1):
-        </span>
-      </div>
-      <div class="d-flex flex-wrap gap-1" style="max-height:56px; overflow-y:auto;">
-        ${audit.armadaCards.map(c => {
-          const n = c.missingNumber;
-          const L = letterFor(n);
-          const bClass = getBallClass(n);
-          return `
-            <div class="auditor-armada-chip" title="Lote: ${esc(c.batchName)}">
-              <span class="armada-serial">#${esc(c.formattedSerial)}</span>
-              <span class="armada-ball-badge ${bClass}">${L} ${n}</span>
-            </div>
-          `;
-        }).join('')}
+      <div class="auditor-armadas-wrap">
+        <div class="auditor-armadas-title">
+          <i data-lucide="flame" class="lucide-xs text-danger"></i>
+          <span>${audit.armadaCards.length} armada${audit.armadaCards.length > 1 ? 's' : ''} (falta 1):</span>
+        </div>
+        <div class="auditor-armadas-grid">
+          ${audit.armadaCards.map(c => {
+            const n = c.missingNumber;
+            const L = letterFor(n);
+            const bClass = getBallClass(n);
+            const catLabel = c.category === 'Cartela Cheia' ? 'Cheia' : c.category;
+            return `
+              <div class="auditor-armada-chip" title="Lote: ${esc(c.batchName)} • ${esc(c.category)}">
+                <span class="armada-serial">#${esc(c.formattedSerial)}</span>
+                <span class="badge bg-white text-secondary border px-1" style="font-size:0.58rem; padding:0 3px;">${esc(catLabel)}</span>
+                <span class="armada-ball-badge ${bClass}">${L} ${n}</span>
+              </div>
+            `;
+          }).join('')}
+        </div>
       </div>
     `;
   }
@@ -580,15 +633,20 @@ function updateAuditorUI() {
   }
 
   chipArmada.style.display = 'inline-flex';
+  chipArmada.style.cursor = 'pointer';
 
-  if (audit.hasBingou) {
+  if (audit.hasBingou && audit.batidasCards && audit.batidasCards.length > 0) {
+    const isCheia = audit.bingouCards.length > 0;
     chipArmada.className = 'chip chip-auditor bg-success text-white fw-bold border border-success';
-    armadaContent.innerHTML = `<i data-lucide="sparkles" class="lucide-sm"></i> <span>🏆 ${audit.bingouCards.length} BINGOU!</span>`;
+    chipArmada.title = 'Clique para ver detalhes das batidas e cartelas';
+    armadaContent.innerHTML = `<i data-lucide="sparkles" class="lucide-sm"></i> <span>🏆 ${audit.batidasCards.length} BATIDA${audit.batidasCards.length > 1 ? 'S' : ''}!</span>`;
   } else if (audit.hasArmada) {
     chipArmada.className = 'chip chip-auditor bg-danger-subtle text-danger fw-bold border border-danger';
+    chipArmada.title = 'Clique para ver detalhes das cartelas armadas';
     armadaContent.innerHTML = `<i data-lucide="flame" class="lucide-sm text-danger"></i> <span>🔥 ${audit.armadaCards.length} armada${audit.armadaCards.length > 1 ? 's' : ''}</span>`;
   } else {
     chipArmada.className = 'chip chip-auditor text-muted';
+    chipArmada.title = 'Clique para ver a lista de cartelas auditadas';
     armadaContent.innerHTML = `<i data-lucide="shield-check" class="lucide-sm text-secondary"></i> <span>0 armadas</span>`;
   }
 
@@ -610,18 +668,19 @@ function openArmadasModal() {
 
   let html = '';
 
-  if (audit.hasBingou) {
+  if (audit.hasBingou && audit.batidasCards && audit.batidasCards.length > 0) {
     html += `
       <div class="p-3 rounded-3" style="background:#f0fdf4; border:1.5px solid #86efac;">
         <div class="d-flex align-items-center gap-2 mb-2">
           <span class="fs-5">🏆</span>
-          <h4 class="fw-bold text-success m-0 fs-6">CARTELA CHEIA FECHADA (${audit.bingouCards.length})</h4>
+          <h4 class="fw-bold text-success m-0 fs-6">CARTELAS BATIDAS (${audit.batidasCards.length})</h4>
         </div>
-        <div class="d-flex flex-column gap-2">
-          ${audit.bingouCards.map(c => `
+        <div class="d-flex flex-column gap-2" style="max-height:220px; overflow-y:auto;">
+          ${audit.batidasCards.map(c => `
             <div class="d-flex align-items-center justify-content-between p-2 rounded bg-white border border-success-subtle">
-              <div>
-                <span class="badge bg-success fw-bold me-1">SÉRIE Nº ${esc(c.formattedSerial)}</span>
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-success fw-bold">SÉRIE #${esc(c.formattedSerial)}</span>
+                <span class="badge bg-primary-subtle text-primary fw-bold">${esc(c.category)}</span>
                 <span class="text-muted small">Lote: ${esc(c.batchName)}</span>
               </div>
               <a href="check.html" class="btn btn-sm btn-success py-0 px-2 fw-bold" style="font-size:0.75rem;">Conferir</a>
@@ -632,13 +691,13 @@ function openArmadasModal() {
     `;
   }
 
-  if (audit.hasArmada) {
+  if (audit.hasArmada && audit.armadaCards && audit.armadaCards.length > 0) {
     html += `
       <div class="p-3 rounded-3" style="background:#fff7ed; border:1.5px solid #fdba74;">
         <div class="d-flex align-items-center justify-content-between mb-2">
           <div class="d-flex align-items-center gap-2">
             <span class="fs-5">🔥</span>
-            <h4 class="fw-bold text-danger m-0 fs-6">CARTELAS ARMADAS (Falta 1 pedra para Cartela Cheia)</h4>
+            <h4 class="fw-bold text-danger m-0 fs-6">CARTELAS ARMADAS (Falta 1 pedra)</h4>
           </div>
           <span class="badge bg-danger">${audit.armadaCards.length} armada(s)</span>
         </div>
@@ -651,7 +710,8 @@ function openArmadasModal() {
               <div class="armada-item-card">
                 <div class="d-flex align-items-center gap-2">
                   <span class="badge bg-dark fw-bold" style="font-size:0.8rem;">#${esc(c.formattedSerial)}</span>
-                  <span class="text-muted small text-truncate" style="max-width:140px;">${esc(c.batchName)}</span>
+                  <span class="badge bg-warning-subtle text-dark fw-bold" style="font-size:0.72rem;">${esc(c.category)}</span>
+                  <span class="text-muted small text-truncate" style="max-width:130px;">${esc(c.batchName)}</span>
                 </div>
                 <div class="d-flex align-items-center gap-2">
                   <span class="text-muted small fw-semibold">Falta nº:</span>
@@ -669,8 +729,8 @@ function openArmadasModal() {
     html = `
       <div class="text-center py-4 text-muted">
         <div class="fs-1 mb-2">🎯</div>
-        <p class="m-0 fw-semibold">Nenhuma cartela armada no momento.</p>
-        <p class="small text-muted mt-1">Conforme os números forem sorteados, as cartelas a 1 pedra de bater serão listadas aqui em tempo real.</p>
+        <p class="m-0 fw-semibold">Nenhuma cartela armada ou batida no momento.</p>
+        <p class="small text-muted mt-1">Conforme os números forem sorteados, as cartelas com 1 pedra restante ou batidas serão listadas aqui em tempo real.</p>
       </div>
     `;
   }
@@ -681,6 +741,7 @@ function openArmadasModal() {
 }
 
 document.getElementById('chip-armada')?.addEventListener('click', openArmadasModal);
+document.getElementById('tv-auditor-panel')?.addEventListener('click', openArmadasModal);
 document.getElementById('btn-close-armadas')?.addEventListener('click', () => document.getElementById('modal-armadas')?.setAttribute('hidden', ''));
 document.getElementById('btn-close-armadas-x')?.addEventListener('click', () => document.getElementById('modal-armadas')?.setAttribute('hidden', ''));
 
@@ -1117,7 +1178,12 @@ async function initCloudSync() {
     window.BingoCardsEngine.Storage.mergeRemoteBatches(remoteBatches);
   }
 
-  if (remoteState || remoteRanking) {
+  const hasLocalProgress = drawn.length > 0;
+  const remoteDrawn = remoteState && Array.isArray(remoteState.drawn) ? remoteState.drawn : [];
+
+  if (hasLocalProgress && remoteDrawn.length === 0) {
+    LS.save();
+  } else if (remoteState) {
     applyRemoteState(remoteState, remoteRanking);
   }
 

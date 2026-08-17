@@ -23,17 +23,64 @@
     error: '⚠️ Erro de sincronização'
   };
 
-  function setStatus(status) {
-    window.dispatchEvent(new CustomEvent('bingosync:status', { detail: { status } }));
+  let currentStatus = 'disabled';
+  let lastErrorMsg = '';
+
+  function setStatus(status, errorDetails = null) {
+    currentStatus = status;
+    if (errorDetails) lastErrorMsg = String(errorDetails);
+    else if (status === 'online') lastErrorMsg = '';
+
+    window.dispatchEvent(new CustomEvent('bingosync:status', { detail: { status, error: lastErrorMsg } }));
     const chip = document.getElementById('chip-sync');
     if (chip) {
       chip.textContent = STATUS_LABEL[status] || '☁️';
-      chip.title = 'Sincronização com a nuvem (Sala: ' + ROOM + '): ' + (STATUS_LABEL[status] || status);
+      chip.title = (status === 'error' && lastErrorMsg)
+        ? 'Erro de sincronização: ' + lastErrorMsg + ' (Clique para ver diagnóstico)'
+        : 'Sincronização com a nuvem (Sala: ' + ROOM + '): ' + (STATUS_LABEL[status] || status);
       chip.className = chip.className.replace(/\bsync-\S+/g, '').trim() + ' sync-' + status;
+      chip.style.cursor = 'pointer';
     }
     const line = document.getElementById('sync-line');
     if (line) line.textContent = STATUS_LABEL[status] || '';
   }
+
+  function showSyncDiagnostic() {
+    const key = operatorKey();
+    if (currentStatus === 'error') {
+      const isKeyError = lastErrorMsg.toLowerCase().includes('chave de operador') || lastErrorMsg.toLowerCase().includes('operator');
+      let msg = '';
+      if (isKeyError) {
+        msg = `<b>Chave de Operador Inválida ou Divergente no Supabase!</b><br><br>` +
+              `A chave de segurança no arquivo <code>operator-key.js</code> não coincide com o registro da tabela <code>bingo_admin_key</code> no seu Supabase.<br><br>` +
+              `<b>Como corrigir em 10 segundos:</b><br>` +
+              `1. Abra o painel do seu Supabase no <b>SQL Editor</b>.<br>` +
+              `2. Cole e execute o comando abaixo:<br>` +
+              `<pre style="background:#0f172a; color:#38bdf8; padding:10px; border-radius:6px; font-size:0.8rem; margin:8px 0; overflow-x:auto; user-select:all;">INSERT INTO bingo_admin_key (id, secret) VALUES (true, '${key}') ON CONFLICT (id) DO UPDATE SET secret = EXCLUDED.secret;</pre>` +
+              `3. Recarregue esta página.`;
+      } else {
+        msg = `<b>Falha na comunicação com o Supabase:</b><br><code>${lastErrorMsg || 'Erro de conexão'}</code><br><br>Verifique a conexão de rede e as credenciais em <code>supabase-config.js</code>.`;
+      }
+      if (window.BingoDialog?.alert) {
+        window.BingoDialog.alert({ title: '⚠️ Diagnóstico de Sincronização', message: msg });
+      } else {
+        alert(msg.replace(/<[^>]+>/g, ''));
+      }
+    } else if (currentStatus === 'online') {
+      if (window.BingoDialog?.toast) {
+        window.BingoDialog.toast(`☁️ Sincronização Ativa na Sala "${ROOM}". Tudo conectado e atualizado!`, 'success');
+      }
+    } else if (currentStatus === 'offline') {
+      if (window.BingoDialog?.toast) {
+        window.BingoDialog.toast('📴 Modo Offline: Sem conexão de rede. Os dados estão sendo salvos localmente.', 'warning');
+      }
+    }
+  }
+
+  document.addEventListener('click', (e) => {
+    const chip = e.target.closest('#chip-sync');
+    if (chip) showSyncDiagnostic();
+  });
 
   function init() {
     const cfg = window.SUPABASE_CONFIG || {};
@@ -48,7 +95,7 @@
       return true;
     } catch (e) {
       console.warn('[BingoSync] Falha ao iniciar Supabase:', e);
-      setStatus('error');
+      setStatus('error', e.message || e);
       return false;
     }
   }
@@ -66,7 +113,18 @@
     );
   }
 
-  async function pushState(state) {
+  let pushTimer = null;
+  function pushState(state, immediate = false) {
+    if (pushTimer) clearTimeout(pushTimer);
+    if (immediate) {
+      return doPushState(state);
+    }
+    pushTimer = setTimeout(() => {
+      doPushState(state);
+    }, 120);
+  }
+
+  async function doPushState(state) {
     if (!ready()) return;
     const isAd = typeof state.adMode === 'boolean' ? state.adMode : (localStorage.getItem('bingo.adMode') === '1');
     const isConference = typeof state.conferenceMode === 'boolean' ? state.conferenceMode : (localStorage.getItem('bingo.conferenceMode') === '1');
@@ -154,15 +212,11 @@
 
     const key = operatorKey();
     if (!key) {
-      // Sem chave de operador não dá pra gravar (as políticas do banco exigem).
-      // Isso é esperado em páginas só-leitura (ex.: projetor.html).
       console.warn('[BingoSync] BINGO_OPERATOR_KEY ausente — inclua operator-key.js antes de sync.js nesta página para sincronizar gravações.');
       return;
     }
 
     try {
-      // Gravação passa por uma função no banco (bingo_push_state) que confere
-      // a chave de operador antes de escrever — ver supabase-schema.sql.
       const { error } = await client.rpc('bingo_push_state', {
         p_key: key,
         p_room: payload.room,
@@ -184,13 +238,24 @@
       if (error) throw error;
       setStatus('online');
     } catch (e) {
-      setStatus('error');
+      setStatus('error', e.message || e);
       lastPushStateJson = ''; // permite tentar de novo na próxima mudança
       console.warn('[BingoSync] push state falhou:', e.message || e);
     }
   }
 
-  async function pushRanking(list) {
+  let pushRankingTimer = null;
+  function pushRanking(list, immediate = false) {
+    if (pushRankingTimer) clearTimeout(pushRankingTimer);
+    if (immediate) {
+      return doPushRanking(list);
+    }
+    pushRankingTimer = setTimeout(() => {
+      doPushRanking(list);
+    }, 100);
+  }
+
+  async function doPushRanking(list) {
     if (!ready()) return;
     const str = JSON.stringify(list || []);
     if (str === lastPushRankingJson) return;
@@ -208,7 +273,7 @@
       if (error) throw error;
       setStatus('online');
     } catch (e) {
-      setStatus('error');
+      setStatus('error', e.message || e);
       lastPushRankingJson = '';
       console.warn('[BingoSync] push ranking falhou:', e.message || e);
     }

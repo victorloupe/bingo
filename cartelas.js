@@ -137,63 +137,101 @@
       }
     }
 
-    // Checagem de Quatro Cantos: (0,0), (0,4), (4,0), (4,4)
-    const isQuatroCantos = hitsGrid[0][0] && hitsGrid[0][4] && hitsGrid[4][0] && hitsGrid[4][4];
+    // 1. Checagem de Quatro Cantos: (0,0), (0,4), (4,0), (4,4)
+    const cornerPositions = [[0, 0], [0, 4], [4, 0], [4, 4]];
+    const cornerHits = cornerPositions.filter(([r, c]) => hitsGrid[r][c]).length;
+    const isQuatroCantos = cornerHits === 4;
+    const isArmadaQuatroCantos = cornerHits === 3;
+    const missingCornerNumbers = cornerPositions.filter(([r, c]) => !hitsGrid[r][c]).map(([r, c]) => grid[r][c]);
 
-    // As 12 linhas da cartela (5 horizontais, 5 verticais, 2 diagonais)
-    const lines = [
-      // 5 Horizontais
-      [hitsGrid[0][0], hitsGrid[0][1], hitsGrid[0][2], hitsGrid[0][3], hitsGrid[0][4]],
-      [hitsGrid[1][0], hitsGrid[1][1], hitsGrid[1][2], hitsGrid[1][3], hitsGrid[1][4]],
-      [hitsGrid[2][0], hitsGrid[2][1], hitsGrid[2][2], hitsGrid[2][3], hitsGrid[2][4]],
-      [hitsGrid[3][0], hitsGrid[3][1], hitsGrid[3][2], hitsGrid[3][3], hitsGrid[3][4]],
-      [hitsGrid[4][0], hitsGrid[4][1], hitsGrid[4][2], hitsGrid[4][3], hitsGrid[4][4]],
-      // 5 Verticais
-      [hitsGrid[0][0], hitsGrid[1][0], hitsGrid[2][0], hitsGrid[3][0], hitsGrid[4][0]],
-      [hitsGrid[0][1], hitsGrid[1][1], hitsGrid[2][1], hitsGrid[3][1], hitsGrid[4][1]],
-      [hitsGrid[0][2], hitsGrid[1][2], hitsGrid[2][2], hitsGrid[3][2], hitsGrid[4][2]],
-      [hitsGrid[0][3], hitsGrid[1][3], hitsGrid[2][3], hitsGrid[3][3], hitsGrid[4][3]],
-      [hitsGrid[0][4], hitsGrid[1][4], hitsGrid[2][4], hitsGrid[3][4], hitsGrid[4][4]],
-      // 2 Diagonais
-      [hitsGrid[0][0], hitsGrid[1][1], hitsGrid[2][2], hitsGrid[3][3], hitsGrid[4][4]],
-      [hitsGrid[0][4], hitsGrid[1][3], hitsGrid[2][2], hitsGrid[3][1], hitsGrid[4][0]]
+    // 2. As 12 Linhas (5 Horizontais, 5 Verticais, 2 Diagonais)
+    const linesCoords = [
+      // Horizontais
+      [[0,0],[0,1],[0,2],[0,3],[0,4]],
+      [[1,0],[1,1],[1,2],[1,3],[1,4]],
+      [[2,0],[2,1],[2,2],[2,3],[2,4]],
+      [[3,0],[3,1],[3,2],[3,3],[3,4]],
+      [[4,0],[4,1],[4,2],[4,3],[4,4]],
+      // Verticais
+      [[0,0],[1,0],[2,0],[3,0],[4,0]],
+      [[0,1],[1,1],[2,1],[3,1],[4,1]],
+      [[0,2],[1,2],[2,2],[3,2],[4,2]],
+      [[0,3],[1,3],[2,3],[3,3],[4,3]],
+      [[0,4],[1,4],[2,4],[3,4],[4,4]],
+      // Diagonais
+      [[0,0],[1,1],[2,2],[3,3],[4,4]],
+      [[0,4],[1,3],[2,2],[3,1],[4,0]]
     ];
 
-    function hasConsecutiveRun(arr, count) {
-      let run = 0;
-      for (let i = 0; i < arr.length; i++) {
-        if (arr[i]) {
-          run++;
-          if (run >= count) return true;
-        } else {
-          run = 0;
+    let isCinquina = false;
+    let isArmadaCinquina = false;
+    const missingCinquinaNumbers = new Set();
+
+    let isTerno = false;
+    let isArmadaTerno = false;
+    const missingTernoNumbers = new Set();
+
+    linesCoords.forEach(line => {
+      const hitsCount = line.filter(([r, c]) => hitsGrid[r][c]).length;
+      if (hitsCount === 5) {
+        isCinquina = true;
+      } else if (hitsCount === 4) {
+        isArmadaCinquina = true;
+        line.forEach(([r, c]) => {
+          if (!hitsGrid[r][c]) {
+            const val = grid[r][c];
+            if (val !== 'FREE') missingCinquinaNumbers.add(val);
+          }
+        });
+      }
+
+      // Checa Terno nas 3 fatias de 3 da linha ([0,1,2], [1,2,3], [2,3,4])
+      for (let i = 0; i <= 2; i++) {
+        const slice = [line[i], line[i+1], line[i+2]];
+        const sliceHits = slice.filter(([r, c]) => hitsGrid[r][c]).length;
+        if (sliceHits === 3) {
+          isTerno = true;
+        } else if (sliceHits === 2) {
+          isArmadaTerno = true;
+          slice.forEach(([r, c]) => {
+            if (!hitsGrid[r][c]) {
+              const val = grid[r][c];
+              if (val !== 'FREE') missingTernoNumbers.add(val);
+            }
+          });
         }
       }
-      return false;
-    }
+    });
 
-    // Cinquina: 5 pedras consecutivas na sequência (linha completa horizontal, vertical ou diagonal)
-    const isCinquina = lines.some((line) => hasConsecutiveRun(line, 5));
-
-    // Terno: 3 pedras consecutivas na sequência na mesma linha horizontal, vertical ou diagonal
-    const isTerno = lines.some((line) => hasConsecutiveRun(line, 3));
-
-    // Cartela Cheia: todas as 25 casas preenchidas (24 pedras + FREE)
+    // 3. Cartela Cheia: todas as 25 casas (24 números + FREE)
     const isCartelaCheia = totalHits === 25;
+    const isArmadaCheia = missingNumbers.length === 1;
 
     return {
       serial: card.serial,
+      formattedSerial: card.formattedSerial,
       authCode: card.authCode,
       totalHits: totalHits - 1, // Desconsidera FREE para contagem numérica
       maxPlayable: 24,
       hitsGrid,
       missingNumbers,
       missingCount: missingNumbers.length,
+      // Status de Batidas
       isCartelaCheia,
-      isQuatroCantos,
       isCinquina,
+      isQuatroCantos,
       isTerno,
-      isArmada: missingNumbers.length === 1 // Falta apenas 1 pedra para fechar a cartela
+      // Status de Armadas
+      isArmadaCheia,
+      isArmadaCinquina,
+      isArmadaQuatroCantos,
+      isArmadaTerno,
+      isArmada: isArmadaCheia || isArmadaCinquina || isArmadaQuatroCantos || isArmadaTerno,
+      // Números faltantes por modalidade
+      missingCheiaNumber: isArmadaCheia ? missingNumbers[0] : null,
+      missingCinquinaNumbers: Array.from(missingCinquinaNumbers),
+      missingCornerNumbers,
+      missingTernoNumbers: Array.from(missingTernoNumbers)
     };
   }
 
@@ -211,8 +249,9 @@
       matchingBatches = batches;
     }
 
-    const bingouCards = [];
-    const armadaCards = [];
+    const bingouCards = []; // Cartela Cheia (24/24)
+    const batidasCards = []; // Todas as batidas (Cheia, Cinquina, 4 Cantos, Terno)
+    const armadaCards = []; // Todas as armadas
     let totalCardsAudited = 0;
 
     matchingBatches.forEach(batch => {
@@ -221,31 +260,117 @@
 
       batch.cards.forEach(card => {
         const ev = evaluateCard(card, drawnNumbers);
+        const batchName = batch.roundName || batch.eventName || 'Lote';
+
+        // 1. Batidas
         if (ev.isCartelaCheia) {
-          bingouCards.push({
+          const item = {
             serial: card.serial,
             formattedSerial: card.formattedSerial,
             authCode: card.authCode,
-            batchName: batch.roundName || batch.eventName || 'Lote',
+            batchName,
+            category: 'Cartela Cheia',
+            icon: '🏆',
+            title: 'BINGOU! (Cartela Cheia 24/24)',
+            missingNumbers: []
+          };
+          bingouCards.push(item);
+          batidasCards.push(item);
+        }
+        if (ev.isCinquina && !ev.isCartelaCheia) {
+          batidasCards.push({
+            serial: card.serial,
+            formattedSerial: card.formattedSerial,
+            authCode: card.authCode,
+            batchName,
+            category: 'Cinquina',
+            icon: '⚡',
+            title: 'Cinquina (Linha Completa 5/5)',
             missingNumbers: []
           });
-        } else if (ev.isArmada) {
+        }
+        if (ev.isQuatroCantos && !ev.isCartelaCheia) {
+          batidasCards.push({
+            serial: card.serial,
+            formattedSerial: card.formattedSerial,
+            authCode: card.authCode,
+            batchName,
+            category: 'Quatro Cantos',
+            icon: '🍫',
+            title: 'Quatro Cantos (4/4)',
+            missingNumbers: []
+          });
+        }
+        if (ev.isTerno && !ev.isCinquina && !ev.isCartelaCheia) {
+          batidasCards.push({
+            serial: card.serial,
+            formattedSerial: card.formattedSerial,
+            authCode: card.authCode,
+            batchName,
+            category: 'Terno',
+            icon: '🍗',
+            title: 'Terno (3 em Linha)',
+            missingNumbers: []
+          });
+        }
+
+        // 2. Armadas (prioridade: Cheia > Cinquina > 4 Cantos > Terno)
+        if (ev.isArmadaCheia) {
           armadaCards.push({
             serial: card.serial,
             formattedSerial: card.formattedSerial,
             authCode: card.authCode,
-            batchName: batch.roundName || batch.eventName || 'Lote',
-            missingNumber: ev.missingNumbers[0]
+            batchName,
+            category: 'Cartela Cheia',
+            missingNumber: ev.missingCheiaNumber,
+            missingNumbers: [ev.missingCheiaNumber],
+            priority: 1
+          });
+        } else if (ev.isArmadaCinquina && !ev.isCinquina) {
+          armadaCards.push({
+            serial: card.serial,
+            formattedSerial: card.formattedSerial,
+            authCode: card.authCode,
+            batchName,
+            category: 'Cinquina',
+            missingNumber: ev.missingCinquinaNumbers[0],
+            missingNumbers: ev.missingCinquinaNumbers,
+            priority: 2
+          });
+        } else if (ev.isArmadaQuatroCantos && !ev.isQuatroCantos) {
+          armadaCards.push({
+            serial: card.serial,
+            formattedSerial: card.formattedSerial,
+            authCode: card.authCode,
+            batchName,
+            category: 'Quatro Cantos',
+            missingNumber: ev.missingCornerNumbers[0],
+            missingNumbers: ev.missingCornerNumbers,
+            priority: 3
+          });
+        } else if (ev.isArmadaTerno && !ev.isTerno) {
+          armadaCards.push({
+            serial: card.serial,
+            formattedSerial: card.formattedSerial,
+            authCode: card.authCode,
+            batchName,
+            category: 'Terno',
+            missingNumber: ev.missingTernoNumbers[0],
+            missingNumbers: ev.missingTernoNumbers,
+            priority: 4
           });
         }
       });
     });
 
+    armadaCards.sort((a, b) => (a.priority || 99) - (b.priority || 99));
+
     return {
       totalCardsAudited,
       bingouCards,
+      batidasCards,
       armadaCards,
-      hasBingou: bingouCards.length > 0,
+      hasBingou: bingouCards.length > 0 || batidasCards.length > 0,
       hasArmada: armadaCards.length > 0
     };
   }

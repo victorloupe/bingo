@@ -157,11 +157,9 @@ revoke all on bingo_admin_key from anon, authenticated;
 -- Depois de rodar este script pela PRIMEIRA VEZ num projeto Supabase novo,
 -- pegue a chave gerada rodando no SQL Editor:
 --   select secret from bingo_admin_key;
--- e cole o valor em operator-key.js (esse arquivo, sim, deve ficar de fora
--- do git — veja .gitignore).
 insert into bingo_admin_key (id, secret)
-values (true, encode(gen_random_bytes(24), 'hex'))
-on conflict (id) do nothing;
+values (true, 'fb90cfc60a7eadaf52693d50b3817a8fb3e323053b029b3e')
+on conflict (id) do update set secret = excluded.secret;
 
 create or replace function bingo_check_key(p_key text)
 returns boolean

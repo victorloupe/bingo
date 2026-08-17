@@ -57,7 +57,9 @@ body {
   background: var(--bg-gradient);
   background-attachment: fixed;
   color: var(--text);
+  height: 100dvh;
   min-height: 100dvh;
+  overflow: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -98,13 +100,15 @@ svg.lucide-xl, i.lucide-xl, .lucide-xl {
    TV Shell & Container Principal (Compacto & Minimalista)
    ============================================================ */
 .tv-shell {
-  min-height: 100dvh;
+  height: 100dvh;
+  max-height: 100dvh;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 10px 16px;
+  padding: 8px 16px;
   max-width: 1920px;
   margin: 0 auto;
+  overflow: hidden;
 }
 
 /* Header Compacto */
@@ -332,7 +336,7 @@ progress::-moz-progress-bar {
    ============================================================ */
 .tv-main {
   display: grid;
-  grid-template-columns: 0.95fr 1.45fr;
+  grid-template-columns: 450px 1fr;
   gap: 12px;
   align-items: stretch;
   flex: 1;
@@ -345,6 +349,9 @@ progress::-moz-progress-bar {
   gap: 10px;
   height: 100%;
   min-height: 0;
+  width: 450px;
+  max-width: 450px;
+  overflow: hidden;
 }
 
 /* Última Pedra Sorteada */
@@ -417,13 +424,13 @@ progress::-moz-progress-bar {
 
 .tv-auditor-box {
   flex: 0 0 auto;
-  max-height: 105px;
+  max-height: 135px;
   display: flex;
   flex-direction: column;
   background: #ffffff;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 6px 10px;
+  padding: 5px 8px;
   box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
@@ -1778,67 +1785,134 @@ progress::-moz-progress-bar {
   flex-direction: column;
   gap: 3px;
   flex: 1;
-  overflow-y: auto;
+  overflow: hidden;
   min-height: 0;
-  padding-right: 1px;
 }
 
 .auditor-bingou-banner {
   background: linear-gradient(135deg, #15803d 0%, #16a34a 100%);
-  color: #ffffff;
-  border-radius: 6px;
-  padding: 3px 8px;
+  color: #ffffff !important;
+  border-radius: 5px;
+  padding: 2px 6px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
-  box-shadow: 0 2px 5px rgba(22, 163, 74, 0.25);
+  gap: 4px;
+  box-shadow: 0 1px 3px rgba(22, 163, 74, 0.2);
   flex-shrink: 0;
+}
+.auditor-bingou-banner strong {
+  color: #ffffff !important;
+}
+
+.auditor-batida-banner {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  color: #ffffff !important;
+  border-radius: 5px;
+  padding: 2px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  box-shadow: 0 1px 3px rgba(2, 132, 199, 0.2);
+  flex-shrink: 0;
+}
+.auditor-batida-banner strong {
+  color: #ffffff !important;
 }
 
 .auditor-bingou-serial-pill {
   background: #ffffff;
-  color: #15803d;
+  color: #0f172a;
   font-weight: 800;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   padding: 1px 6px;
   border-radius: 999px;
   font-family: var(--font-mono);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  white-space: nowrap;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  vertical-align: middle;
 }
 
 .auditor-btn-conferir {
   background: #ffffff;
-  color: #15803d;
+  color: #0f172a;
   font-weight: 800;
-  font-size: 0.68rem;
-  padding: 2px 7px;
+  font-size: 0.65rem;
+  padding: 2px 6px;
   border-radius: 4px;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
   line-height: 1;
   transition: all 0.15s ease;
   white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 .auditor-btn-conferir:hover {
-  background: #f0fdf4;
-  color: #166534;
+  background: #f8fafc;
+  color: #2563eb;
   transform: translateY(-1px);
+}
+
+.auditor-armadas-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.auditor-armadas-title {
+  color: #dc2626;
+  font-weight: 800;
+  font-size: 0.66rem;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  line-height: 1;
+}
+
+.auditor-armadas-grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 3px;
+  max-height: 60px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.auditor-armadas-grid::-webkit-scrollbar {
+  width: 4px;
+}
+.auditor-armadas-grid::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+.auditor-armadas-grid::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+.auditor-armadas-grid::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .auditor-armada-chip {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
   background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #cbd5e1;
   border-radius: 4px;
   padding: 1px 4px;
-  font-size: 0.7rem;
-  line-height: 1;
-  transition: border-color 0.15s ease;
+  font-size: 0.66rem;
+  line-height: 1.1;
+  transition: all 0.15s ease;
 }
 .auditor-armada-chip:hover {
   border-color: #fca5a5;
@@ -1846,14 +1920,14 @@ progress::-moz-progress-bar {
 }
 .armada-serial {
   font-weight: 800;
-  color: #334155;
+  color: #0f172a;
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.65rem;
 }
 .armada-ball-badge {
   color: #ffffff;
   font-weight: 800;
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   padding: 1px 4px;
   border-radius: 3px;
   line-height: 1;
