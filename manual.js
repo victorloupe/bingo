@@ -39,6 +39,7 @@ let firstTs = null;
 let lastTs = null;
 let prizes = Object.assign({}, DEFAULT_PRIZES);
 let adMode = false;
+let lastUserActionTs = 0;
 
 // ====== UI ======
 const elStatDrawn = document.getElementById('stat-drawn');
@@ -763,6 +764,7 @@ function openAdConfigModal() {
 }
 
 btnAdToggle?.addEventListener('click', () => {
+  lastUserActionTs = Date.now();
   adMode = !adMode;
   updateAdButton();
   LS.save();
@@ -832,6 +834,7 @@ formAdConfig?.addEventListener('submit', (e) => {
   const notice = { title, desc };
   localStorage.setItem('bingo.adNotice', JSON.stringify(notice));
 
+  lastUserActionTs = Date.now();
   adMode = true;
   updateAdButton();
   LS.save();
@@ -1076,8 +1079,10 @@ function applyRemoteState(remoteState, remoteRanking) {
     if (remoteState.roundName) roundName = remoteState.roundName;
     if (remoteState.activeRoundId) roundId = remoteState.activeRoundId;
     if (typeof remoteState.adMode === 'boolean') {
-      adMode = remoteState.adMode;
-      localStorage.setItem('bingo.adMode', adMode ? '1' : '0');
+      if (Date.now() - lastUserActionTs > 3000) {
+        adMode = remoteState.adMode;
+        localStorage.setItem('bingo.adMode', adMode ? '1' : '0');
+      }
     }
     if (remoteState.prizes) prizes = Object.assign({}, DEFAULT_PRIZES, remoteState.prizes);
     if (remoteState.adNotice) localStorage.setItem('bingo.adNotice', JSON.stringify(remoteState.adNotice));
