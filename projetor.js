@@ -58,6 +58,7 @@
   let previousConferenceMode = false;
   let currentAdIndex = 0;
   let lastRenderedSlideIndex = -1;
+  let lastSponsorsJson = '';
   let adIntervalTimer = null;
 
   let soundEnabled = localStorage.getItem('bingo.projector.sound') !== '0';
@@ -215,29 +216,38 @@
   // ====== Modo Propaganda / Comercial Slider ======
   function renderCurrentSlide(force = false) {
     const spList = sponsors && sponsors.length ? sponsors : SAMPLE_SPONSORS;
+    if (!spList.length) return;
     if (currentAdIndex >= spList.length) currentAdIndex = 0;
     const cur = spList[currentAdIndex];
+    if (!cur) return;
 
     if (adImg) {
       adImg.onerror = () => { adImg.src = 'favicon.svg'; };
     }
 
-    if (cur && (force || currentAdIndex !== lastRenderedSlideIndex)) {
+    if (force || currentAdIndex !== lastRenderedSlideIndex) {
       lastRenderedSlideIndex = currentAdIndex;
       if (adSlideBox) {
-        adSlideBox.style.transition = 'opacity 0.25s ease';
-        adSlideBox.style.opacity = '0.3';
+        adSlideBox.style.transition = 'opacity 0.2s ease';
+        adSlideBox.style.opacity = '0.35';
         setTimeout(() => {
           if (adImg) adImg.src = cur.img || 'favicon.svg';
           if (adName) adName.textContent = cur.name || 'Patrocinador Oficial';
           if (adDesc) adDesc.textContent = cur.desc || 'Apoio aos nossos eventos';
           if (adSlideBox) adSlideBox.style.opacity = '1';
-        }, 150);
+        }, 120);
       } else {
         if (adImg) adImg.src = cur.img || 'favicon.svg';
         if (adName) adName.textContent = cur.name || 'Patrocinador Oficial';
         if (adDesc) adDesc.textContent = cur.desc || 'Apoio aos nossos eventos';
       }
+    } else {
+      // Mesma imagem já renderizada: apenas atualiza textos sem piscar/fade de opacidade
+      if (adImg && adImg.src !== (cur.img || 'favicon.svg') && !adImg.src.endsWith(cur.img || 'favicon.svg')) {
+        adImg.src = cur.img || 'favicon.svg';
+      }
+      if (adName && adName.textContent !== cur.name) adName.textContent = cur.name || 'Patrocinador Oficial';
+      if (adDesc && adDesc.textContent !== cur.desc) adDesc.textContent = cur.desc || 'Apoio aos nossos eventos';
     }
   }
 
@@ -473,7 +483,7 @@
   function updateLiveNoticeBar() {
     if (!elLiveNoticeBar || !elNoticeIcon || !elNoticeBadge || !elNoticeText) return;
 
-    const isConference = conferenceMode || (localStorage.getItem('bingo.conferenceMode') === '1');
+    const isConference = typeof conferenceMode === 'boolean' ? conferenceMode : false;
 
     const elLiveDot = document.getElementById('live-indicator');
     if (elLiveDot) {
@@ -600,7 +610,7 @@
       adMode = localStorage.getItem('bingo.adMode') === '1';
     }
 
-    const newConf = (typeof newState.conferenceMode === 'boolean') ? newState.conferenceMode : (localStorage.getItem('bingo.conferenceMode') === '1');
+    const newConf = typeof newState.conferenceMode === 'boolean' ? newState.conferenceMode : false;
     if (newConf && !previousConferenceMode) {
       try { playDrawDing(); } catch (e) {}
     }
@@ -610,8 +620,12 @@
 
     if (newState.prizes) prizes = Object.assign({}, DEFAULT_PRIZES, newState.prizes);
     if (Array.isArray(newState.sponsors)) {
-      sponsors = newState.sponsors;
-      lastRenderedSlideIndex = -1;
+      const newSpJson = JSON.stringify(newState.sponsors);
+      if (newSpJson !== lastSponsorsJson) {
+        lastSponsorsJson = newSpJson;
+        sponsors = newState.sponsors;
+        lastRenderedSlideIndex = -1;
+      }
     }
 
     if (isNewBall) {
@@ -640,7 +654,8 @@
       
       adMode = (typeof st.adMode === 'boolean') ? st.adMode : (localStorage.getItem('bingo.adMode') === '1');
       st.adMode = adMode;
-      st.conferenceMode = conferenceMode || (localStorage.getItem('bingo.conferenceMode') === '1');
+      conferenceMode = typeof st.conferenceMode === 'boolean' ? st.conferenceMode : false;
+      st.conferenceMode = conferenceMode;
       handleStateChange(st);
     } catch (e) {}
   }

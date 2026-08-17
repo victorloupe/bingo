@@ -508,6 +508,7 @@
       try {
         const st = JSON.parse(localStorage.getItem('bingo.state') || '{}');
         st.adMode = boolVal;
+        st.conferenceMode = false;
         st.sponsors = loadSponsors();
         st.roundsList = loadRoundsList();
         let adNotice = null;
@@ -747,7 +748,8 @@
         prizes: roundPrizes,
         roundsList: list,
         activeRoundId: roundId,
-        adMode: getAdMode()
+        adMode: getAdMode(),
+        conferenceMode: false
       };
       localStorage.setItem('bingo.state', JSON.stringify(stateToLoad));
       localStorage.setItem('bingo.prizes', JSON.stringify(roundPrizes));

@@ -1063,7 +1063,16 @@
     });
 
     // ====== Voltar ao Modo Anterior ======
-    function goBackToGame() {
+    async function goBackToGame() {
+      setConferenceBroadcast(false);
+      try {
+        const st = LS.state();
+        st.conferenceMode = false;
+        if (window.BingoSync) {
+          await window.BingoSync.pushState(st);
+        }
+      } catch (e) {}
+
       // 1. Prioriza o modo registrado no sessionStorage
       const lastMode = sessionStorage.getItem('bingo.lastMode');
       if (lastMode && (lastMode.includes('automatico') || lastMode.includes('manual') || lastMode.includes('menu'))) {
@@ -1090,6 +1099,23 @@
 
     document.getElementById('btn-back-header')?.addEventListener('click', goBackToGame);
     document.getElementById('btn-back-footer')?.addEventListener('click', goBackToGame);
+
+    // Garante que links de saída (ex: Início / menu.html) desativem o aviso no Telão antes de navegar
+    document.querySelectorAll('a[href*="menu.html"], a[href*="automatico.html"], a[href*="manual.html"]').forEach((link) => {
+      link.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const dest = link.getAttribute('href');
+        setConferenceBroadcast(false);
+        try {
+          const st = LS.state();
+          st.conferenceMode = false;
+          if (window.BingoSync) {
+            await window.BingoSync.pushState(st);
+          }
+        } catch (err) {}
+        window.location.href = dest;
+      });
+    });
 
     // ====== Tela Cheia ======
     document.getElementById('btn-full')?.addEventListener('click', () => {

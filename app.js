@@ -144,7 +144,8 @@ const LS = {
       prizes,
       sponsors,
       adMode,
-      adNotice
+      adNotice,
+      conferenceMode: false
     };
     localStorage.setItem('bingo.state', JSON.stringify(data));
     localStorage.setItem('bingo.prizes', JSON.stringify(prizes));
