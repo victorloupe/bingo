@@ -766,6 +766,11 @@
     if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
     if (e.key === 'f' || e.key === 'F') { toggleFull(); }
     if (e.key === 'm' || e.key === 'M') { btnSoundToggle?.click(); }
+    if (e.key === 'p' || e.key === 'P') {
+      adMode = !adMode;
+      localStorage.setItem('bingo.adMode', adMode ? '1' : '0');
+      updateAdCarousel();
+    }
   });
 
   window.addEventListener('storage', (e) => {
