@@ -566,15 +566,10 @@
     updateAdCarousel();
   }
 
-  let lastHandledStateJson = '';
   function handleStateChange(newState) {
     if (!newState) return;
-    const str = JSON.stringify(newState);
     const newDrawn = Array.isArray(newState.drawn) ? newState.drawn : [];
     const isNewBall = newDrawn.length > previousDrawnLength && newState.last != null && newState.last !== previousLast;
-
-    if (str === lastHandledStateJson && !isNewBall) return;
-    lastHandledStateJson = str;
 
     drawn = newDrawn;
     last = newState.last ?? null;

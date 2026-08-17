@@ -1150,20 +1150,29 @@ async function initCloudSync() {
   BingoSync.init();
   if (!BingoSync.ready()) return;
 
-  const [remoteState, remoteRanking] = await Promise.all([
+  const [remoteState, remoteRanking, remoteBatches] = await Promise.all([
     BingoSync.pullState(),
-    BingoSync.pullRanking()
+    BingoSync.pullRanking(),
+    BingoSync.pullCardBatches ? BingoSync.pullCardBatches() : Promise.resolve(null)
   ]);
+
+  if (Array.isArray(remoteBatches) && window.BingoCardsEngine?.Storage?.mergeRemoteBatches) {
+    window.BingoCardsEngine.Storage.mergeRemoteBatches(remoteBatches);
+  }
 
   if (remoteState || remoteRanking) {
     applyRemoteState(remoteState, remoteRanking);
   }
 
   BingoSync.subscribe(async () => {
-    const [rs, rr] = await Promise.all([
+    const [rs, rr, rb] = await Promise.all([
       BingoSync.pullState(),
-      BingoSync.pullRanking()
+      BingoSync.pullRanking(),
+      BingoSync.pullCardBatches ? BingoSync.pullCardBatches() : Promise.resolve(null)
     ]);
+    if (Array.isArray(rb) && window.BingoCardsEngine?.Storage?.mergeRemoteBatches) {
+      window.BingoCardsEngine.Storage.mergeRemoteBatches(rb);
+    }
     if (rs || rr) {
       applyRemoteState(rs, rr);
     }

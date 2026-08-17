@@ -200,12 +200,16 @@
   // Auditoria em Tempo Real de todos os lotes de cartelas para uma rodada
   function auditAllCardsForRound(drawnNumbers = [], roundId = null) {
     const batches = Storage.getAllBatches();
-    const matchingBatches = batches.filter(b => {
+    let matchingBatches = batches.filter(b => {
       if (!roundId) return true;
       const ids = b.assignedRoundIds || b.roundIds;
       if (!ids || !ids.length || ids.includes('all')) return true;
       return ids.includes(roundId);
     });
+
+    if (!matchingBatches.length && batches.length > 0) {
+      matchingBatches = batches;
+    }
 
     const bingouCards = [];
     const armadaCards = [];
