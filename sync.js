@@ -445,11 +445,16 @@
         ? data.ad_mode 
         : (rawNotice && typeof rawNotice._adMode === 'boolean' ? rawNotice._adMode : false);
 
-      let cleanNotice = null;
+      let cleanNotice = rawNotice ? {
+        _conferenceMode: confMode,
+        _adMode: adModeVal
+      } : null;
       if (rawNotice && (rawNotice.title || rawNotice.desc)) {
         cleanNotice = {
           title: rawNotice.title || '',
-          desc: rawNotice.desc || ''
+          desc: rawNotice.desc || '',
+          _conferenceMode: confMode,
+          _adMode: adModeVal
         };
       }
 
