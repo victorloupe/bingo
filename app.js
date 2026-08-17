@@ -285,6 +285,7 @@ function drawOne(){
   if(gameOver) return;
   const left = remaining();
   if(left.length===0){ stopAuto(); return; }
+  lastUserActionTs = Date.now();
   const n = left[Math.floor(Math.random()*left.length)];
   drawn.push(n);
   last = n;
@@ -300,6 +301,7 @@ function drawOne(){
 
 function undo(){
   if(drawn.length===0) return;
+  lastUserActionTs = Date.now();
   drawn.pop();
   last = drawn.at(-1) ?? null;
   if(drawn.length===0){ firstTs = null; lastTs = null; }
@@ -309,6 +311,7 @@ function undo(){
 }
 
 function resetAll(){
+  lastUserActionTs = Date.now();
   drawn = []; last = null; stopAuto();
   gameOver = false;
   firstTs = null; lastTs = null;
@@ -1126,15 +1129,18 @@ document.getElementById('btn-close-shortcuts')?.addEventListener('click', ()=> d
 // ====== Sincronização Supabase (Dados Online Prioritários) ======
 function applyRemoteState(remoteState, remoteRanking) {
   if (remoteState) {
-    drawn = Array.isArray(remoteState.drawn) ? remoteState.drawn : [];
-    last = remoteState.last ?? null;
-    gameOver = !!remoteState.gameOver;
-    firstTs = remoteState.firstTs ?? null;
-    lastTs = remoteState.lastTs ?? null;
-    if (remoteState.roundName) roundName = remoteState.roundName;
-    if (remoteState.activeRoundId) roundId = remoteState.activeRoundId;
+    const isRecentLocalAction = (Date.now() - lastUserActionTs < 3000);
+    if (!isRecentLocalAction) {
+      drawn = Array.isArray(remoteState.drawn) ? remoteState.drawn : [];
+      last = remoteState.last ?? null;
+      gameOver = !!remoteState.gameOver;
+      firstTs = remoteState.firstTs ?? null;
+      lastTs = remoteState.lastTs ?? null;
+      if (remoteState.roundName) roundName = remoteState.roundName;
+      if (remoteState.activeRoundId) roundId = remoteState.activeRoundId;
+    }
     if (typeof remoteState.adMode === 'boolean') {
-      if (Date.now() - lastUserActionTs > 3000) {
+      if (!isRecentLocalAction) {
         adMode = remoteState.adMode;
         localStorage.setItem('bingo.adMode', adMode ? '1' : '0');
       }
