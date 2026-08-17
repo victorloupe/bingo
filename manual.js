@@ -276,10 +276,11 @@ function selectNumber(n){
   const now = Date.now();
   if(!firstTs) firstTs = now;
   lastTs = now;
+  LS.save();
+  updateUI();
   const L = letterFor(n);
   speakLongShort(L, n);
   try{ ding(920, 0.08); }catch(e){}
-  updateUI();
 }
 
 function undo(){
@@ -288,6 +289,7 @@ function undo(){
   last = drawn.at(-1) ?? null;
   if(drawn.length===0){ firstTs = null; lastTs = null; }
   else { lastTs = Date.now(); }
+  LS.save();
   updateUI();
 }
 
@@ -295,6 +297,7 @@ function resetAll(){
   drawn = []; last = null;
   gameOver = false;
   firstTs = null; lastTs = null;
+  LS.save();
   updateUI();
   try{ speechSynthesis.cancel(); }catch(e){}
 }
@@ -475,7 +478,6 @@ function updateUI(){
     elStatus.innerHTML = gameOver ? '<i data-lucide="flag" class="lucide-sm"></i> Encerrado' : '<i data-lucide="clock" class="lucide-sm text-primary"></i> Em andamento';
   }
   if(window.lucide) lucide.createIcons();
-  LS.save();
 }
 
 // ====== Auditoria em Tempo Real de Cartelas Armadas & Batidas ======

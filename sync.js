@@ -273,7 +273,9 @@
       const nRound = (data.next_round && typeof data.next_round === 'object' && data.next_round.name) ? data.next_round : null;
       const rawNotice = (data.ad_notice && typeof data.ad_notice === 'object') ? data.ad_notice : null;
       const confMode = rawNotice && typeof rawNotice._conferenceMode === 'boolean' ? rawNotice._conferenceMode : false;
-      const adModeVal = (data.ad_mode === true) || (rawNotice && rawNotice._adMode === true);
+      const adModeVal = typeof data.ad_mode === 'boolean' 
+        ? data.ad_mode 
+        : (rawNotice && typeof rawNotice._adMode === 'boolean' ? rawNotice._adMode : false);
 
       let cleanNotice = null;
       if (rawNotice && (rawNotice.title || rawNotice.desc)) {

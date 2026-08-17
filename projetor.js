@@ -605,10 +605,12 @@
     // adMode
     if (typeof newState.adMode === 'boolean') {
       adMode = newState.adMode;
-      localStorage.setItem('bingo.adMode', adMode ? '1' : '0');
+    } else if (newState.adNotice && typeof newState.adNotice._adMode === 'boolean') {
+      adMode = newState.adNotice._adMode;
     } else {
       adMode = localStorage.getItem('bingo.adMode') === '1';
     }
+    localStorage.setItem('bingo.adMode', adMode ? '1' : '0');
 
     const newConf = typeof newState.conferenceMode === 'boolean' ? newState.conferenceMode : false;
     if (newConf && !previousConferenceMode) {
