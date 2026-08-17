@@ -1193,19 +1193,27 @@ async function initCloudSync() {
     applyRemoteState(remoteState, remoteRanking);
   }
 
-  BingoSync.subscribe(async () => {
-    const [rs, rr, rb] = await Promise.all([
-      BingoSync.pullState(),
-      BingoSync.pullRanking(),
-      BingoSync.pullCardBatches ? BingoSync.pullCardBatches() : Promise.resolve(null)
-    ]);
-    if (Array.isArray(rb) && window.BingoCardsEngine?.Storage?.mergeRemoteBatches) {
-      window.BingoCardsEngine.Storage.mergeRemoteBatches(rb);
+  BingoSync.subscribe(
+    async () => {
+      const [rs, rr, rb] = await Promise.all([
+        BingoSync.pullState(),
+        BingoSync.pullRanking(),
+        BingoSync.pullCardBatches ? BingoSync.pullCardBatches() : Promise.resolve(null)
+      ]);
+      if (Array.isArray(rb) && window.BingoCardsEngine?.Storage?.mergeRemoteBatches) {
+        window.BingoCardsEngine.Storage.mergeRemoteBatches(rb);
+      }
+      if (rs || rr) {
+        applyRemoteState(rs, rr);
+      }
+    },
+    (directState) => {
+      applyRemoteState(directState);
+    },
+    (directRanking) => {
+      applyRemoteState(null, directRanking);
     }
-    if (rs || rr) {
-      applyRemoteState(rs, rr);
-    }
-  });
+  );
 }
 
 // ====== Start ======

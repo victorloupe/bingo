@@ -654,9 +654,19 @@
 
     await fetchAndApplyRemote();
 
-    BingoSync.subscribe(() => {
-      fetchAndApplyRemote();
-    });
+    BingoSync.subscribe(
+      () => {
+        fetchAndApplyRemote();
+      },
+      (directState) => {
+        lastStateSyncJson = JSON.stringify(directState);
+        handleStateChange(directState);
+      },
+      (directRanking) => {
+        lastRankingSyncJson = JSON.stringify(directRanking);
+        renderRanking(directRanking);
+      }
+    );
   }
 
   // ====== Relógio ======

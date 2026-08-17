@@ -14,6 +14,7 @@
   let statusResetTimer = null;
   let lastPushStateJson = '';
   let lastPushRankingJson = '';
+  let broadcastChannel = null;
 
   const STATUS_LABEL = {
     disabled: '💻 Local apenas',
@@ -91,6 +92,21 @@
     try {
       client = window.supabase.createClient(cfg.url, cfg.anonKey);
       configured = true;
+
+      // Canal de Broadcast em Tempo Real dedicado para a sala
+      if (!broadcastChannel) {
+        broadcastChannel = client.channel('bingo-broadcast-' + ROOM, {
+          config: {
+            broadcast: { self: false }
+          }
+        });
+        broadcastChannel.subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            setStatus('online');
+          }
+        });
+      }
+
       setStatus(navigator.onLine ? 'online' : 'offline');
       return true;
     } catch (e) {
@@ -210,6 +226,35 @@
     if (str === lastPushStateJson) return; // Não envia se não houve alteração real
     lastPushStateJson = str;
 
+    // Transmissão ultrarrápida via Realtime Broadcast (< 20ms)
+    const broadcastPayload = {
+      activeRoundId: payload.active_round_id,
+      roundName: payload.round_name,
+      roundsList: payload.rounds_list,
+      nextRound: payload.next_round,
+      roundsQueue: payload.rounds_queue,
+      drawn: payload.drawn,
+      last: payload.last,
+      gameOver: payload.game_over,
+      firstTs: payload.first_ts,
+      lastTs: payload.last_ts,
+      prizes: payload.prizes,
+      sponsors: payload.sponsors,
+      adMode: payload.ad_mode,
+      adNotice: payload.ad_notice,
+      conferenceMode: isConference
+    };
+
+    if (broadcastChannel) {
+      try {
+        broadcastChannel.send({
+          type: 'broadcast',
+          event: 'state_update',
+          payload: broadcastPayload
+        });
+      } catch (e) {}
+    }
+
     const key = operatorKey();
     if (!key) {
       console.warn('[BingoSync] BINGO_OPERATOR_KEY ausente — inclua operator-key.js antes de sync.js nesta página para sincronizar gravações.');
@@ -269,6 +314,17 @@
 
     try {
       const rows = (list || []).map((r) => ({ name: r.name, type: r.type, ts: r.ts || new Date().toISOString() }));
+      
+      if (broadcastChannel) {
+        try {
+          broadcastChannel.send({
+            type: 'broadcast',
+            event: 'ranking_update',
+            payload: rows
+          });
+        } catch (e) {}
+      }
+
       const { error } = await client.rpc('bingo_push_ranking', { p_key: key, p_room: ROOM, p_rows: rows });
       if (error) throw error;
       setStatus('online');
@@ -421,9 +477,27 @@
   }
 
   let remoteCallbackTimer = null;
-  function subscribe(onRemoteChange) {
+  function subscribe(onRemoteChange, onDirectStateChange, onDirectRankingChange) {
     if (!ready()) return;
     
+    if (broadcastChannel) {
+      broadcastChannel
+        .on('broadcast', { event: 'state_update' }, (response) => {
+          if (onDirectStateChange && response.payload) {
+            onDirectStateChange(response.payload);
+          } else if (onRemoteChange) {
+            onRemoteChange();
+          }
+        })
+        .on('broadcast', { event: 'ranking_update' }, (response) => {
+          if (onDirectRankingChange && response.payload) {
+            onDirectRankingChange(response.payload);
+          } else if (onRemoteChange) {
+            onRemoteChange();
+          }
+        });
+    }
+
     const handleRemoteChange = () => {
       if (remoteCallbackTimer) clearTimeout(remoteCallbackTimer);
       remoteCallbackTimer = setTimeout(() => {
@@ -445,10 +519,10 @@
         });
     } catch(e) {}
 
-    // Polling rápido e contínuo de 800ms (garante sincronização mesmo se WebSocket for bloqueado ou oscilar)
+    // Polling de fallback a cada 1.5s
     setInterval(() => {
       if (onRemoteChange) onRemoteChange();
-    }, 800);
+    }, 1500);
   }
 
   window.addEventListener('online', () => setStatus(configured ? 'online' : 'disabled'));
