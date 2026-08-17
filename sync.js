@@ -31,6 +31,7 @@
   let statusResetTimer = null;
   let lastPushStateJson = '';
   let lastPushRankingJson = '';
+  let lastRemoteState = null; // último estado lido da nuvem (referência para não apagar dados alheios)
   let broadcastChannel = null;
   let realtimeChannel = null;
 
@@ -178,8 +179,12 @@
   }
 
   let pushTimer = null;
-  function pushState(state, immediate = true) {
+  function pushState(state, immediate = true, force = false) {
     if (pushTimer) clearTimeout(pushTimer);
+    // force: reenvia mesmo que o conteúdo seja igual ao do último envio. Usado
+    // nas retentativas do botão de Propaganda — se outro aparelho tiver
+    // sobrescrito o valor na nuvem, o reenvio idêntico precisa passar.
+    if (force) lastPushStateJson = '';
     if (immediate) {
       return doPushState(state);
     }
@@ -190,8 +195,25 @@
 
   async function doPushState(state) {
     if (!ready()) return;
-    const isAd = typeof state.adMode === 'boolean' ? state.adMode : (localStorage.getItem('bingo.adMode') === '1');
-    const isConference = typeof state.conferenceMode === 'boolean' ? state.conferenceMode : (localStorage.getItem('bingo.conferenceMode') === '1');
+
+    // Último estado lido da nuvem. É a referência para NÃO apagar um valor que
+    // este aparelho ainda não conhece: uma página que envia um estado parcial
+    // (ex.: a Mesa de Conferência aberta num celular, que começa com o
+    // localStorage vazio) precisa preservar o que já está na nuvem em vez de
+    // sobrescrever com o "padrão" local. Era isso que desligava a propaganda
+    // do Telão sozinha assim que outro aparelho entrava na sala.
+    const remote = lastRemoteState || {};
+
+    const isAd = typeof state.adMode === 'boolean'
+      ? state.adMode
+      : (typeof remote.adMode === 'boolean'
+          ? remote.adMode
+          : (localStorage.getItem('bingo.adMode') === '1'));
+    const isConference = typeof state.conferenceMode === 'boolean'
+      ? state.conferenceMode
+      : (typeof remote.conferenceMode === 'boolean'
+          ? remote.conferenceMode
+          : (localStorage.getItem('bingo.conferenceMode') === '1'));
 
     let adNoticeObj = {};
     if (state.adNotice && typeof state.adNotice === 'object') {
@@ -200,6 +222,9 @@
       try {
         adNoticeObj = JSON.parse(localStorage.getItem('bingo.adNotice') || '{}') || {};
       } catch (e) { adNoticeObj = {}; }
+      if (!adNoticeObj.title && !adNoticeObj.desc && remote.adNotice && typeof remote.adNotice === 'object') {
+        adNoticeObj = Object.assign({}, remote.adNotice);
+      }
     }
     // Grava flags dinâmicas junto no ad_notice (jsonb) para garantir propagação perfeita
     adNoticeObj._conferenceMode = isConference;
@@ -213,6 +238,7 @@
         if (Array.isArray(localSp) && localSp.length > 0) sponsorsList = localSp;
       } catch (e) {}
     }
+    if (!sponsorsList && Array.isArray(remote.sponsors) && remote.sponsors.length > 0) sponsorsList = remote.sponsors;
 
     // RoundsList: preserva lista de rodadas
     let roundsListVal = (Array.isArray(state.roundsList) && state.roundsList.length > 0) ? state.roundsList : null;
@@ -222,6 +248,7 @@
         if (Array.isArray(localRounds) && localRounds.length > 0) roundsListVal = localRounds;
       } catch (e) {}
     }
+    if (!roundsListVal && Array.isArray(remote.roundsList) && remote.roundsList.length > 0) roundsListVal = remote.roundsList;
 
     // RoundsQueue: preserva fila de rodadas
     let roundsQueueVal = (Array.isArray(state.roundsQueue) && state.roundsQueue.length > 0) ? state.roundsQueue : null;
@@ -231,6 +258,7 @@
         if (Array.isArray(localQueue) && localQueue.length > 0) roundsQueueVal = localQueue;
       } catch (e) {}
     }
+    if (!roundsQueueVal && Array.isArray(remote.roundsQueue) && remote.roundsQueue.length > 0) roundsQueueVal = remote.roundsQueue;
 
     // Drawn & Last & ActiveRound & RoundName & Prizes: preserva se state não passar explicitamente
     let drawnVal = Array.isArray(state.drawn) ? state.drawn : null;
@@ -245,12 +273,21 @@
         const savedSt = JSON.parse(localStorage.getItem('bingo.state') || '{}');
         if (!drawnVal && Array.isArray(savedSt.drawn)) drawnVal = savedSt.drawn;
         if (lastVal === undefined && typeof savedSt.last !== 'undefined') lastVal = savedSt.last;
-        if (!activeRoundIdVal) activeRoundIdVal = savedSt.activeRoundId || localStorage.getItem('bingo.activeRoundId') || 'round_1';
-        if (!roundNameVal) roundNameVal = savedSt.roundName || 'Rodada 1';
+        if (!activeRoundIdVal) activeRoundIdVal = savedSt.activeRoundId || localStorage.getItem('bingo.activeRoundId') || null;
+        if (!roundNameVal) roundNameVal = savedSt.roundName || null;
         if (!prizesVal && savedSt.prizes) prizesVal = savedSt.prizes;
         if (!nextRoundVal && savedSt.nextRound) nextRoundVal = savedSt.nextRound;
       } catch (e) {}
     }
+
+    // Última rede de proteção: o que ainda faltar vem do último estado lido da
+    // nuvem, nunca de um valor "zerado" inventado por este aparelho.
+    if (!drawnVal && Array.isArray(remote.drawn)) drawnVal = remote.drawn;
+    if (lastVal === undefined && typeof remote.last !== 'undefined') lastVal = remote.last;
+    if (!activeRoundIdVal) activeRoundIdVal = remote.activeRoundId || 'round_1';
+    if (!roundNameVal) roundNameVal = remote.roundName || 'Rodada 1';
+    if (!prizesVal && remote.prizes && Object.keys(remote.prizes).length > 0) prizesVal = remote.prizes;
+    if (!nextRoundVal && remote.nextRound) nextRoundVal = remote.nextRound;
 
     const payload = {
       room: ROOM,
@@ -273,6 +310,28 @@
     const str = JSON.stringify(payload);
     if (str === lastPushStateJson) return; // Não envia se não houve alteração real
     lastPushStateJson = str;
+
+    // Formato que as telas consomem (camelCase), usado nas duas transmissões
+    // instantâneas abaixo. Sem este objeto as duas chamadas quebravam em
+    // silêncio (o erro morria no try/catch) e o Telão só era atualizado pelo
+    // polling de 1,5 s — nunca em tempo real.
+    const broadcastPayload = {
+      activeRoundId: payload.active_round_id,
+      roundName: payload.round_name,
+      roundsList: payload.rounds_list,
+      nextRound: payload.next_round,
+      roundsQueue: payload.rounds_queue,
+      drawn: payload.drawn,
+      last: payload.last,
+      gameOver: payload.game_over,
+      firstTs: payload.first_ts,
+      lastTs: payload.last_ts,
+      prizes: payload.prizes,
+      sponsors: payload.sponsors,
+      adMode: payload.ad_mode,
+      adNotice: payload.ad_notice,
+      conferenceMode: isConference
+    };
 
     // 1. Transmissão instantânea via Barramento Local do Navegador (< 1ms para todas as abas)
     if (localBus) {
@@ -297,6 +356,7 @@
 
     const key = operatorKey();
     if (!key) {
+      lastPushStateJson = ''; // não marca como enviado algo que nunca saiu daqui
       console.warn('[BingoSync] BINGO_OPERATOR_KEY ausente — inclua operator-key.js antes de sync.js nesta página para sincronizar gravações.');
       return;
     }
@@ -490,7 +550,7 @@
         };
       }
 
-      return {
+      const result = {
         activeRoundId: data.active_round_id || 'round_1',
         roundName: data.round_name || 'Rodada 1',
         roundsList: Array.isArray(data.rounds_list) ? data.rounds_list : [],
@@ -507,6 +567,8 @@
         adNotice: cleanNotice,
         conferenceMode: confMode
       };
+      lastRemoteState = result;
+      return result;
     } catch (e) {
       return null;
     }
@@ -541,7 +603,17 @@
   }
 
   let remoteCallbackTimer = null;
-  function subscribe(onRemoteChange, onDirectStateChange, onDirectRankingChange) {
+  function subscribe(onRemoteChange, onDirectStateChangeRaw, onDirectRankingChange) {
+    // Todo estado que chega em tempo real também vira referência do "último
+    // estado conhecido da nuvem", para que um envio parcial feito logo em
+    // seguida não apague campos (propaganda, pedras, prêmios) sem querer.
+    const onDirectStateChange = onDirectStateChangeRaw
+      ? (payload) => {
+          if (payload && typeof payload === 'object') lastRemoteState = payload;
+          return onDirectStateChangeRaw(payload);
+        }
+      : onDirectStateChangeRaw;
+
     // 1. Escuta no Barramento Local (comunicação instantânea <1ms entre abas no mesmo PC)
     if (localBus) {
       localBus.onmessage = (e) => {
