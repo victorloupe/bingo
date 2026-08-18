@@ -10,6 +10,7 @@
     warning: `<svg class="lucide lucide-alert-triangle" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`,
     error: `<svg class="lucide lucide-alert-circle" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
     trash: `<svg class="lucide lucide-trash-2" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>`,
+    trophy: `<svg class="lucide lucide-trophy" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.45 1-1 1H7v2h10v-2h-2c-.55 0-1-.45-1-1v-2.34"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>`,
     help: `<svg class="lucide lucide-help-circle" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`
   };
 
@@ -61,6 +62,8 @@
 
       if (icon && typeof icon === 'string' && icon.includes('<svg')) {
         iconEl.innerHTML = icon;
+      } else if (icon && ICONS[icon]) {
+        iconEl.innerHTML = ICONS[icon];
       } else if (danger) {
         iconEl.innerHTML = ICONS.trash;
       } else {
@@ -93,6 +96,85 @@
       btnCancel.addEventListener('click', onCancel);
       btnConfirm.addEventListener('click', onConfirm);
       btnConfirm.focus();
+    });
+  }
+
+  function prompt({
+    title = 'Informação',
+    message = 'Digite o valor:',
+    placeholder = 'Digite aqui...',
+    defaultValue = '',
+    confirmText = 'Confirmar',
+    cancelText = 'Cancelar',
+    icon = null
+  } = {}) {
+    ensureElements();
+    return new Promise((resolve) => {
+      const overlay = document.getElementById('bingo-dialog-overlay');
+      const iconEl = document.getElementById('bingo-dialog-icon');
+      const titleEl = document.getElementById('bingo-dialog-title');
+      const msgEl = document.getElementById('bingo-dialog-msg');
+      const actionsEl = document.getElementById('bingo-dialog-actions');
+
+      if (icon && typeof icon === 'string' && icon.includes('<svg')) {
+        iconEl.innerHTML = icon;
+      } else if (icon && ICONS[icon]) {
+        iconEl.innerHTML = ICONS[icon];
+      } else {
+        iconEl.innerHTML = ICONS.info;
+      }
+
+      titleEl.textContent = title;
+      msgEl.innerHTML = `
+        <div style="margin-bottom:10px; font-size:0.88rem; color:#334155; line-height:1.4;">${message.replace(/\n/g, '<br>')}</div>
+        <input type="text" id="dialog-prompt-input" class="form-control" style="width:100%; padding:9px 12px; font-size:0.95rem; border-radius:8px; border:1.5px solid #cbd5e1; outline:none; background:#ffffff; color:#0f172a; box-shadow:0 1px 2px rgba(0,0,0,0.04);" placeholder="${placeholder}" value="${defaultValue}" autocomplete="off" />
+      `;
+
+      actionsEl.innerHTML = `
+        <button type="button" class="btn-min" id="dialog-btn-prompt-cancel">${cancelText}</button>
+        <button type="button" class="btn-min btn-min-primary" id="dialog-btn-prompt-confirm">${confirmText}</button>
+      `;
+
+      overlay.removeAttribute('hidden');
+
+      const inputEl = document.getElementById('dialog-prompt-input');
+      const btnCancel = document.getElementById('dialog-btn-prompt-cancel');
+      const btnConfirm = document.getElementById('dialog-btn-prompt-confirm');
+
+      if (inputEl) {
+        setTimeout(() => {
+          inputEl.focus();
+          inputEl.select();
+        }, 50);
+      }
+
+      function close(result) {
+        overlay.setAttribute('hidden', '');
+        btnCancel.removeEventListener('click', onCancel);
+        btnConfirm.removeEventListener('click', onConfirm);
+        inputEl?.removeEventListener('keydown', onKey);
+        resolve(result);
+      }
+
+      function onCancel() { close(null); }
+      function onConfirm() {
+        const val = inputEl ? inputEl.value.trim() : '';
+        close(val);
+      }
+
+      function onKey(e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          onConfirm();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          onCancel();
+        }
+      }
+
+      btnCancel.addEventListener('click', onCancel);
+      btnConfirm.addEventListener('click', onConfirm);
+      inputEl?.addEventListener('keydown', onKey);
     });
   }
 
@@ -148,5 +230,5 @@
     }, duration);
   }
 
-  window.BingoDialog = { confirm, alert, toast };
+  window.BingoDialog = { confirm, prompt, alert, toast };
 })();

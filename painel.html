@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#2563eb" />
+  <title>Bingo 75 – Painel de Sorteio Oficial</title>
+
+  <!-- Google Fonts & Bootstrap 5 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="styles.css?v=3.3" />
+
+  <style>
+    .tv-header {
+      display: grid !important;
+      grid-template-columns: auto 1fr auto !important;
+      align-items: center !important;
+      gap: 12px !important;
+      width: 100% !important;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header-center {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+    .header-center .badge-round {
+      font-size: 0.92rem;
+      font-weight: 800;
+      padding: 5px 18px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    }
+    .mode-switch-capsule {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      background: #e2e8f0;
+      padding: 3px;
+      border-radius: 999px;
+      border: 1px solid #cbd5e1;
+      user-select: none;
+      isolation: isolate;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);
+    }
+    .mode-switch-glider {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      height: calc(100% - 6px);
+      width: calc(50% - 3px);
+      background: #2563eb;
+      border-radius: 999px;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.3s ease, box-shadow 0.3s ease;
+      z-index: 1;
+      pointer-events: none;
+    }
+    .mode-switch-capsule.is-manual .mode-switch-glider {
+      transform: translateX(100%);
+      background: #059669;
+      box-shadow: 0 2px 8px rgba(5, 150, 105, 0.4);
+    }
+    .mode-switch-btn {
+      position: relative;
+      z-index: 2;
+      border: none;
+      background: transparent;
+      padding: 4px 13px;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 800;
+      color: #64748b;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      transition: color 0.25s ease;
+      line-height: 1.4;
+      white-space: nowrap;
+    }
+    .mode-switch-btn:hover {
+      color: #0f172a;
+    }
+    .mode-switch-btn.active {
+      color: #ffffff !important;
+    }
+    .grid.mode-manual .cell {
+      cursor: pointer;
+    }
+    .grid.mode-manual .cell:hover {
+      transform: scale(1.06);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      border-color: #3b82f6;
+    }
+    .grid.mode-auto .cell {
+      cursor: default;
+    }
+
+    /* Animação suave para os controles da barra inferior */
+    .mode-controls-box {
+      display: inline-flex;
+      align-items: center;
+      position: relative;
+    }
+    .mode-controls-pane {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1), transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .mode-controls-pane.is-hidden {
+      display: none !important;
+      opacity: 0;
+      transform: translateY(8px) scale(0.96);
+      pointer-events: none;
+    }
+    .mode-controls-pane.anim-in {
+      animation: paneSlideIn 0.26s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+    }
+    .mode-controls-pane.anim-out {
+      animation: paneSlideOut 0.18s cubic-bezier(0.4, 0, 1, 1) forwards;
+    }
+
+    @keyframes paneSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+    @keyframes paneSlideOut {
+      from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      to {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.95);
+      }
+    }
+
+    /* Coluna Esquerda com 3 Containers de Tamanho Fixo e Equilibrado */
+    .tv-main {
+      grid-template-columns: 530px 1fr !important;
+    }
+    .tv-last {
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 10px !important;
+      height: 100% !important;
+      min-height: 0 !important;
+      width: 530px !important;
+      max-width: 530px !important;
+      overflow: hidden !important;
+    }
+    .tv-last .last {
+      height: 64px !important;
+      flex: 0 0 64px !important;
+      padding: 6px 14px !important;
+      box-sizing: border-box !important;
+      margin-bottom: 0 !important;
+    }
+    .tv-history-wrap,
+    .tv-ranking,
+    .tv-auditor-box {
+      flex: 1 1 0 !important;
+      min-height: 0 !important;
+      height: 0 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      background: #ffffff !important;
+      border: 1px solid var(--border) !important;
+      border-radius: var(--radius-md) !important;
+      padding: 8px 12px !important;
+      box-shadow: var(--shadow-sm) !important;
+      overflow: hidden !important;
+    }
+    .tv-history-wrap .history,
+    .tv-ranking .table-responsive,
+    .tv-auditor-box .auditor-live-content {
+      flex: 1 1 auto !important;
+      min-height: 0 !important;
+      overflow-y: auto !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="tv-shell">
+    <!-- Cabeçalho Principal Compacto em 3 Colunas -->
+    <header class="tv-header">
+      <!-- Esquerda: Logo + Seletor de Modo com Animação Deslizante -->
+      <div class="header-left">
+        <h1 class="app-title m-0">
+          <span>Bingo 75</span>
+        </h1>
+        
+        <!-- Alternador de Modo de Sorteio com Glider Deslizante Animado -->
+        <div class="mode-switch-capsule" id="mode-capsule" role="group" aria-label="Alternar modo de sorteio">
+          <div class="mode-switch-glider"></div>
+          <button type="button" class="mode-switch-btn active" id="btn-mode-auto" title="Modo Automático: Sorteio digital pelo sistema (Espaço / Auto)">
+            <svg class="lucide lucide-play lucide-xs" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+            <span>Automático</span>
+          </button>
+          <button type="button" class="mode-switch-btn" id="btn-mode-manual" title="Modo Manual: Digite ou clique nas pedras sorteadas no globo físico">
+            <svg class="lucide lucide-hand lucide-xs" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg>
+            <span>Manual (Globo)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Centro: Nome do Bingo / Rodada Centralizado -->
+      <div class="header-center">
+        <span id="round-badge" class="badge-round">Rodada 1</span>
+      </div>
+
+      <!-- Direita: Informações & Status -->
+      <div class="stats">
+        <div class="chip"><span class="text-muted">Sorteados:</span> <span class="v tabnum" id="stat-drawn">0/75</span></div>
+        <div class="chip"><span class="text-muted">Restam:</span> <span class="v tabnum" id="stat-left">75</span></div>
+        <div class="chip chip-auditor" id="chip-armada" style="display:none;" title="Auditoria ao vivo: Clique para ver detalhes das cartelas armadas">
+          <span id="armada-content" class="d-inline-flex align-items-center gap-1"></span>
+        </div>
+        <div class="chip" id="chip-status" title="Status do jogo">
+          <i data-lucide="clock" class="lucide-sm text-primary"></i> Em andamento
+        </div>
+        <div class="chip d-inline-flex align-items-center gap-1" id="chip-sync" title="Status de sincronização">
+          <i data-lucide="cloud" class="lucide-sm"></i> Sincronizado
+        </div>
+      </div>
+    </header>
+
+    <!-- Barra de Progresso Minimalista -->
+    <div class="tv-progress">
+      <progress id="progress" max="75" value="0" class="w-100"></progress>
+    </div>
+
+    <!-- Fita Compacta de Prêmios da Rodada -->
+    <div class="prizes-container">
+      <div class="prizes-header">
+        <h2 class="d-flex align-items-center gap-1">
+          <i data-lucide="gift" class="lucide text-primary"></i>
+          <span>Prêmios Desta Rodada</span>
+        </h2>
+      </div>
+      <div class="prizes-grid" id="prizes-grid"></div>
+    </div>
+
+    <!-- Área Principal 16:9 -->
+    <main class="tv-main">
+      <!-- Painel Esquerdo: Última pedra, Histórico e Ranking -->
+      <section class="tv-last">
+        <div id="last" class="last" style="display:none">
+          <div class="badge-letter" id="last-letter">B</div>
+          <div class="last-sep">·</div>
+          <div class="last-number tabnum" id="last-number">1</div>
+        </div>
+
+        <div class="tv-history-wrap">
+          <div class="tv-history-title" id="history-title">Sequência de Sorteio</div>
+          <div id="history" class="history"></div>
+        </div>
+
+        <section class="tv-ranking">
+          <div class="ranking-header">
+            <h2 class="d-flex align-items-center gap-1">
+              <i data-lucide="award" class="lucide text-warning"></i>
+              <span>Vencedores</span>
+            </h2>
+            <div class="ranking-actions">
+              <button class="btn btn-sm btn-outline-secondary py-0 px-2" id="btn-export-pdf" style="font-size:0.75rem;">PDF</button>
+              <button class="btn btn-sm btn-outline-secondary py-0 px-2" id="btn-export-csv" style="font-size:0.75rem;">CSV</button>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-sm align-middle table-borderless m-0" id="tbl-ranking">
+              <thead>
+                <tr class="border-bottom text-muted" style="font-size:0.78rem;">
+                  <th>#</th>
+                  <th>Jogador</th>
+                  <th>Conquista</th>
+                  <th>Prêmio</th>
+                  <th>Horário</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="ranking-body"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Painel Inferior: Auditoria de Cartelas Armadas & Batidas (Ao Vivo) -->
+        <section class="tv-auditor-box" id="tv-auditor-panel">
+          <div class="tv-auditor-header">
+            <span class="tv-auditor-title">
+              <i data-lucide="target" class="lucide-xs text-danger"></i>
+              <span>Cartelas Armadas & Batidas</span>
+            </span>
+            <span class="badge bg-secondary-subtle text-secondary border" id="auditor-summary-badge" style="font-size:0.65rem; padding:1px 5px;">0 cartelas</span>
+          </div>
+          <div id="auditor-live-container" class="auditor-live-content">
+            <!-- Preenchido dinamicamente via JS -->
+          </div>
+        </section>
+      </section>
+
+      <!-- Painel Direito: Grade BINGO 75 -->
+      <section class="tv-grid">
+        <div id="grid" class="grid mode-auto" aria-label="Grade BINGO 75"></div>
+      </section>
+    </main>
+
+    <!-- Toolbar Minimalista em Linha Única -->
+    <footer class="tv-footer">
+      <div class="footer-controls">
+        <!-- Grupo 1: Ações Principais -->
+        <div class="toolbar-group">
+          <a href="menu.html" class="btn-tool d-inline-flex align-items-center gap-1" title="Menu Principal">
+            <i data-lucide="home" class="lucide"></i> Início
+          </a>
+
+          <!-- Controles Dinâmicos com Animação de Entrada e Saída -->
+          <div class="mode-controls-box">
+            <!-- Modo Automático -->
+            <div id="controls-auto" class="mode-controls-pane">
+              <button class="btn-tool btn-tool-primary d-inline-flex align-items-center gap-1" id="btn-draw" title="Sortear Pedra (Espaço)">
+                <i data-lucide="dices" class="lucide"></i> <span>Sortear</span>
+              </button>
+              <button class="btn-tool btn-tool-auto d-inline-flex align-items-center gap-1" id="btn-auto" title="Iniciar/Pausar Auto (A)">
+                <span id="auto-icon"><i data-lucide="play" class="lucide"></i></span> <span id="auto-label">Auto</span>
+              </button>
+              <select id="sel-interval" class="form-select form-select-sm" style="width:74px; font-size:0.8rem; padding:4px 6px;" title="Intervalo entre pedras">
+                <option value="3000">3s</option>
+                <option value="4000">4s</option>
+                <option value="6000" selected>6s</option>
+                <option value="8000">8s</option>
+                <option value="10000">10s</option>
+              </select>
+            </div>
+
+            <!-- Modo Manual -->
+            <div id="controls-manual" class="mode-controls-pane is-hidden">
+              <div class="manual-input-group">
+                <input type="number" id="manual-number-input" class="manual-inp" placeholder="1 a 75" min="1" max="75" title="Digite o número (1 a 75) e tecle Enter" />
+                <button type="button" class="btn-tool btn-tool-manual-mark" id="btn-manual-mark" title="Marcar pedra (Enter)">Marcar</button>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn-tool d-inline-flex align-items-center gap-1" id="btn-undo" disabled title="Desfazer (U)">
+            <i data-lucide="undo-2" class="lucide"></i> Desfazer
+          </button>
+          <button class="btn-tool d-inline-flex align-items-center gap-1" id="btn-reset" title="Reiniciar (R)">
+            <i data-lucide="rotate-ccw" class="lucide"></i> Zerar
+          </button>
+        </div>
+
+        <!-- Grupo 2: Propaganda & Telão -->
+        <div class="toolbar-group">
+          <button class="btn-tool btn-tool-ad d-inline-flex align-items-center gap-1" id="btn-ad-toggle" title="Ligar/Desligar modo comercial no telão (Atalho P)">
+            <i data-lucide="megaphone" class="lucide"></i> <span id="ad-label">Propaganda: OFF</span>
+          </button>
+          <a href="check.html" class="btn-tool d-inline-flex align-items-center gap-1" style="background:#ecfdf5; border-color:#10b981; color:#065f46; font-weight:800;" title="Abrir Mesa de Conferência">
+            <i data-lucide="clipboard-check" class="lucide"></i> Conferência
+          </a>
+          <a class="btn-tool d-inline-flex align-items-center gap-1" href="projetor.html" target="_blank" style="background:#fffbeb; border-color:#f59e0b; color:#b45309; font-weight:800;" title="Abrir Telão">
+            <i data-lucide="tv" class="lucide"></i> Telão
+          </a>
+        </div>
+
+        <!-- Grupo 3: Áudio & Ferramentas -->
+        <div class="toolbar-group ms-auto">
+          <button class="btn-tool btn-tool-icon" id="btn-voice" title="Mutar/Ativar som do painel (M)"><i data-lucide="volume-2" class="lucide"></i></button>
+          <button class="btn-tool btn-tool-icon" id="btn-open-voice" title="Configurações de Voz & Áudio"><i data-lucide="settings" class="lucide"></i></button>
+          <button class="btn-tool btn-tool-icon" id="btn-full" title="Tela Cheia (F)"><i data-lucide="maximize" class="lucide"></i></button>
+          <button class="btn-tool btn-tool-icon" id="btn-help" title="Atalhos (?)"><i data-lucide="help-circle" class="lucide"></i></button>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Datalist de Sugestões de Prêmios -->
+  <datalist id="prize-suggestions">
+    <option value="1 Frango Assado"></option>
+    <option value="1 Caixa de Bombom"></option>
+    <option value="1 Cesta Básica"></option>
+    <option value="1 Liquidificador"></option>
+    <option value="1 Air Fryer"></option>
+    <option value="1 Sanduicheira"></option>
+    <option value="1 Smart TV 43 polegadas"></option>
+    <option value="1 Bicicleta"></option>
+    <option value="R$ 50,00"></option>
+    <option value="R$ 100,00"></option>
+    <option value="R$ 200,00"></option>
+    <option value="R$ 500,00"></option>
+    <option value="R$ 1.000,00"></option>
+  </datalist>
+
+  <!-- Modal de Configurar Prêmios -->
+  <div id="modal-prizes" class="modal-backdrop-custom" hidden>
+    <div class="modal-box-custom" style="max-width:520px;">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="modal-icon-badge" style="background:#eff6ff; color:#1d4ed8;"><i data-lucide="gift" class="lucide"></i></div>
+          <div>
+            <h3 class="fw-bold m-0 fs-5 text-dark">Configurar Prêmios da Rodada</h3>
+            <p class="text-muted m-0" style="font-size:0.82rem;">Defina os prêmios disputados nesta rodada.</p>
+          </div>
+        </div>
+        <button id="btn-close-prizes-x" class="modal-close-btn" title="Fechar">✕</button>
+      </div>
+
+      <form id="form-prizes" class="d-flex flex-column gap-3">
+        <div class="form-field-card">
+          <div class="d-flex align-items-center justify-content-between mb-1">
+            <label class="form-label-clean mb-0 d-flex align-items-center gap-1.5"><i data-lucide="award" class="lucide-xs text-primary"></i> <span>Terno (3 em linha):</span></label>
+            <span class="badge bg-light text-secondary border" style="font-size:0.7rem;">Opcional</span>
+          </div>
+          <input type="text" id="prize-terno" class="form-input-clean" placeholder="Ex: 1 Frango Assado (ou deixe vazio)" list="prize-suggestions" />
+        </div>
+
+        <div class="form-field-card">
+          <div class="d-flex align-items-center justify-content-between mb-1">
+            <label class="form-label-clean mb-0 d-flex align-items-center gap-1.5"><i data-lucide="layout-grid" class="lucide-xs text-primary"></i> <span>Quatro Cantos (4 cantos):</span></label>
+            <span class="badge bg-light text-secondary border" style="font-size:0.7rem;">Opcional</span>
+          </div>
+          <input type="text" id="prize-cantos" class="form-input-clean" placeholder="Ex: 1 Caixa de Bombom (ou deixe vazio)" list="prize-suggestions" />
+        </div>
+
+        <div class="form-field-card">
+          <div class="d-flex align-items-center justify-content-between mb-1">
+            <label class="form-label-clean mb-0 d-flex align-items-center gap-1.5"><i data-lucide="zap" class="lucide-xs text-warning"></i> <span>Cinquina (Linha Completa 5):</span></label>
+            <span class="badge bg-light text-secondary border" style="font-size:0.7rem;">Opcional</span>
+          </div>
+          <input type="text" id="prize-cinquina" class="form-input-clean" placeholder="Ex: 1 Liquidificador (ou deixe vazio)" list="prize-suggestions" />
+        </div>
+
+        <div class="form-field-card" style="background:#eff6ff; border-color:#93c5fd;">
+          <div class="d-flex align-items-center justify-content-between mb-1">
+            <label class="form-label-clean mb-0 fw-bold text-primary d-flex align-items-center gap-1.5"><i data-lucide="trophy" class="lucide-xs text-warning"></i> <span>Cartela Cheia (Bingo Principal):</span></label>
+            <span class="badge bg-primary px-2" style="font-size:0.7rem;">Principal</span>
+          </div>
+          <input type="text" id="prize-cheia" class="form-input-clean fw-bold" placeholder="Ex: R$ 500,00" required list="prize-suggestions" />
+        </div>
+
+        <div class="d-flex gap-2 justify-content-end mt-2">
+          <button type="button" id="btn-close-prizes" class="btn-min">Cancelar</button>
+          <button type="submit" class="btn-min btn-min-primary px-4 fw-bold">Salvar Prêmios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal de Atalhos -->
+  <div id="shortcuts" class="modal-backdrop-custom" hidden>
+    <div class="modal-box-custom" style="max-width:480px;">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h3 class="fw-bold m-0 fs-5 text-dark d-flex align-items-center gap-2"><i data-lucide="keyboard" class="lucide text-primary"></i> <span>Atalhos de Teclado</span></h3>
+        <button onclick="document.getElementById('shortcuts').setAttribute('hidden','')" class="modal-close-btn">✕</button>
+      </div>
+      <div class="d-flex flex-column gap-2 mb-3 small">
+        <div class="d-flex align-items-center justify-content-between p-2 rounded bg-light border">
+          <span>Sortear pedra / Focar digitação</span>
+          <kbd class="bg-dark text-white px-2 py-0.5 rounded font-monospace fw-bold">Espaço</kbd>
+        </div>
+        <div class="d-flex align-items-center justify-content-between p-2 rounded bg-light border">
+          <span>Mesa de Conferência & Cartelas Armadas</span>
+          <kbd class="bg-dark text-white px-2 py-0.5 rounded font-monospace fw-bold">C</kbd>
+        </div>
+        <div class="d-flex align-items-center justify-content-between p-2 rounded bg-light border">
+          <span>Desfazer última pedra sorteada</span>
+          <kbd class="bg-dark text-white px-2 py-0.5 rounded font-monospace fw-bold">Ctrl + Z ou U</kbd>
+        </div>
+        <div class="d-flex align-items-center justify-content-between p-2 rounded bg-light border">
+          <span>Digitação rápida no modo manual</span>
+          <kbd class="bg-dark text-white px-2 py-0.5 rounded font-monospace fw-bold">0 a 9 + Enter</kbd>
+        </div>
+        <div class="d-flex align-items-center justify-content-between p-2 rounded bg-light border">
+          <span>Iniciar / Pausar Sorteio Automático</span>
+          <kbd class="bg-dark text-white px-2 py-0.5 rounded font-monospace fw-bold">A</kbd>
+        </div>
+        <div class="d-flex align-items-center justify-content-between p-2 rounded bg-light border">
+          <span>Ativar / Desativar Intervalo no Telão</span>
+          <kbd class="bg-dark text-white px-2 py-0.5 rounded font-monospace fw-bold">P</kbd>
+        </div>
+        <div class="d-flex align-items-center justify-content-between p-2 rounded bg-light border">
+          <span>Ligar / Mutar Áudio do Painel</span>
+          <kbd class="bg-dark text-white px-2 py-0.5 rounded font-monospace fw-bold">M</kbd>
+        </div>
+        <div class="d-flex align-items-center justify-content-between p-2 rounded bg-light border">
+          <span>Alternar Modo Tela Cheia</span>
+          <kbd class="bg-dark text-white px-2 py-0.5 rounded font-monospace fw-bold">F</kbd>
+        </div>
+        <div class="d-flex align-items-center justify-content-between p-2 rounded bg-light border">
+          <span>Fechar modais / Cancelar ação</span>
+          <kbd class="bg-dark text-white px-2 py-0.5 rounded font-monospace fw-bold">Esc</kbd>
+        </div>
+      </div>
+      <button id="btn-close-shortcuts" class="btn-min btn-min-primary w-100">Entendi</button>
+    </div>
+  </div>
+
+  <!-- Modal de Configurações de Voz & Áudio -->
+  <!-- Modal de Configurações de Voz, Áudio & Telão (2 Colunas) -->
+  <div id="modal-voice" class="modal-backdrop-custom" hidden>
+    <div class="modal-box-custom" style="max-width: 800px; width: 95%;">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="modal-icon-badge" style="background:#eff6ff; color:#1d4ed8;"><i data-lucide="sliders" class="lucide"></i></div>
+          <div>
+            <h3 class="fw-bold m-0 fs-5 text-dark">Configurações de Narração, Áudio & Telão</h3>
+            <p class="text-muted m-0" style="font-size:0.82rem;">Ajuste o narrador automático, saídas de som e aparência no projetor.</p>
+          </div>
+        </div>
+        <button id="btn-close-voice-x" class="modal-close-btn">✕</button>
+      </div>
+
+      <div class="row g-3">
+        <!-- Coluna 1 (Esquerda): Voz e Efeitos Sonoros -->
+        <div class="col-12 col-md-6 d-flex flex-column gap-2.5">
+          <div class="form-field-card h-100 d-flex flex-column justify-content-between">
+            <div>
+              <div class="fw-bold text-dark mb-2.5 d-flex align-items-center gap-1.5" style="font-size:0.85rem;">
+                <i data-lucide="mic" class="lucide-xs text-primary"></i> <span>Voz & Narração do Sorteio</span>
+              </div>
+              
+              <div class="mb-2.5">
+                <label class="form-label-clean" style="font-size:0.75rem;">Voz do Narrador:</label>
+                <select id="sel-voice" class="form-select form-select-sm"></select>
+                <div class="form-hint mt-1" style="font-size:0.7rem;">Dica: Vozes 'Natural' ou 'Neural' têm maior realismo.</div>
+              </div>
+
+              <div class="mb-2.5">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <label class="form-label-clean mb-0" style="font-size:0.75rem;">Velocidade da Fala:</label>
+                  <span class="badge bg-light text-dark border" id="lbl-voice-rate">1.0x</span>
+                </div>
+                <input type="range" class="form-range" id="rng-rate" min="0.7" max="1.5" step="0.05" value="1.0">
+              </div>
+
+              <div class="mb-2.5">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <label class="form-label-clean mb-0" style="font-size:0.75rem;">Tom da Voz (Pitch):</label>
+                  <span class="badge bg-light text-dark border" id="lbl-voice-pitch">1.0</span>
+                </div>
+                <input type="range" class="form-range" id="rng-pitch" min="0.5" max="1.5" step="0.05" value="1.0">
+              </div>
+
+              <div>
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                  <label class="form-label-clean mb-0" style="font-size:0.75rem;">Volume dos Efeitos (Sinos/Bolas):</label>
+                  <span class="badge bg-light text-dark border" id="lbl-ding-vol">60%</span>
+                </div>
+                <input type="range" class="form-range" id="rng-dingvol" min="0" max="1" step="0.05" value="0.6">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Coluna 2 (Direita): Saídas de Áudio & Tema do Telão -->
+        <div class="col-12 col-md-6 d-flex flex-column gap-2.5">
+          <!-- Onde reproduzir o som -->
+          <div class="form-field-card" style="background:#f8fafc; border-color:#cbd5e1;">
+            <label class="form-label-clean mb-2 fw-bold text-dark d-flex align-items-center gap-1.5"><i data-lucide="volume-2" class="lucide-xs text-primary"></i> <span>Onde reproduzir o som:</span></label>
+            <div class="d-flex flex-column gap-2">
+              <!-- Telão / Projetor -->
+              <div class="d-flex align-items-center justify-content-between p-2 rounded bg-white border">
+                <div class="d-flex align-items-center gap-2">
+                  <i data-lucide="tv" class="lucide text-primary"></i>
+                  <div>
+                    <div class="fw-bold text-dark" style="font-size:0.82rem;">Áudio no Telão / Projetor</div>
+                    <div class="text-muted" style="font-size:0.71rem;">Narração e efeitos para o público</div>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-success fw-bold px-3 py-1" id="btn-toggle-proj-audio" style="font-size:0.75rem;">
+                  <i data-lucide="volume-2" class="lucide-xs"></i> <span id="lbl-proj-audio">Ativado</span>
+                </button>
+              </div>
+
+              <!-- Painel do Operador -->
+              <div class="d-flex align-items-center justify-content-between p-2 rounded bg-white border">
+                <div class="d-flex align-items-center gap-2">
+                  <i data-lucide="laptop" class="lucide text-primary"></i>
+                  <div>
+                    <div class="fw-bold text-dark" style="font-size:0.82rem;">Áudio no Painel do Operador</div>
+                    <div class="text-muted" style="font-size:0.71rem;">Som local no computador</div>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-success fw-bold px-3 py-1" id="btn-toggle-panel-audio" style="font-size:0.75rem;">
+                  <i data-lucide="volume-2" class="lucide-xs"></i> <span id="lbl-panel-audio">Ativado</span>
+                </button>
+              </div>
+            </div>
+            <div class="form-hint mt-2 text-primary" style="font-size:0.71rem;">
+              <i data-lucide="info" class="lucide-xs"></i> As opções de áudio acima são sincronizadas com o Telão.
+            </div>
+          </div>
+
+          <!-- Tema Visual do Telão / Projetor -->
+          <div class="form-field-card" style="background:#f8fafc; border-color:#cbd5e1;">
+            <label class="form-label-clean mb-2 fw-bold text-dark d-flex align-items-center gap-1.5"><i data-lucide="tv" class="lucide-xs text-primary"></i> <span>Aparência do Telão / Projetor:</span></label>
+            <div class="d-flex align-items-center justify-content-between p-2 rounded bg-white border">
+              <div class="d-flex align-items-center gap-2">
+                <i data-lucide="sun-moon" class="lucide text-primary"></i>
+                <div>
+                  <div class="fw-bold text-dark" style="font-size:0.82rem;">Tema Visual do Telão</div>
+                  <div class="text-muted" style="font-size:0.71rem;">Alternar entre modo claro e noturno</div>
+                </div>
+              </div>
+              <button type="button" class="btn btn-sm btn-outline-primary fw-bold px-3 py-1 d-inline-flex align-items-center gap-1.5" id="btn-toggle-proj-theme" style="font-size:0.75rem;">
+                <i data-lucide="moon" class="lucide-xs" id="lbl-proj-theme-icon"></i>
+                <span id="lbl-proj-theme-text">Modo Noturno</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2 justify-content-end mt-3 pt-2 border-top">
+        <button id="btn-test-voice" class="btn-min d-inline-flex align-items-center gap-1">
+          <i data-lucide="play" class="lucide-sm text-primary"></i> Testar Narração
+        </button>
+        <button id="btn-close-voice" class="btn-min btn-min-primary px-4 fw-bold">Concluído</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Conferência de Cartelas & Auditoria (Ao Vivo) -->
+  <div id="modal-armadas-detail" class="modal-backdrop-custom" hidden>
+    <div class="modal-box-custom" style="width: 95%; max-width: 880px; max-height: 94vh; display: flex; flex-direction: column;">
+      <!-- Header do Modal -->
+      <div class="d-flex align-items-center justify-content-between mb-2 flex-shrink-0">
+        <div class="d-flex align-items-center gap-3">
+          <div class="modal-icon-badge" style="background:#ecfdf5; color:#059669;"><i data-lucide="clipboard-check" class="lucide"></i></div>
+          <div>
+            <h3 class="fw-bold m-0 fs-5 text-dark">Mesa de Conferência & Cartelas Armadas</h3>
+            <p class="text-muted m-0" style="font-size:0.8rem;">Monitore batidas em tempo real, veja quem está armado e inspecione a grade 5x5 oficial.</p>
+          </div>
+        </div>
+        <button id="btn-close-armadas-x" class="modal-close-btn" title="Fechar">✕</button>
+      </div>
+
+      <!-- Corpo em 2 Colunas -->
+      <div class="row g-3 flex-grow-1 overflow-hidden" style="min-height: 0;">
+        <!-- Coluna Esquerda: Busca e Lista de Cartelas -->
+        <div class="col-12 col-md-6 d-flex flex-column" style="max-height: 100%;">
+          <!-- Barra de Busca por Número da Cartela -->
+          <div class="input-group input-group-sm mb-2 flex-shrink-0">
+            <span class="input-group-text bg-light fw-bold text-muted" style="font-size:0.8rem;">Série Nº</span>
+            <input type="number" id="modal-card-serial-input" class="form-control" placeholder="Ex: 7 ou 105" min="1" style="font-size:0.85rem;" />
+            <button id="btn-modal-search-card" type="button" class="btn btn-primary fw-bold px-3 d-inline-flex align-items-center gap-1" style="font-size:0.82rem;">
+              <i data-lucide="search" class="lucide-xs"></i> Conferir
+            </button>
+          </div>
+
+          <!-- Filtros Rápidos (Pills) -->
+          <div class="d-flex gap-1 mb-2 flex-shrink-0">
+            <button type="button" class="btn btn-sm btn-primary py-0.5 px-2.5 fw-bold d-inline-flex align-items-center gap-1" id="btn-filter-batidas" style="font-size:0.75rem; border-radius: 999px;">
+              <i data-lucide="trophy" class="lucide-xs"></i> Batidas (<span id="modal-count-batidas">0</span>)
+            </button>
+            <button type="button" class="btn btn-sm btn-light border py-0.5 px-2.5 fw-bold text-dark d-inline-flex align-items-center gap-1" id="btn-filter-armadas" style="font-size:0.75rem; border-radius: 999px;">
+              <i data-lucide="zap" class="lucide-xs text-warning"></i> Armadas (<span id="modal-count-armadas">0</span>)
+            </button>
+            <button type="button" class="btn btn-sm btn-light border py-0.5 px-2.5 fw-bold text-muted d-inline-flex align-items-center gap-1" id="btn-filter-all" style="font-size:0.75rem; border-radius: 999px;">
+              <i data-lucide="list" class="lucide-xs"></i> Todas (<span id="modal-count-all">0</span>)
+            </button>
+          </div>
+
+          <!-- Lista de Cartelas com Scroll Isolado -->
+          <div id="modal-audit-cards-list" class="d-flex flex-column gap-1.5 overflow-y-auto pe-1 flex-grow-1" style="max-height: 400px;">
+            <!-- Renderizado dinamicamente via JS -->
+          </div>
+        </div>
+
+        <!-- Coluna Direita: Visualizador 5x5 Oficial da Cartela Selecionada -->
+        <div class="col-12 col-md-6 d-flex flex-column" style="max-height: 100%;">
+          <div class="modal-bingo-card-preview h-100 d-flex flex-column justify-content-between overflow-y-auto">
+            <!-- Cabeçalho da Cartela -->
+            <div>
+              <div class="d-flex align-items-center justify-content-between mb-1 gap-2 flex-wrap">
+                <span class="fw-bold text-dark fs-6" id="modal-view-card-title">Cartela #0000</span>
+                <span class="badge bg-secondary" id="modal-view-card-badge" style="max-width:100%; white-space:normal; text-align:right;">Selecione uma cartela</span>
+              </div>
+              <div class="text-muted small mb-2 d-flex justify-content-between align-items-center" style="font-size:0.75rem;">
+                <span id="modal-view-card-batch">Lote: --</span>
+                <span id="modal-view-card-player" class="fw-semibold text-dark">Jogador: --</span>
+              </div>
+
+              <!-- Grade BINGO 5x5 -->
+              <div id="modal-bingo-matrix" class="modal-bingo-card-grid mb-2">
+                <!-- Colunas B I N G O + 25 células geradas via JS -->
+              </div>
+            </div>
+
+            <!-- Rodapé da Cartela: Código Auth & Botão de Ação -->
+            <div class="pt-2 border-top mt-1">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="text-muted" style="font-size:0.72rem;" id="modal-view-card-auth">Cód: --</span>
+                <span class="text-success fw-bold" style="font-size:0.72rem;" id="modal-view-card-hits">0/24 acertos</span>
+              </div>
+              <div class="d-flex gap-2">
+                <button type="button" id="btn-modal-claim-winner" class="btn btn-success flex-grow-1 fw-bold py-1.5 shadow-sm d-flex align-items-center justify-content-center gap-1" style="font-size:0.85rem;" disabled>
+                  <i data-lucide="trophy" class="lucide-sm"></i> Registrar Vitória
+                </button>
+                <a id="btn-modal-open-check-page" href="check.html" target="_blank" class="btn btn-outline-primary fw-bold py-1.5 px-3 d-inline-flex align-items-center justify-content-center gap-1" style="font-size:0.82rem;" title="Abrir esta cartela na Mesa de Conferência completa">
+                  <i data-lucide="external-link" class="lucide-sm"></i> Mesa Completa
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer do Modal -->
+      <div class="d-flex justify-content-between align-items-center mt-2 pt-2 border-top flex-shrink-0 flex-wrap gap-2">
+        <span class="text-muted small d-flex align-items-center gap-1" style="font-size:0.75rem;">
+          <i data-lucide="shield-check" class="lucide-xs text-success"></i> Códigos criptográficos validados contra as pedras sorteadas.
+        </span>
+        <div class="d-flex align-items-center gap-2">
+          <a href="check.html" class="btn-min btn-light border text-primary fw-bold d-inline-flex align-items-center gap-1" style="font-size:0.8rem;" title="Abrir Mesa Completa de Conferência">
+            <i data-lucide="clipboard-check" class="lucide-xs"></i> Abrir Mesa de Conferência
+          </a>
+          <button type="button" id="btn-close-armadas" class="btn-min btn-min-primary px-4 fw-bold">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Confirmação de Pedra Patrocinada -->
+  <!-- Modal de Confirmação de Pedra Patrocinada -->
+  <div id="modal-sponsored-alert" class="modal-backdrop-custom" hidden>
+    <div class="modal-box-custom" style="max-width: 520px; border-top: 4px solid #f59e0b;">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <div class="d-flex align-items-center gap-3">
+          <div class="modal-icon-badge" style="background:#fef3c7; color:#b45309;"><i data-lucide="sparkles" class="lucide"></i></div>
+          <div>
+            <h3 class="fw-bold m-0 fs-5 text-dark">Pedra Patrocinada!</h3>
+            <p class="text-muted m-0" style="font-size:0.82rem;">Esta pedra possui um patrocinador oficial associado.</p>
+          </div>
+        </div>
+        <button id="btn-close-sponsored-x" class="modal-close-btn">✕</button>
+      </div>
+
+      <!-- Card de Apresentação do Patrocinador e da Pedra -->
+      <div class="p-3 rounded-3 border mb-3 text-center" style="background: linear-gradient(180deg, #fffdf0 0%, #fffbeb 100%); border-color: #fde047 !important;">
+        
+        <!-- Destaque: Bola 3D Dourada + Logotipo da Empresa -->
+        <div class="d-flex align-items-center justify-content-center gap-3 mb-2.5">
+          <!-- Bola 3D Dourada com Letra e Número -->
+          <div class="panel-sponsored-ball-3d">
+            <span class="panel-sp-letter" id="sp-alert-letter">B</span>
+            <span class="panel-sp-number" id="sp-alert-number">12</span>
+          </div>
+
+          <!-- Logo do Patrocinador em Card Branco Nítido -->
+          <div class="bg-white p-1.5 rounded-3 border shadow-sm d-flex align-items-center justify-content-center" style="min-width: 100px; height: 64px;">
+            <img id="sp-alert-logo" src="favicon.svg" alt="Logo" style="max-height: 52px; max-width: 120px; object-fit: contain;" onerror="this.src='favicon.svg'" />
+          </div>
+        </div>
+
+        <h4 class="fw-bold text-dark fs-5 mb-1" id="sp-alert-name">Hidro G - Bombas Submersas</h4>
+        
+        <div class="d-inline-block px-3 py-1 rounded-pill mb-2 fw-bold text-white shadow-sm" id="sp-alert-msg" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); font-size: 0.85rem; line-height: 1.3;">
+          "Em comemoração aos 50 anos"
+        </div>
+
+        <p class="text-secondary small m-0" style="font-size:0.82rem;">
+          Deseja exibir o show de <b>Oferecimento Especial</b> com a foto e mensagem da empresa no Telão?
+        </p>
+      </div>
+
+      <div class="d-flex flex-column gap-2">
+        <button type="button" class="btn btn-warning fw-bold py-2 shadow-sm text-white d-flex align-items-center justify-content-center gap-2" id="btn-confirm-sponsored-show" style="background: linear-gradient(135deg, #f59e0b, #d97706); border: none; font-size: 0.92rem;">
+          <i data-lucide="sparkles" class="lucide-sm"></i> Sim, Exibir Destaque no Telão
+        </button>
+        <button type="button" class="btn btn-light border fw-bold text-secondary py-2" id="btn-skip-sponsored-show" style="font-size: 0.85rem;">
+          Apenas Marcar Pedra (Sem Exibir no Telão)
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="supabase-config.js?v=3.3"></script>
+  <script src="operator-key.js?v=3.3"></script>
+  <script src="dialog.js?v=3.3"></script>
+  <script src="sync.js?v=3.3"></script>
+  <script src="cartelas.js?v=3.3"></script>
+  <script src="pdf-export.js?v=3.3"></script>
+  <script src="painel.js?v=1.0"></script>
+</body>
+</html>

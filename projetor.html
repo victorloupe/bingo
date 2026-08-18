@@ -21,15 +21,16 @@
       background: #ffffff;
       border: 1px solid var(--chip-border);
       color: var(--text);
-      padding: 6px 12px;
+      width: 38px;
+      height: 38px;
+      padding: 0;
       border-radius: 10px;
-      font-weight: 700;
-      font-size: 0.85rem;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      justify-content: center;
       text-decoration: none;
       transition: all 0.2s ease;
+      cursor: pointer;
     }
     .projector-nav-btn:hover {
       background: #eff6ff;
@@ -47,6 +48,14 @@
     @keyframes blinkLive {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.4; }
+    }
+    .projector-nav-btn.active-ad {
+      background: #f59e0b !important;
+      border-color: #d97706 !important;
+      color: #ffffff !important;
+      font-weight: 800;
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.5);
+      animation: pulseAd 1.8s infinite;
     }
   </style>
 </head>
@@ -76,15 +85,21 @@
         </div>
       </div>
 
-      <div class="d-flex align-items-center gap-2">
-        <button id="btn-sound-toggle" class="projector-nav-btn lift d-inline-flex align-items-center gap-1" title="Ligar/Desligar Som do Telão (independente do painel)">
-          <span id="sound-icon"><i data-lucide="volume-2" class="lucide-sm"></i></span> <span id="sound-label">Som On</span>
+      <div class="d-flex align-items-center gap-1.5">
+        <button id="btn-theme-toggle" class="projector-nav-btn lift" title="Alternar Modo Noturno / Alto Contraste (Atalho T)">
+          <i data-lucide="moon" class="lucide" id="theme-icon"></i>
         </button>
-        <button id="btn-share" class="projector-nav-btn lift d-inline-flex align-items-center gap-1" title="Compartilhar / QR Code">
-          <i data-lucide="share-2" class="lucide-sm"></i> Conectar
+        <button id="btn-ad-toggle" class="projector-nav-btn lift" title="Ativar/Desativar Patrocinadores no Telão (Atalho P)">
+          <span id="ad-icon"><i data-lucide="megaphone" class="lucide"></i></span>
         </button>
-        <button id="btn-full" class="projector-nav-btn lift d-inline-flex align-items-center" title="Tela Cheia (F)">
-          <i data-lucide="maximize" class="lucide-sm"></i>
+        <button id="btn-sound-toggle" class="projector-nav-btn lift" title="Ligar/Desligar Som do Telão (Atalho M)">
+          <span id="sound-icon"><i data-lucide="volume-2" class="lucide"></i></span>
+        </button>
+        <button id="btn-share" class="projector-nav-btn lift" title="Conectar / Compartilhar QR Code">
+          <i data-lucide="share-2" class="lucide"></i>
+        </button>
+        <button id="btn-full" class="projector-nav-btn lift" title="Tela Cheia (Atalho F)">
+          <i data-lucide="maximize" class="lucide"></i>
         </button>
       </div>
     </header>
@@ -137,7 +152,7 @@
 
     <!-- Barra de Avisos ao Vivo no Telão (Conferência, Ganhador, Status) -->
     <div id="live-notice-bar" class="live-notice-bar state-idle">
-      <div class="notice-icon" id="notice-icon">✨</div>
+      <div class="notice-icon" id="notice-icon"><i data-lucide="sparkles" class="lucide"></i></div>
       <div class="notice-content">
         <span class="notice-badge" id="notice-badge">BINGO 75</span>
         <span class="notice-text" id="notice-text">Aguardando início do sorteio desta rodada. Boa sorte a todos!</span>
@@ -149,7 +164,7 @@
   <div id="ad-overlay" class="ad-fullscreen-overlay" hidden>
     <div class="ad-header">
       <div class="d-flex align-items-center gap-2">
-        <span class="fs-3">📢</span>
+        <i data-lucide="megaphone" class="lucide-lg text-warning"></i>
         <div>
           <h2 class="m-0 fw-bold fs-4">Nossos Patrocinadores & Apoiadores</h2>
           <span class="text-muted small">Agradecemos aos parceiros que tornam este evento possível!</span>
@@ -157,6 +172,7 @@
       </div>
       <div class="d-flex align-items-center gap-2">
         <span class="badge bg-warning text-dark px-3 py-2 fw-bold fs-6">INTERVALO COMERCIAL</span>
+        <button id="btn-close-ad-overlay" class="modal-close-btn ms-2" title="Fechar Patrocinadores (Atalho P)">✕</button>
       </div>
     </div>
 
@@ -171,7 +187,7 @@
     <!-- Banner de Próxima Rodada / Anúncio do Próximo Bingo -->
     <div id="ad-next-banner" class="ad-next-round-banner">
       <div class="d-flex align-items-center gap-2">
-        <span class="fs-4">🚀</span>
+        <i data-lucide="arrow-right-circle" class="lucide-md text-primary"></i>
         <div>
           <div class="fw-bold fs-6 text-primary" id="ad-next-title">A SEGUIR: Próxima Rodada</div>
           <div class="small text-muted" id="ad-next-prizes">Aguardando definição dos prêmios...</div>
@@ -181,8 +197,43 @@
     </div>
 
     <div class="ad-footer-status">
-      <div>🏁 Rodada Anterior: <b id="ad-last-round" class="text-dark">Rodada 1</b> &nbsp;•&nbsp; Última pedra: <b id="ad-last-ball" class="text-primary">—</b> &nbsp;•&nbsp; Sorteadas: <b id="ad-total-drawn">0/75</b></div>
+      <div>Rodada Anterior: <b id="ad-last-round" class="text-dark">Rodada 1</b> &nbsp;•&nbsp; Última pedra: <b id="ad-last-ball" class="text-primary">—</b> &nbsp;•&nbsp; Sorteadas: <b id="ad-total-drawn">0/75</b></div>
       <div class="text-muted">Aguardando operador para retornar ao sorteio...</div>
+    </div>
+  </div>
+
+  <!-- OVERLAY DE PEDRA PATROCINADA / OFERECIMENTO ESPECIAL NO TELÃO -->
+  <div id="sponsored-stone-overlay" class="sponsored-stone-overlay" hidden>
+    <div class="sponsored-stone-card">
+      <div class="sponsored-top-badge d-inline-flex align-items-center gap-1.5">
+        <i data-lucide="sparkles" class="lucide-xs"></i> <span>OFERECIMENTO ESPECIAL</span> <i data-lucide="sparkles" class="lucide-xs"></i>
+      </div>
+
+      <div class="sponsored-stone-row">
+        <!-- Bola Dourada 3D -->
+        <div class="sponsored-ball-3d">
+          <span class="sponsored-ball-letter" id="sp-proj-letter">G</span>
+          <span class="sponsored-ball-number" id="sp-proj-number">50</span>
+        </div>
+
+        <!-- Logo do Patrocinador -->
+        <div class="sponsored-logo-box">
+          <img id="sp-proj-logo" src="favicon.svg" alt="Patrocinador" class="sponsored-logo-img" />
+        </div>
+      </div>
+
+      <div class="sponsored-company-name" id="sp-proj-name">Hidro G - Bombas Submersas</div>
+      
+      <div class="sponsored-message-pill" id="sp-proj-msg">
+        "Em comemoração aos seus 50 anos"
+      </div>
+
+      <div class="text-muted mt-3 small fw-semibold">
+        Pedra patrocinada oficial desta rodada
+      </div>
+
+      <div id="sp-proj-progress" class="sponsored-progress-bar"></div>
+      <button id="btn-close-sp-overlay" class="modal-close-btn position-absolute top-0 end-0 m-3" title="Fechar (ESC)">✕</button>
     </div>
   </div>
 
@@ -202,8 +253,8 @@
       </div>
 
       <div class="d-flex gap-2 justify-content-center flex-wrap">
-        <a href="automatico.html" class="btn btn-outline-primary btn-sm">Modo Automático</a>
-        <a href="manual.html" class="btn btn-outline-success btn-sm">Modo Manual</a>
+        <a href="painel.html?modo=auto" class="btn btn-outline-primary btn-sm">Painel Automático</a>
+        <a href="painel.html?modo=manual" class="btn btn-outline-success btn-sm">Painel Manual</a>
         <a href="check.html" class="btn btn-outline-info btn-sm">Conferência</a>
       </div>
 

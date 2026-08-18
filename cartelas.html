@@ -15,65 +15,167 @@
 
   <style>
     .card-preview-box {
-      max-width: 380px;
+      max-width: 360px;
       margin: 0 auto;
       background: #ffffff;
       border: 2px solid #1e3a8a;
-      border-radius: 0;
+      border-radius: 12px;
+      padding: 3px;
       overflow: hidden;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+      position: relative;
+    }
+    .card-preview-inner {
+      border: 1px solid #bfdbfe;
+      border-radius: 9px;
+      overflow: hidden;
+      background: #ffffff;
+      display: flex;
+      flex-direction: column;
     }
     .card-preview-header {
       background: #eff6ff;
-      padding: 10px;
+      padding: 8px 10px 6px;
       text-align: center;
-      border-bottom: 1.5px solid #bfdbfe;
+      border-bottom: 1px solid #bfdbfe;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+    .card-preview-title {
+      font-weight: 900;
+      font-size: 0.95rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      line-height: 1.2;
+    }
+    .card-preview-round-badge {
+      background: #1e3a8a;
+      color: #ffffff;
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      padding: 2px 12px;
+      border-radius: 20px;
+      display: inline-block;
+    }
+    .card-preview-grid-wrap {
+      padding: 6px;
+      background: #ffffff;
+    }
+    .card-preview-bingo-header {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 4px;
+      margin-bottom: 4px;
+    }
+    .card-preview-cell-header {
+      color: #ffffff;
+      background: #1e3a8a;
+      font-weight: 900;
+      font-size: 1.15rem;
+      text-align: center;
+      padding: 3px 0;
+      border-radius: 5px;
+      line-height: 1.2;
     }
     .card-preview-grid {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      gap: 3px;
-      padding: 8px;
-      background: #f8fafc;
-    }
-    .card-preview-cell-header {
-      color: #ffffff;
-      font-weight: 900;
-      font-size: 1.1rem;
-      text-align: center;
-      padding: 4px 0;
-      border-radius: 0;
+      gap: 4px;
     }
     .card-preview-cell {
       background: #ffffff;
       border: 1px solid #cbd5e1;
-      border-radius: 0;
+      border-radius: 4px;
       aspect-ratio: 1;
       display: flex;
       align-items: center;
       justify-content: center;
       font-weight: 800;
-      font-size: 1.25rem;
+      font-size: 1.3rem;
       color: #0f172a;
     }
+    .card-preview-cell:nth-child(even) {
+      background: #f8fafc;
+    }
     .card-preview-cell.free {
-      background: #fef08a;
-      border-color: #facc15;
+      background: #fef3c7;
+      border: 1.5px solid #f59e0b;
       color: #854d0e;
-      font-size: 0.75rem;
+      font-size: 0.65rem;
       font-weight: 900;
       flex-direction: column;
+      align-items: center;
+      justify-content: center;
       gap: 1px;
       padding: 2px;
+      position: relative;
+    }
+    .card-preview-free-badge {
+      width: 28px;
+      height: 28px;
+      background: #ffffff;
+      border: 1.5px solid #d97706;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #d97706;
+      font-size: 0.9rem;
+      font-weight: 900;
+    }
+    .card-preview-free-badge img {
+      width: 20px;
+      height: 20px;
+      object-fit: contain;
+    }
+    .card-preview-free-text {
+      color: #92400e;
+      font-size: 0.55rem;
+      font-weight: 900;
+      letter-spacing: 0.5px;
+      line-height: 1;
     }
     .card-preview-footer {
-      padding: 8px 12px;
+      padding: 6px 8px 4px;
       background: #ffffff;
       border-top: 1px solid #e2e8f0;
       display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .card-preview-footer-pills {
+      display: flex;
       align-items: center;
       justify-content: space-between;
-      font-size: 0.8rem;
+      gap: 4px;
+    }
+    .card-preview-pill {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #1e3a8a;
+    }
+    .card-preview-pill.auth {
+      background: #f8fafc;
+      border-color: #e2e8f0;
+      color: #475569;
+      font-family: monospace;
+      font-size: 0.7rem;
+    }
+    .card-preview-micro {
+      text-align: center;
+      font-size: 0.52rem;
+      font-weight: 800;
+      color: #94a3b8;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
     }
   </style>
 </head>
@@ -236,25 +338,33 @@
           <!-- Caixa Visual da Cartela -->
           <div class="d-flex align-items-center justify-content-center flex-grow-1 py-2">
             <div id="card-preview" class="card-preview-box w-100">
-              <div class="card-preview-header" id="pv-header-box">
-                <div class="fw-bold fs-6 text-uppercase" id="pv-event">GRANDE BINGO BENEFICENTE</div>
-                <div class="text-muted small" id="pv-round">Rodada Oficial</div>
-              </div>
+              <div class="card-preview-inner" id="pv-inner-frame">
+                <div class="card-preview-header" id="pv-header-box">
+                  <div class="card-preview-title" id="pv-event">GRANDE BINGO BENEFICENTE</div>
+                  <div class="card-preview-round-badge" id="pv-round">RODADA OFICIAL</div>
+                </div>
 
-              <div class="card-preview-grid">
-                <div class="card-preview-cell-header pv-head-cell">B</div>
-                <div class="card-preview-cell-header pv-head-cell">I</div>
-                <div class="card-preview-cell-header pv-head-cell">N</div>
-                <div class="card-preview-cell-header pv-head-cell">G</div>
-                <div class="card-preview-cell-header pv-head-cell">O</div>
+                <div class="card-preview-grid-wrap">
+                  <div class="card-preview-bingo-header">
+                    <div class="card-preview-cell-header pv-head-cell">B</div>
+                    <div class="card-preview-cell-header pv-head-cell">I</div>
+                    <div class="card-preview-cell-header pv-head-cell">N</div>
+                    <div class="card-preview-cell-header pv-head-cell">G</div>
+                    <div class="card-preview-cell-header pv-head-cell">O</div>
+                  </div>
 
-                <!-- 25 Células geradas via script -->
-                <div id="pv-cells" class="contents" style="display:contents;"></div>
-              </div>
+                  <div class="card-preview-grid" id="pv-cells">
+                    <!-- 25 Células geradas via script -->
+                  </div>
+                </div>
 
-              <div class="card-preview-footer">
-                <span class="fw-bold" id="pv-serial">SÉRIE Nº 0001</span>
-                <span class="text-muted font-monospace" id="pv-auth">AUT: 0000-0000</span>
+                <div class="card-preview-footer">
+                  <div class="card-preview-footer-pills">
+                    <span class="card-preview-pill" id="pv-serial">SÉRIE Nº 0001</span>
+                    <span class="card-preview-pill auth" id="pv-auth">AUT: 0000-0000</span>
+                  </div>
+                  <div class="card-preview-micro">SISTEMA ANTIFRAUDE • BINGO 75 OFICIAL</div>
+                </div>
               </div>
             </div>
           </div>
@@ -283,11 +393,8 @@
           <a class="btn-tool d-inline-flex align-items-center gap-1" href="menu.html" title="Menu Principal">
             <i data-lucide="home" class="lucide"></i> Início
           </a>
-          <a class="btn-tool d-inline-flex align-items-center gap-1" href="automatico.html" title="Modo Automático">
-            <i data-lucide="play" class="lucide"></i> Auto
-          </a>
-          <a class="btn-tool d-inline-flex align-items-center gap-1" href="manual.html" title="Modo Manual">
-            <i data-lucide="hand" class="lucide"></i> Manual
+          <a class="btn-tool d-inline-flex align-items-center gap-1" href="painel.html" title="Painel de Sorteio">
+            <i data-lucide="dices" class="lucide"></i> Painel de Sorteio
           </a>
           <a class="btn-tool btn-tool-primary d-inline-flex align-items-center gap-1" href="check.html" title="Mesa de Conferência">
             <i data-lucide="search" class="lucide"></i> Conferência
@@ -315,11 +422,11 @@
 
   <script>
     const THEME_PALETTES = {
-      blue: { primary: '#1e3a8a', headerBg: '#1e3a8a', cardBg: '#eff6ff', border: '#1e3a8a' },
-      green: { primary: '#14532d', headerBg: '#14532d', cardBg: '#f0fdf4', border: '#14532d' },
-      red: { primary: '#991b1b', headerBg: '#991b1b', cardBg: '#fef2f2', border: '#991b1b' },
-      amber: { primary: '#9a3412', headerBg: '#9a3412', cardBg: '#fff7ed', border: '#9a3412' },
-      bw: { primary: '#0f172a', headerBg: '#0f172a', cardBg: '#f8fafc', border: '#0f172a' }
+      blue: { primary: '#1e3a8a', headerBg: '#1e3a8a', cardBg: '#eff6ff', border: '#bfdbfe', pillBg: '#eff6ff', pillText: '#1e3a8a' },
+      green: { primary: '#14532d', headerBg: '#14532d', cardBg: '#f0fdf4', border: '#bbf7d0', pillBg: '#f0fdf4', pillText: '#14532d' },
+      red: { primary: '#881337', headerBg: '#881337', cardBg: '#fff1f2', border: '#fecdd3', pillBg: '#fff1f2', pillText: '#881337' },
+      amber: { primary: '#78350f', headerBg: '#78350f', cardBg: '#fffbeb', border: '#fde68a', pillBg: '#fffbeb', pillText: '#78350f' },
+      bw: { primary: '#1e293b', headerBg: '#1e293b', cardBg: '#f1f5f9', border: '#cbd5e1', pillBg: '#f1f5f9', pillText: '#1e293b' }
     };
 
     let currentBatch = null;
@@ -498,11 +605,11 @@
 
       const ok = await BingoDialog.confirm({
         title: 'Excluir Lote de Cartelas?',
-        message: `Deseja excluir o lote "<b>${esc(b.eventName)} - ${esc(b.roundName)}</b>" com <b>${b.totalCards} cartelas</b>?<br><br><span class="text-danger">⚠️ As cartelas deste lote não serão mais autenticadas na conferência!</span>`,
+        message: `Deseja excluir o lote "<b>${esc(b.eventName)} - ${esc(b.roundName)}</b>" com <b>${b.totalCards} cartelas</b>?<br><br><span class="text-danger">Atenção: As cartelas deste lote não serão mais autenticadas na conferência!</span>`,
         confirmText: 'Sim, Excluir Lote',
         cancelText: 'Cancelar',
         danger: true,
-        icon: '🗑️'
+        icon: 'trash'
       });
 
       if (!ok) return;
@@ -563,17 +670,29 @@
       const curEventName = document.getElementById('event-name')?.value.trim() || currentBatch.eventName || 'GRANDE BINGO BENEFICENTE';
       const curRoundName = document.getElementById('round-name')?.value.trim() || currentBatch.roundName || 'Rodada Oficial';
 
-      if (cardPreview) cardPreview.style.borderColor = pal.border;
-      pvEvent.textContent = curEventName;
+      if (cardPreview) cardPreview.style.borderColor = pal.primary;
+      const innerFrame = document.getElementById('pv-inner-frame');
+      if (innerFrame) innerFrame.style.borderColor = pal.border;
+      const headerBox = document.getElementById('pv-header-box');
+      if (headerBox) {
+        headerBox.style.background = pal.cardBg;
+        headerBox.style.borderColor = pal.border;
+      }
+
+      pvEvent.textContent = curEventName.toUpperCase();
       pvEvent.style.color = pal.primary;
-      pvRound.textContent = curRoundName;
-      pvSerial.style.color = pal.primary;
+      pvRound.textContent = curRoundName.toUpperCase();
+      pvRound.style.background = pal.primary;
 
       document.querySelectorAll('.pv-head-cell').forEach(el => {
         el.style.background = pal.headerBg;
       });
 
       pvSerial.textContent = `SÉRIE Nº ${card.formattedSerial}`;
+      pvSerial.style.color = pal.pillText;
+      pvSerial.style.background = pal.pillBg;
+      pvSerial.style.borderColor = pal.border;
+
       pvAuth.textContent = `AUT: ${card.authCode}`;
       cardNavLbl.textContent = `${currentPreviewIndex + 1} de ${currentBatch.cards.length}`;
 
@@ -585,8 +704,10 @@
           if (val === 'FREE') {
             cell.className = 'card-preview-cell free';
             cell.innerHTML = `
-              <img src="favicon.svg" alt="Logo" style="width:28px; height:28px; object-fit:contain;" />
-              <span style="font-size:0.62rem; font-weight:900; line-height:1; margin-top:2px;">GRÁTIS</span>
+              <div class="card-preview-free-badge">
+                <img src="favicon.svg" alt="Logo" onerror="this.outerHTML='★'" />
+              </div>
+              <span class="card-preview-free-text">GRÁTIS</span>
             `;
           } else {
             cell.className = 'card-preview-cell';
@@ -647,7 +768,7 @@
 
         btnDownloadPdf.removeAttribute('disabled');
         btnGen.disabled = false;
-        btnGen.textContent = '🎲 Gerar & Salvar Lote';
+        btnGen.textContent = 'Gerar & Salvar Lote';
 
         batchStatusBadge.textContent = `${batch.totalCards} Cartelas Ativas (#${batch.startSerial}-#${batch.endSerial})`;
         batchStatusBadge.className = 'badge-round bg-success text-white';
@@ -664,7 +785,7 @@
       const colorTheme = document.getElementById('color-theme').value || currentBatch.colorTheme || 'blue';
 
       btnDownloadPdf.disabled = true;
-      btnDownloadPdf.textContent = '⏳ Gerando PDF...';
+      btnDownloadPdf.textContent = 'Gerando PDF...';
 
       try {
         await BingoCardsEngine.generatePDF(currentBatch, { cardsPerPage, colorTheme });
@@ -673,7 +794,7 @@
         BingoDialog.alert({ title: 'Erro ao gerar PDF', message: String(err.message || err), type: 'error' });
       } finally {
         btnDownloadPdf.disabled = false;
-        btnDownloadPdf.textContent = '🖨️ Baixar PDF do Lote Atual';
+        btnDownloadPdf.textContent = 'Baixar PDF do Lote Atual';
       }
     });
 

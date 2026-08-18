@@ -270,7 +270,7 @@
             authCode: card.authCode,
             batchName,
             category: 'Cartela Cheia',
-            icon: '🏆',
+            icon: 'trophy',
             title: 'BINGOU! (Cartela Cheia 24/24)',
             missingNumbers: []
           };
@@ -284,7 +284,7 @@
             authCode: card.authCode,
             batchName,
             category: 'Cinquina',
-            icon: '⚡',
+            icon: 'zap',
             title: 'Cinquina (Linha Completa 5/5)',
             missingNumbers: []
           });
@@ -296,7 +296,7 @@
             authCode: card.authCode,
             batchName,
             category: 'Quatro Cantos',
-            icon: '🍫',
+            icon: 'layoutGrid',
             title: 'Quatro Cantos (4/4)',
             missingNumbers: []
           });
@@ -308,7 +308,7 @@
             authCode: card.authCode,
             batchName,
             category: 'Terno',
-            icon: '🍗',
+            icon: 'award',
             title: 'Terno (3 em Linha)',
             missingNumbers: []
           });
@@ -549,7 +549,7 @@
     });
   }
 
-  // Exportador de PDF em A4 para Impressão
+  // Exportador de PDF em A4 para Impressão com Layout Oficial e Seguro
   async function generatePDF(batch, options = {}) {
     const { jsPDF } = window.jspdf || {};
     if (!jsPDF) {
@@ -563,11 +563,46 @@
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
     const themeColors = {
-      blue: { primary: [30, 58, 138], bgHeader: [239, 246, 255], border: [147, 197, 253], textDark: [15, 23, 42] },
-      green: { primary: [20, 83, 45], bgHeader: [240, 253, 244], border: [134, 239, 172], textDark: [15, 23, 42] },
-      red: { primary: [153, 27, 27], bgHeader: [254, 242, 242], border: [252, 165, 165], textDark: [15, 23, 42] },
-      amber: { primary: [146, 64, 14], bgHeader: [254, 243, 199], border: [252, 211, 77], textDark: [15, 23, 42] },
-      bw: { primary: [0, 0, 0], bgHeader: [240, 240, 240], border: [0, 0, 0], textDark: [0, 0, 0] }
+      blue: {
+        primary: [30, 58, 138],       // #1e3a8a
+        secondary: [37, 99, 235],     // #2563eb
+        bgHeader: [239, 246, 255],    // #eff6ff
+        border: [147, 197, 253],      // #93c5fd
+        accent: [217, 119, 6],        // #d97706 (Gold)
+        textDark: [15, 23, 42]        // #0f172a
+      },
+      green: {
+        primary: [20, 83, 45],        // #14532d
+        secondary: [22, 163, 74],     // #16a34a
+        bgHeader: [240, 253, 244],    // #f0fdf4
+        border: [134, 239, 172],      // #86efac
+        accent: [217, 119, 6],
+        textDark: [15, 23, 42]
+      },
+      red: {
+        primary: [136, 19, 55],       // #881337
+        secondary: [220, 38, 38],     // #dc2626
+        bgHeader: [255, 241, 242],    // #fff1f2
+        border: [252, 165, 165],      // #fca5a5
+        accent: [217, 119, 6],
+        textDark: [15, 23, 42]
+      },
+      amber: {
+        primary: [120, 53, 15],       // #78350f
+        secondary: [217, 119, 6],     // #d97706
+        bgHeader: [255, 251, 235],    // #fffbeb
+        border: [252, 211, 77],       // #fcd34d
+        accent: [180, 83, 9],
+        textDark: [15, 23, 42]
+      },
+      bw: {
+        primary: [30, 41, 59],        // #1e293b
+        secondary: [71, 85, 105],     // #475569
+        bgHeader: [241, 245, 249],    // #f1f5f9
+        border: [148, 163, 184],      // #94a3b8
+        accent: [71, 85, 105],
+        textDark: [15, 23, 42]
+      }
     };
     const c = themeColors[colorTheme] || themeColors.blue;
 
@@ -581,38 +616,55 @@
       const pageCards = cards.slice(p * cardsPerPage, (p + 1) * cardsPerPage);
 
       if (cardsPerPage === 4) {
-        // Layout 2x2 em A4 (210 x 297 mm)
+        // Layout 2x2 em A4 (210 x 297 mm) — Margens perfeitamente seguras e simétricas
         const positions = [
-          { x: 10, y: 10, w: 90, h: 133 },
-          { x: 110, y: 10, w: 90, h: 133 },
-          { x: 10, y: 153, w: 90, h: 133 },
-          { x: 110, y: 153, w: 90, h: 133 }
+          { x: 8.5, y: 11.5, w: 93, h: 130 },
+          { x: 108.5, y: 11.5, w: 93, h: 130 },
+          { x: 8.5, y: 155.5, w: 93, h: 130 },
+          { x: 108.5, y: 155.5, w: 93, h: 130 }
         ];
 
-        // Linhas guias pontilhadas de corte no centro
-        doc.setDrawColor(200, 200, 200);
+        // Linhas guias pontilhadas de corte no centro exato da folha com marcadores
+        doc.setDrawColor(180, 190, 205);
+        doc.setLineWidth(0.2);
         doc.setLineDashPattern([2, 2], 0);
         doc.line(105, 5, 105, 292);
-        doc.line(5, 148, 205, 148);
+        doc.line(5, 148.5, 205, 148.5);
         doc.setLineDashPattern([], 0); // restaura
 
+        // Ícones de tesoura sutis nas margens
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        doc.setTextColor(148, 163, 184);
+        doc.text('✂', 105, 4.5, { align: 'center' });
+        doc.text('✂', 105, 295.5, { align: 'center' });
+        doc.text('✂', 3.5, 149.5, { align: 'center' });
+        doc.text('✂', 206.5, 149.5, { align: 'center' });
+
         pageCards.forEach((card, idx) => {
-          renderCardOnPDF(doc, card, batch, positions[idx], c, logoDataUrl);
+          renderCardOnPDF(doc, card, batch, positions[idx], c, logoDataUrl, false);
         });
       } else {
         // Layout 2x1 em A4 (2 cartelas grandes por folha)
         const positions = [
-          { x: 20, y: 15, w: 170, h: 125 },
-          { x: 20, y: 155, w: 170, h: 125 }
+          { x: 17.5, y: 11.5, w: 175, h: 130 },
+          { x: 17.5, y: 155.5, w: 175, h: 130 }
         ];
 
-        doc.setDrawColor(200, 200, 200);
+        doc.setDrawColor(180, 190, 205);
+        doc.setLineWidth(0.2);
         doc.setLineDashPattern([2, 2], 0);
-        doc.line(10, 148, 200, 148);
+        doc.line(8, 148.5, 202, 148.5);
         doc.setLineDashPattern([], 0);
 
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        doc.setTextColor(148, 163, 184);
+        doc.text('✂', 4, 149.5, { align: 'center' });
+        doc.text('✂', 206, 149.5, { align: 'center' });
+
         pageCards.forEach((card, idx) => {
-          renderCardOnPDF(doc, card, batch, positions[idx], c, logoDataUrl);
+          renderCardOnPDF(doc, card, batch, positions[idx], c, logoDataUrl, true);
         });
       }
     }
@@ -621,104 +673,168 @@
     doc.save(fileName);
   }
 
-  function renderCardOnPDF(doc, card, batch, pos, c, logoDataUrl) {
+  function renderCardOnPDF(doc, card, batch, pos, c, logoDataUrl, isLarge = false) {
     const { x, y, w, h } = pos;
 
-    // Fundo da Cartela (Quadrada/Retangular sem cantos arredondados)
+    // 1. Moldura Externa Nobre com Cantos Arredondados
     doc.setFillColor(255, 255, 255);
     doc.setDrawColor(...c.primary);
-    doc.setLineWidth(0.8);
-    doc.rect(x, y, w, h, 'FD');
+    doc.setLineWidth(0.6);
+    doc.roundedRect(x, y, w, h, 2.5, 2.5, 'FD');
 
-    // Cabeçalho da Cartela (Quadrado sem arredondamento)
+    // Filete interno decorativo
+    doc.setDrawColor(...c.border);
+    doc.setLineWidth(0.25);
+    doc.roundedRect(x + 1.2, y + 1.2, w - 2.4, h - 2.4, 2, 2, 'S');
+
+    // 2. Banner do Cabeçalho
+    const headerH = isLarge ? 16 : 14.3;
     doc.setFillColor(...c.bgHeader);
     doc.setDrawColor(...c.border);
-    doc.setLineWidth(0.4);
-    doc.rect(x, y, w, 15, 'FD');
+    doc.setLineWidth(0.3);
+    doc.roundedRect(x + 2.2, y + 2.2, w - 4.4, headerH, 1.8, 1.8, 'FD');
 
     // Título do Evento
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(w > 120 ? 12 : 9.5);
+    doc.setFontSize(isLarge ? 12.5 : 9);
     doc.setTextColor(...c.primary);
-    doc.text((batch.eventName || 'BINGO 75').toUpperCase(), x + w / 2, y + 6, { align: 'center' });
+    doc.text((batch.eventName || 'BINGO 75').toUpperCase(), x + w / 2, y + (isLarge ? 7.5 : 6.8), { align: 'center' });
 
-    // Subtítulo e Rodada
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(w > 120 ? 9 : 7);
-    doc.setTextColor(100, 116, 139);
-    doc.text(batch.roundName || 'Cartela Oficial', x + w / 2, y + 11, { align: 'center' });
+    // Badge / Pílula da Rodada
+    const roundPillW = isLarge ? 70 : 48;
+    const roundPillH = isLarge ? 5.5 : 4.8;
+    const roundPillX = x + (w - roundPillW) / 2;
+    const roundPillY = y + (isLarge ? 10.2 : 9.2);
 
-    // Faixa B-I-N-G-O (Cor Única baseada no Tema Escolhido)
+    doc.setFillColor(...c.primary);
+    doc.roundedRect(roundPillX, roundPillY, roundPillW, roundPillH, roundPillH / 2, roundPillH / 2, 'F');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(isLarge ? 7.5 : 6.2);
+    doc.setTextColor(255, 255, 255);
+    doc.text((batch.roundName || 'RODADA OFICIAL').toUpperCase(), x + w / 2, roundPillY + (isLarge ? 3.8 : 3.4), { align: 'center' });
+
+    // 3. Faixa B-I-N-G-O e Grade 5x5 Proporcional
     const letters = ['B', 'I', 'N', 'G', 'O'];
 
-    const gridX = x + 3.5;
-    const gridY = y + 17;
-    const gridW = w - 7;
+    const gridW = isLarge ? 115 : 86;
+    const gridX = x + (w - gridW) / 2;
     const cellW = gridW / 5;
-    const headerH = w > 120 ? 11 : 9;
-    const cellH = (h - 36) / 5;
+    const colHeaderH = isLarge ? 9.5 : 8;
+    const gridY = y + (isLarge ? 20.5 : 18.5);
 
-    // Desenha cabeçalho B I N G O com cor única do tema
+    // Letras B-I-N-G-O em Cápsulas Elegantes
     letters.forEach((L, idx) => {
       const cx = gridX + idx * cellW;
       doc.setFillColor(...c.primary);
-      doc.rect(cx, gridY, cellW, headerH, 'F');
+      doc.setDrawColor(...c.primary);
+      doc.roundedRect(cx + 0.4, gridY, cellW - 0.8, colHeaderH, 1.5, 1.5, 'FD');
 
       doc.setTextColor(255, 255, 255);
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(w > 120 ? 15 : 12);
-      doc.text(L, cx + cellW / 2, gridY + headerH / 2 + (w > 120 ? 4 : 3), { align: 'center' });
+      doc.setFontSize(isLarge ? 15 : 13);
+      doc.text(L, cx + cellW / 2, gridY + colHeaderH / 2 + (isLarge ? 2.5 : 2.2), { align: 'center' });
     });
 
-    // Desenha Grade 5x5 de Números
-    doc.setDrawColor(203, 213, 225);
-    doc.setLineWidth(0.3);
+    // 4. Grade 5x5 de Números (Células Perfeitamente Quadradas e Nítidas)
+    const cellH = isLarge ? 17.5 : 17.2;
+    const cellsStartY = gridY + colHeaderH + 0.8;
 
     for (let r = 0; r < 5; r++) {
-      const cy = gridY + headerH + r * cellH;
+      const cy = cellsStartY + r * cellH;
       for (let col = 0; col < 5; col++) {
         const cx = gridX + col * cellW;
         const val = card.grid[r][col];
 
         if (val === 'FREE') {
-          doc.setFillColor(254, 240, 138); // amarelo suave
-          doc.rect(cx, cy, cellW, cellH, 'FD');
+          // Casa Central Dourada GRÁTIS
+          doc.setFillColor(254, 243, 199); // Amarelo dourado suave
+          doc.setDrawColor(245, 158, 11);  // Borda dourada viva
+          doc.setLineWidth(0.4);
+          doc.roundedRect(cx + 0.3, cy + 0.3, cellW - 0.6, cellH - 0.6, 1.2, 1.2, 'FD');
+
+          // Medalha / Selo Circular Central
+          const medalRadius = isLarge ? 5.2 : 4.3;
+          doc.setFillColor(255, 255, 255);
+          doc.setDrawColor(217, 119, 6);
+          doc.setLineWidth(0.35);
+          doc.circle(cx + cellW / 2, cy + cellH / 2 - (isLarge ? 1.5 : 1.3), medalRadius, 'FD');
 
           if (logoDataUrl) {
             try {
-              const logoSize = Math.min(cellW, cellH) * 0.52;
-              const lx = cx + (cellW - logoSize) / 2;
-              const ly = cy + (cellH - logoSize) / 2 - (w > 120 ? 2 : 1.5);
-              doc.addImage(logoDataUrl, 'PNG', lx, ly, logoSize, logoSize);
-            } catch (e) {}
+              const logoSize = medalRadius * 1.4;
+              doc.addImage(logoDataUrl, 'PNG', cx + cellW / 2 - logoSize / 2, cy + cellH / 2 - (isLarge ? 1.5 : 1.3) - logoSize / 2, logoSize, logoSize);
+            } catch (e) {
+              doc.setTextColor(217, 119, 6);
+              doc.setFont('helvetica', 'bold');
+              doc.setFontSize(isLarge ? 12 : 10);
+              doc.text('★', cx + cellW / 2, cy + cellH / 2 - (isLarge ? 1.5 : 1.3) + 1.8, { align: 'center' });
+            }
+          } else {
+            doc.setTextColor(217, 119, 6);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(isLarge ? 12 : 10);
+            doc.text('★', cx + cellW / 2, cy + cellH / 2 - (isLarge ? 1.5 : 1.3) + 1.8, { align: 'center' });
           }
 
-          doc.setTextColor(133, 77, 14);
+          // Legenda "GRÁTIS"
+          doc.setTextColor(146, 64, 14);
           doc.setFont('helvetica', 'bold');
-          doc.setFontSize(w > 120 ? 7.5 : 5.5);
-          doc.text('GRÁTIS', cx + cellW / 2, cy + cellH - (w > 120 ? 2 : 1.2), { align: 'center' });
+          doc.setFontSize(isLarge ? 7 : 5.8);
+          doc.text('GRÁTIS', cx + cellW / 2, cy + cellH - (isLarge ? 1.8 : 1.5), { align: 'center' });
         } else {
-          doc.setFillColor((r + col) % 2 === 0 ? 255 : 248, (r + col) % 2 === 0 ? 255 : 250, (r + col) % 2 === 0 ? 255 : 252);
-          doc.rect(cx, cy, cellW, cellH, 'FD');
+          // Casa de Número Normal
+          const isEven = (r + col) % 2 === 0;
+          doc.setFillColor(isEven ? 255 : 248, isEven ? 255 : 250, isEven ? 255 : 252);
+          doc.setDrawColor(203, 213, 225);
+          doc.setLineWidth(0.25);
+          doc.roundedRect(cx + 0.3, cy + 0.3, cellW - 0.6, cellH - 0.6, 1, 1, 'FD');
+
           doc.setTextColor(...c.textDark);
           doc.setFont('helvetica', 'bold');
-          doc.setFontSize(w > 120 ? 19 : 15); // Número bem maior e legível
-          doc.text(String(val), cx + cellW / 2, cy + cellH / 2 + (w > 120 ? 5.5 : 4.5), { align: 'center' });
+          doc.setFontSize(isLarge ? 18.5 : 15.5);
+          doc.text(String(val), cx + cellW / 2, cy + cellH / 2 + (isLarge ? 3.6 : 3.2), { align: 'center' });
         }
       }
     }
 
-    // Rodapé da Cartela: Número de Série + Código Antifraude
-    const footerY = y + h - 6;
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(w > 120 ? 10 : 8);
-    doc.setTextColor(...c.primary);
-    doc.text(`SÉRIE Nº ${card.formattedSerial}`, x + 5, footerY);
+    // 5. Rodapé da Cartela & Segurança Antifraude
+    const footerSepY = cellsStartY + 5 * cellH + 2.2;
+    doc.setDrawColor(...c.border);
+    doc.setLineWidth(0.3);
+    doc.line(x + 3.5, footerSepY, x + w - 3.5, footerSepY);
 
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(w > 120 ? 8 : 6.5);
-    doc.setTextColor(100, 116, 139);
-    doc.text(`AUT: ${card.authCode}`, x + w - 5, footerY, { align: 'right' });
+    const pillW = isLarge ? 50 : 38;
+    const pillH = isLarge ? 6.8 : 6.2;
+    const pillY = footerSepY + 1.8;
+
+    // Pílula da Série (Esquerda)
+    doc.setFillColor(...c.bgHeader);
+    doc.setDrawColor(...c.border);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(x + 3.5, pillY, pillW, pillH, 1.5, 1.5, 'FD');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(isLarge ? 8.5 : 7.2);
+    doc.setTextColor(...c.primary);
+    doc.text(`SÉRIE Nº ${card.formattedSerial}`, x + 3.5 + pillW / 2, pillY + pillH / 2 + 1.2, { align: 'center' });
+
+    // Pílula de Autenticação Antifraude (Direita)
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(x + w - 3.5 - pillW, pillY, pillW, pillH, 1.5, 1.5, 'FD');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(isLarge ? 8 : 6.8);
+    doc.setTextColor(71, 85, 105);
+    doc.text(`AUT: ${card.authCode}`, x + w - 3.5 - pillW / 2, pillY + pillH / 2 + 1.2, { align: 'center' });
+
+    // Micro-legenda de segurança
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(isLarge ? 5.5 : 4.5);
+    doc.setTextColor(148, 163, 184);
+    doc.text('SISTEMA ANTIFRAUDE • BINGO 75 OFICIAL', x + w / 2, y + h - (isLarge ? 2.5 : 2.2), { align: 'center' });
   }
 
   // Exporta objeto global

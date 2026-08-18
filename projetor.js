@@ -15,10 +15,10 @@
   };
 
   const PRIZE_ICONS = {
-    'Terno': '🍗',
-    'Quatro Cantos': '🍫',
-    'Cinquina': '⚡',
-    'Cartela Cheia': '💰'
+    'Terno': '',
+    'Quatro Cantos': '',
+    'Cinquina': '',
+    'Cartela Cheia': ''
   };
 
   const SAMPLE_SPONSORS = [
@@ -106,6 +106,10 @@
   const adNextPrizes = document.getElementById('ad-next-prizes');
 
   // Botões
+  const btnAdToggle = document.getElementById('btn-ad-toggle');
+  const adIcon = document.getElementById('ad-icon');
+  const adLabel = document.getElementById('ad-label');
+  const btnCloseAdOverlay = document.getElementById('btn-close-ad-overlay');
   const btnSoundToggle = document.getElementById('btn-sound-toggle');
   const soundIcon = document.getElementById('sound-icon');
   const soundLabel = document.getElementById('sound-label');
@@ -115,6 +119,16 @@
   const btnCloseShare = document.getElementById('btn-close-share');
   const btnCopyLink = document.getElementById('btn-copy-link');
   const shareLinkInput = document.getElementById('share-link-input');
+
+  // Elementos do Destaque de Pedra Patrocinada
+  const sponsoredOverlay = document.getElementById('sponsored-stone-overlay');
+  const spProjLetter = document.getElementById('sp-proj-letter');
+  const spProjNumber = document.getElementById('sp-proj-number');
+  const spProjLogo = document.getElementById('sp-proj-logo');
+  const spProjName = document.getElementById('sp-proj-name');
+  const spProjMsg = document.getElementById('sp-proj-msg');
+  const spProjProgress = document.getElementById('sp-proj-progress');
+  const btnCloseSpOverlay = document.getElementById('btn-close-sp-overlay');
 
   // ====== Áudio & Síntese Sonora do Telão (Web Audio API) ======
   let audioCtx, masterGain;
@@ -210,6 +224,94 @@
     } catch (e) {}
   }
 
+  // ====== Destaque Comemorativo de Pedra Patrocinada ======
+  let sponsoredDismissTimer = null;
+  let sponsoredProgressInterval = null;
+  let lastHandledSponsoredTs = 0;
+
+  function showSponsoredStoneCelebration(triggerData) {
+    if (!triggerData || !triggerData.sponsor) return;
+    if (triggerData.ts && triggerData.ts === lastHandledSponsoredTs) return;
+    lastHandledSponsoredTs = triggerData.ts || Date.now();
+
+    const { stone, letter, sponsor } = triggerData;
+    const L = letter || letterFor(stone);
+
+    if (spProjLetter) spProjLetter.textContent = L;
+    if (spProjNumber) spProjNumber.textContent = String(stone);
+    if (spProjLogo) {
+      spProjLogo.onerror = () => { spProjLogo.src = 'favicon.svg'; };
+      spProjLogo.src = sponsor.img || 'favicon.svg';
+    }
+    if (spProjName) spProjName.textContent = sponsor.name || 'Patrocinador Oficial';
+    if (spProjMsg) {
+      spProjMsg.textContent = sponsor.stoneMessage ? `"${sponsor.stoneMessage}"` : `"${sponsor.desc || 'Oferecimento Especial'}"`;
+    }
+
+    sponsoredOverlay?.removeAttribute('hidden');
+
+    // Desbloqueia e toca fanfarra festiva
+    unlockAudioOnUserGesture();
+    playVictoryFanfare();
+
+    // Confetes na tela
+    if (window.confetti) {
+      try {
+        confetti({ particleCount: 70, spread: 80, origin: { y: 0.55 } });
+      } catch (e) {}
+    }
+
+    // Narração de Oferecimento Especial
+    const isMuted = localStorage.getItem('bingo.projector.muted') === '1';
+    if (!isMuted && soundEnabled && window.speechSynthesis) {
+      try {
+        speechSynthesis.cancel();
+        speechSynthesis.resume();
+        const msg = `Pedra ${sayLetter(L)}, número ${stone}! Em oferecimento a ${sponsor.name}! ${sponsor.stoneMessage || ''}`;
+        const u = new SpeechSynthesisUtterance(msg);
+        u.lang = 'pt-BR';
+        const savedVoice = localStorage.getItem('bingo.voice');
+        const savedRate = parseFloat(localStorage.getItem('bingo.rate') || '1.0');
+        const voices = speechSynthesis.getVoices();
+        const chosen = voices.find((v) => v.name === savedVoice) ||
+                       voices.find((v) => /pt-BR/i.test(v.lang) && /Google|Natural|Neural/i.test(v.name)) ||
+                       voices.find((v) => /pt-BR/i.test(v.lang)) || voices[0];
+        if (chosen) { u.voice = chosen; u.lang = chosen.lang; }
+        u.rate = isNaN(savedRate) ? 1.0 : savedRate;
+        speechSynthesis.speak(u);
+      } catch (e) {}
+    }
+
+    // Barra de progresso visual com auto-fechamento em 10s
+    if (sponsoredDismissTimer) clearTimeout(sponsoredDismissTimer);
+    if (sponsoredProgressInterval) clearInterval(sponsoredProgressInterval);
+
+    const duration = 10000;
+    const startTime = Date.now();
+
+    if (spProjProgress) {
+      spProjProgress.style.transform = 'scaleX(1)';
+      sponsoredProgressInterval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const remainingRatio = Math.max(0, 1 - (elapsed / duration));
+        spProjProgress.style.transform = `scaleX(${remainingRatio})`;
+        if (remainingRatio <= 0) clearInterval(sponsoredProgressInterval);
+      }, 40);
+    }
+
+    sponsoredDismissTimer = setTimeout(() => {
+      closeSponsoredCelebration();
+    }, duration);
+  }
+
+  function closeSponsoredCelebration() {
+    if (sponsoredDismissTimer) clearTimeout(sponsoredDismissTimer);
+    if (sponsoredProgressInterval) clearInterval(sponsoredProgressInterval);
+    sponsoredOverlay?.setAttribute('hidden', '');
+  }
+
+  btnCloseSpOverlay?.addEventListener('click', closeSponsoredCelebration);
+
   let nextRound = null;
   let roundsQueue = [];
   let adNotice = null;
@@ -273,9 +375,9 @@
 
       if (nextItem && adNextBanner) {
         adNextBanner.style.display = 'flex';
-        if (adNextTitle) adNextTitle.innerHTML = `👉 A SEGUIR: <b>${esc(nextItem.name)}</b>`;
+        if (adNextTitle) adNextTitle.innerHTML = `A SEGUIR: <b>${esc(nextItem.name)}</b>`;
         const p = nextItem.prizes || {};
-        const cheia = p['Cartela Cheia'] ? `🏆 Cartela Cheia: <b>${esc(p['Cartela Cheia'])}</b>` : '';
+        const cheia = p['Cartela Cheia'] ? `Cartela Cheia: <b>${esc(p['Cartela Cheia'])}</b>` : '';
         const outros = [
           p['Terno'] ? `Terno: ${esc(p['Terno'])}` : '',
           p['Quatro Cantos'] ? `4 Cantos: ${esc(p['Quatro Cantos'])}` : '',
@@ -287,7 +389,7 @@
         }
       } else if (adNextBanner) {
         adNextBanner.style.display = 'flex';
-        if (adNextTitle) adNextTitle.innerHTML = `👉 A SEGUIR: <b>Próxima Rodada</b>`;
+        if (adNextTitle) adNextTitle.innerHTML = `A SEGUIR: <b>Próxima Rodada</b>`;
         if (adNextPrizes) adNextPrizes.innerHTML = `Fiquem atentos para a próxima chamada de pedras!`;
       }
     }
@@ -473,7 +575,7 @@
         elLiveDot.style.background = '#0284c7';
         elLiveDot.style.color = '#ffffff';
         elLiveDot.style.borderColor = '#0369a1';
-        elLiveDot.innerHTML = '<span class="live-dot" style="background:#38bdf8;"></span> 🔍 CONFERÊNCIA';
+        elLiveDot.innerHTML = '<span class="live-dot" style="background:#38bdf8;"></span> CONFERÊNCIA';
       } else {
         elLiveDot.className = 'chip sync-online d-inline-flex align-items-center gap-1';
         elLiveDot.style.background = '';
@@ -563,6 +665,7 @@
     renderPrizes();
     updateLiveNoticeBar();
     updateAdCarousel();
+    updateAdButton();
   }
 
   function handleStateChange(newState) {
@@ -578,6 +681,11 @@
     roundsQueue = Array.isArray(newState.roundsQueue) ? newState.roundsQueue : [];
     adNotice = newState.adNotice ?? null;
     
+    // Tema do Telão (sincronizado do painel)
+    if (newState.projectorTheme) {
+      applyProjectorTheme(newState.projectorTheme);
+    }
+
     // adMode (online + local)
     let newAdMode = false;
     if (typeof newState.adMode === 'boolean') {
@@ -694,7 +802,7 @@
 
   function updateSoundButton() {
     if (soundIcon) soundIcon.innerHTML = soundEnabled ? ICONS.volume2 : ICONS.volumeX;
-    if (soundLabel) soundLabel.textContent = soundEnabled ? 'Som On' : 'Som Mudo';
+    if (btnSoundToggle) btnSoundToggle.title = soundEnabled ? 'Som do Telão Ativado (Atalho M)' : 'Som do Telão Mutado (Atalho M)';
   }
   updateSoundButton();
 
@@ -704,6 +812,41 @@
     localStorage.setItem('bingo.projector.sound', soundEnabled ? '1' : '0');
     updateSoundButton();
   });
+
+  // ====== Controle do Modo Patrocinadores / Propaganda no Telão ======
+  function updateAdButton() {
+    if (!btnAdToggle) return;
+    if (adMode) {
+      btnAdToggle.classList.add('active-ad');
+      if (adIcon) adIcon.innerHTML = `<span class="live-dot" style="background:#ffffff; box-shadow:0 0 6px #ffffff;"></span>`;
+      btnAdToggle.title = 'Patrocinadores NO AR no Telão! Clique ou pressione P para desativar';
+    } else {
+      btnAdToggle.classList.remove('active-ad');
+      if (adIcon) adIcon.innerHTML = `<svg class="lucide lucide-megaphone" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block; vertical-align:middle;"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></svg>`;
+      btnAdToggle.title = 'Ativar Modo Patrocinadores no Telão (Atalho P)';
+    }
+  }
+  updateAdButton();
+
+  function toggleAdMode() {
+    adMode = !adMode;
+    try {
+      localStorage.setItem('bingo.adMode', adMode ? '1' : '0');
+      const st = JSON.parse(localStorage.getItem('bingo.state') || '{}');
+      st.adMode = adMode;
+      localStorage.setItem('bingo.state', JSON.stringify(st));
+    } catch (e) {}
+
+    updateAdButton();
+    updateAdCarousel();
+
+    if (window.BingoSync && BingoSync.ready()) {
+      BingoSync.pushState({ adMode });
+    }
+  }
+
+  btnAdToggle?.addEventListener('click', toggleAdMode);
+  btnCloseAdOverlay?.addEventListener('click', toggleAdMode);
 
   function toggleFull() {
     const el = document.documentElement;
@@ -747,11 +890,51 @@
     setTimeout(() => { btnCopyLink.textContent = 'Copiar'; }, 2000);
   });
 
+  // ====== Modo Noturno / Alto Contraste ======
+  const btnThemeToggle = document.getElementById('btn-theme-toggle');
+  const themeIcon = document.getElementById('theme-icon');
+
+  function applyProjectorTheme(themeName) {
+    const isDark = themeName === 'dark';
+    if (isDark) {
+      document.body.classList.add('theme-dark');
+      if (themeIcon) themeIcon.setAttribute('data-lucide', 'sun');
+      if (btnThemeToggle) btnThemeToggle.title = 'Alternar para Modo Claro (Atalho T)';
+    } else {
+      document.body.classList.remove('theme-dark');
+      if (themeIcon) themeIcon.setAttribute('data-lucide', 'moon');
+      if (btnThemeToggle) btnThemeToggle.title = 'Alternar para Modo Noturno / Alto Contraste (Atalho T)';
+    }
+    localStorage.setItem('bingo.projector.theme', isDark ? 'dark' : 'light');
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function toggleProjectorTheme() {
+    const isCurrentlyDark = document.body.classList.contains('theme-dark');
+    applyProjectorTheme(isCurrentlyDark ? 'light' : 'dark');
+  }
+
+  btnThemeToggle?.addEventListener('click', toggleProjectorTheme);
+
+  // Inicializa tema salvo
+  const savedTheme = localStorage.getItem('bingo.projector.theme') || 'light';
+  applyProjectorTheme(savedTheme);
+
   // Atalhos
   document.addEventListener('keydown', (e) => {
     if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
-    if (e.key === 'f' || e.key === 'F') { toggleFull(); }
-    if (e.key === 'm' || e.key === 'M') { btnSoundToggle?.click(); }
+    if (e.key === 'Escape') {
+      closeSponsoredCelebration();
+      if (modalShare) modalShare.setAttribute('hidden', '');
+    } else if (e.key === 'f' || e.key === 'F') { toggleFull(); }
+    else if (e.key === 'm' || e.key === 'M') { btnSoundToggle?.click(); }
+    else if (e.key === 't' || e.key === 'T' || e.key === 'd' || e.key === 'D') {
+      toggleProjectorTheme();
+    }
+    else if (e.key === 'p' || e.key === 'P') {
+      e.preventDefault();
+      toggleAdMode();
+    }
   });
 
   function loadLocalState() {
@@ -783,13 +966,38 @@
       }
       st.conferenceMode = conferenceMode;
 
+      const localTheme = st.projectorTheme || localStorage.getItem('bingo.projector.theme') || 'light';
+      applyProjectorTheme(localTheme);
+
+      // Verifica disparo de pedra patrocinada
+      try {
+        const rawTrigger = localStorage.getItem('bingo.sponsoredTrigger');
+        if (rawTrigger) {
+          const trig = JSON.parse(rawTrigger);
+          if (trig && trig.ts && (Date.now() - trig.ts < 12000)) {
+            showSponsoredStoneCelebration(trig);
+          }
+        }
+      } catch (e) {}
+
       handleStateChange(st);
       renderRanking(rankingList);
     } catch (e) {}
   }
 
   window.addEventListener('storage', (e) => {
-    if (e.key === 'bingo.state' || e.key === 'bingo.ranking' || e.key === 'bingo.prizes' || e.key === 'bingo.sponsors' || e.key === 'bingo.adMode' || e.key === 'bingo.conferenceMode' || e.key === 'bingo.adNotice') {
+    if (e.key === 'bingo.sponsoredTrigger') {
+      try {
+        const trig = JSON.parse(e.newValue || '{}');
+        if (trig && trig.ts && (Date.now() - trig.ts < 12000)) {
+          showSponsoredStoneCelebration(trig);
+        }
+      } catch (err) {}
+    }
+    if (e.key === 'bingo.projector.theme') {
+      applyProjectorTheme(e.newValue || 'light');
+    }
+    if (['bingo.state', 'bingo.ranking', 'bingo.prizes', 'bingo.sponsors', 'bingo.adMode', 'bingo.conferenceMode', 'bingo.adNotice', 'bingo.projector.muted'].includes(e.key)) {
       loadLocalState();
     }
   });

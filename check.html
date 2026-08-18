@@ -262,11 +262,8 @@
           <a class="btn-tool d-inline-flex align-items-center gap-1" href="menu.html" title="Menu Principal">
             <i data-lucide="home" class="lucide"></i> Início
           </a>
-          <a class="btn-tool d-inline-flex align-items-center gap-1" href="automatico.html" title="Modo Automático">
-            <i data-lucide="play" class="lucide"></i> Auto
-          </a>
-          <a class="btn-tool d-inline-flex align-items-center gap-1" href="manual.html" title="Modo Manual">
-            <i data-lucide="hand" class="lucide"></i> Manual
+          <a class="btn-tool d-inline-flex align-items-center gap-1" href="painel.html" title="Painel de Sorteio">
+            <i data-lucide="dices" class="lucide"></i> Painel
           </a>
           <a class="btn-tool d-inline-flex align-items-center gap-1" href="projetor.html" target="_blank" style="background:#fffbeb; border-color:#f59e0b; color:#b45309; font-weight:800;" title="Abrir Telão">
             <i data-lucide="tv" class="lucide"></i> Telão
@@ -369,12 +366,12 @@
 
         <!-- Onde Ativar a Voz / Áudio -->
         <div class="form-field-card">
-          <label class="form-label-clean mb-2">🔊 Onde a Voz e o Som devem Tocar?</label>
+          <label class="form-label-clean mb-2 d-flex align-items-center gap-1.5"><i data-lucide="volume-2" class="lucide-xs text-primary"></i> <span>Onde a Voz e o Som devem Tocar?</span></label>
           <div class="d-flex flex-column gap-2">
             <!-- Toggle Painel de Controle -->
             <div class="d-flex align-items-center justify-content-between p-2 rounded-2" style="background:#f8fafc; border:1px solid #e2e8f0;">
               <div class="d-flex align-items-center gap-2">
-                <span class="fs-5">🕹️</span>
+                <i data-lucide="layout-dashboard" class="lucide text-primary"></i>
                 <div>
                   <div class="fw-bold small text-dark">Painel do Operador (Mesa)</div>
                   <div class="text-muted" style="font-size:0.75rem;">Narração e efeitos sonoros neste dispositivo</div>
@@ -388,7 +385,7 @@
             <!-- Toggle Telão / Projetor -->
             <div class="d-flex align-items-center justify-content-between p-2 rounded-2" style="background:#f8fafc; border:1px solid #e2e8f0;">
               <div class="d-flex align-items-center gap-2">
-                <span class="fs-5">📺</span>
+                <i data-lucide="tv" class="lucide text-primary"></i>
                 <div>
                   <div class="fw-bold small text-dark">Telão / Projetor do Público</div>
                   <div class="text-muted" style="font-size:0.75rem;">Narração e efeitos sonoros no telão</div>
@@ -544,8 +541,21 @@
       state() { try { return JSON.parse(localStorage.getItem('bingo.state') || '{}'); } catch (e) { return {}; } },
       loadRanking() { try { return JSON.parse(localStorage.getItem('bingo.ranking') || '[]'); } catch (e) { return []; } },
       saveRanking(list) {
-        localStorage.setItem('bingo.ranking', JSON.stringify(list || []));
-        window.BingoSync?.pushRanking(list || []);
+        const sanitized = Array.isArray(list) ? list : [];
+        localStorage.setItem('bingo.ranking', JSON.stringify(sanitized));
+        try {
+          let roundsList = JSON.parse(localStorage.getItem('bingo.roundsList') || '[]');
+          const activeId = localStorage.getItem('bingo.activeRoundId') || 'round_1';
+          const rIdx = roundsList.findIndex(r => r.id === activeId);
+          if (rIdx >= 0) {
+            roundsList[rIdx].ranking = sanitized;
+            localStorage.setItem('bingo.roundsList', JSON.stringify(roundsList));
+          }
+        } catch (e) {}
+        window.BingoSync?.pushRanking(sanitized);
+        const st = LS.state();
+        st.ranking = sanitized;
+        LS.saveState(st);
       },
       saveState(data) {
         localStorage.setItem('bingo.state', JSON.stringify(data || {}));
@@ -626,6 +636,13 @@
       grid.innerHTML = sorted.map((item, idx) => {
         const prizeWon = prizes[item.type] || '—';
         const origIdx = list.indexOf(item);
+        let whenStr = '—';
+        if (item.time) {
+          whenStr = item.time;
+        } else if (item.ts) {
+          const d = new Date(item.ts);
+          whenStr = !isNaN(d.getTime()) ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—';
+        }
         return `
           <div class="col-12 col-md-6">
             <div class="d-flex align-items-center justify-content-between p-1 px-2 rounded border" style="background:#ffffff; font-size:0.78rem; line-height:1.2; box-shadow:0 1px 2px rgba(0,0,0,0.03);">
@@ -636,7 +653,7 @@
                 <span class="text-success fw-bold text-truncate" style="max-width:140px; font-size:0.72rem;" title="${esc(prizeWon)}">${esc(prizeWon)}</span>
               </div>
               <div class="d-flex align-items-center gap-1 flex-shrink-0 ms-1">
-                <span class="text-muted" style="font-size:0.68rem;">${new Date(item.ts || Date.now()).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' })}</span>
+                <span class="text-muted" style="font-size:0.68rem;">${esc(whenStr)}</span>
                 <button type="button" class="btn btn-sm btn-outline-danger py-0 px-1 fw-bold" style="font-size:0.68rem; line-height:1;" data-action="del-winner" data-idx="${origIdx}" title="Excluir este registro">✕</button>
               </div>
             </div>
@@ -717,7 +734,9 @@
         return;
       }
 
-      list.push({ name, type, ts: new Date().toISOString() });
+      const now = new Date();
+      const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      list.push({ name, type, time: timeStr, ts: now.getTime() });
       playPattern(type);
       LS.saveRanking(list);
 
@@ -743,7 +762,8 @@
 
       const prizes = getPrizes();
       const prizeWon = prizes[type] || '';
-      msg.innerHTML = `<div class="alert alert-success py-1 mb-0 small">✅ Ganhador registrado! Prêmio: <b>${esc(prizeWon)}</b> (já riscado no telão).</div>`;
+      msg.innerHTML = `<div class="alert alert-success py-1 mb-0 small d-flex align-items-center gap-1.5"><i data-lucide="check-circle" class="lucide-xs text-success"></i> <span>Ganhador registrado! Prêmio: <b>${esc(prizeWon)}</b> (já riscado no telão).</span></div>`;
+      if (window.lucide) lucide.createIcons();
       e.target.reset();
       updateRankingTable();
       setTimeout(() => { if (msg) msg.innerHTML = ''; }, 4000);
@@ -787,11 +807,15 @@
       if (!card) {
         res.innerHTML = `
           <div class="alert alert-danger py-2 px-2 mt-2 mb-0 small">
-            <b>❌ Cartela #${serialNum} não encontrada!</b><br>
+            <div class="d-flex align-items-center gap-1.5 fw-bold mb-1">
+              <i data-lucide="alert-circle" class="lucide-xs text-danger"></i>
+              <span>Cartela #${serialNum} não encontrada!</span>
+            </div>
             Nenhum lote oficial contendo esta numeração foi cadastrado.
-            <div class="mt-1"><a href="cartelas.html" class="fw-bold text-danger">➡️ Ir para Gerador de Cartelas</a></div>
+            <div class="mt-1"><a href="cartelas.html" class="fw-bold text-danger">Ir para Gerador de Cartelas →</a></div>
           </div>
         `;
+        if (window.lucide) lucide.createIcons();
         return;
       }
 
@@ -979,10 +1003,11 @@
       const miss = checkNums.filter(n => !setDrawn.has(n));
 
       if (passed) {
-        res.innerHTML = `<div class="p-2 rounded bg-success text-white small">🎉 <b>VÁLIDA!</b> Atende a <b>${esc(type)}</b> (${hit.length} acertos).</div>`;
+        res.innerHTML = `<div class="p-2 rounded bg-success text-white small d-flex align-items-center gap-1.5"><i data-lucide="check-circle" class="lucide-xs"></i> <span><b>VÁLIDA!</b> Atende a <b>${esc(type)}</b> (${hit.length} acertos).</span></div>`;
       } else {
-        res.innerHTML = `<div class="p-2 rounded bg-danger text-white small">❌ <b>Falta:</b> ${miss.join(', ')} (${hit.length} acertos).</div>`;
+        res.innerHTML = `<div class="p-2 rounded bg-danger text-white small d-flex align-items-center gap-1.5"><i data-lucide="x-circle" class="lucide-xs"></i> <span><b>Falta:</b> ${miss.join(', ')} (${hit.length} acertos).</span></div>`;
       }
+      if (window.lucide) lucide.createIcons();
     });
 
     document.getElementById('btn-clear')?.addEventListener('click', () => {
@@ -1082,7 +1107,7 @@
 
       // 2. Se houver referrer da aplicação
       const ref = document.referrer;
-      if (ref && (ref.includes('automatico.html') || ref.includes('manual.html') || ref.includes('menu.html'))) {
+      if (ref && (ref.includes('painel.html') || ref.includes('automatico.html') || ref.includes('manual.html') || ref.includes('menu.html'))) {
         window.location.href = ref;
         return;
       }
@@ -1094,14 +1119,14 @@
       }
 
       // 4. Fallback padrão
-      window.location.href = 'automatico.html';
+      window.location.href = 'painel.html';
     }
 
     document.getElementById('btn-back-header')?.addEventListener('click', goBackToGame);
     document.getElementById('btn-back-footer')?.addEventListener('click', goBackToGame);
 
     // Garante que links de saída (ex: Início / menu.html) desativem o aviso no Telão antes de navegar
-    document.querySelectorAll('a[href*="menu.html"], a[href*="automatico.html"], a[href*="manual.html"]').forEach((link) => {
+    document.querySelectorAll('a[href*="menu.html"], a[href*="painel.html"], a[href*="automatico.html"], a[href*="manual.html"]').forEach((link) => {
       link.addEventListener('click', async (e) => {
         e.preventDefault();
         const dest = link.getAttribute('href');
@@ -1240,7 +1265,7 @@
         confirmText: 'Sim, Excluir',
         cancelText: 'Cancelar',
         danger: true,
-        icon: '🗑️'
+        icon: 'trash'
       });
 
       if (confirmed) {
@@ -1357,6 +1382,18 @@
       if (window.BingoSync) BingoSync.init();
       setConferenceBroadcast(true);
       await syncFromCloud();
+
+      // Se passado na URL ?serial=..., confere a cartela automaticamente
+      const urlParams = new URLSearchParams(window.location.search);
+      const serialParam = urlParams.get('serial');
+      if (serialParam) {
+        const sNum = parseInt(serialParam, 10);
+        if (!isNaN(sNum) && sNum > 0) {
+          const inp = document.getElementById('card-serial-input');
+          if (inp) inp.value = String(sNum);
+          checkCardBySerial(sNum);
+        }
+      }
     }
 
     if (document.readyState === 'loading') {

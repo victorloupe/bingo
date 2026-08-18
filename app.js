@@ -16,10 +16,10 @@ const DEFAULT_PRIZES = {
 };
 
 const PRIZE_ICONS = {
-  'Terno': '🍗',
-  'Quatro Cantos': '🍫',
-  'Cinquina': '⚡',
-  'Cartela Cheia': '💰'
+  'Terno': '',
+  'Quatro Cantos': '',
+  'Cinquina': '',
+  'Cartela Cheia': ''
 };
 
 function esc(s){
@@ -171,11 +171,8 @@ const LS = {
         firstTs = round.firstTs ?? stateData.firstTs ?? null;
         lastTs = round.lastTs ?? stateData.lastTs ?? null;
         if (round.prizes) prizes = Object.assign({}, DEFAULT_PRIZES, round.prizes);
-        if (Array.isArray(round.ranking) && round.ranking.length > 0) {
-          const curRank = LS.loadRanking();
-          if (!curRank.length) {
-            localStorage.setItem('bingo.ranking', JSON.stringify(round.ranking));
-          }
+        if (Array.isArray(round.ranking)) {
+          localStorage.setItem('bingo.ranking', JSON.stringify(round.ranking));
         }
       } else {
         if(typeof stateData.roundName==='string') roundName = stateData.roundName;
@@ -187,7 +184,7 @@ const LS = {
         if(stateData.prizes) prizes = Object.assign({}, DEFAULT_PRIZES, stateData.prizes);
         else {
           const p = JSON.parse(localStorage.getItem('bingo.prizes') || 'null');
-          if(p) prizes = Object.assign({}, DEFAULT_PRIZES, p);
+          if (p) prizes = Object.assign({}, DEFAULT_PRIZES, p);
         }
       }
 
@@ -204,8 +201,19 @@ const LS = {
     }catch(e){}
   },
   saveRanking(list){
-    localStorage.setItem('bingo.ranking', JSON.stringify(list||[]));
-    window.BingoSync?.pushRanking(list||[]);
+    const sanitized = Array.isArray(list) ? list : [];
+    localStorage.setItem('bingo.ranking', JSON.stringify(sanitized));
+    try {
+      let roundsList = JSON.parse(localStorage.getItem('bingo.roundsList') || '[]');
+      const activeId = localStorage.getItem('bingo.activeRoundId') || 'round_1';
+      const rIdx = roundsList.findIndex(r => r.id === activeId);
+      if (rIdx >= 0) {
+        roundsList[rIdx].ranking = sanitized;
+        localStorage.setItem('bingo.roundsList', JSON.stringify(roundsList));
+      }
+    } catch(e){}
+    window.BingoSync?.pushRanking(sanitized);
+    LS.save();
   },
   loadRanking(){
     try{ return JSON.parse(localStorage.getItem('bingo.ranking')||'[]'); }catch(e){ return []; }
@@ -1132,7 +1140,7 @@ document.addEventListener('keydown', (e)=>{
   else if(e.key==='u' || e.key==='U'){ undo(); }
   else if(e.key==='r' || e.key==='R'){ btnReset?.click(); }
   else if(e.key==='m' || e.key==='M'){ btnVoice?.click(); }
-  else if(e.key==='p' || e.key==='P'){ window.open(window.BingoSync?.buildRoomUrl('projetor.html') || 'projetor.html', '_blank'); }
+  else if(e.key==='p' || e.key==='P'){ e.preventDefault(); btnAdToggle?.click(); }
   else if(e.key==='f' || e.key==='F'){ toggleFull(); }
 });
 
@@ -1238,7 +1246,7 @@ async function initCloudSync() {
   });
 
   window.addEventListener('storage', (e)=>{
-    if(e.key==='bingo.ranking' || e.key==='bingo.state' || e.key==='bingo.prizes' || e.key==='bingo.roundsList' || e.key==='bingo.activeRoundId'){
+    if(e.key==='bingo.ranking' || e.key==='bingo.state' || e.key==='bingo.prizes' || e.key==='bingo.roundsList' || e.key==='bingo.activeRoundId' || e.key==='bingo.adMode' || e.key==='bingo.conferenceMode'){
       LS.load();
       if(gameOver) stopAuto();
       updateUI();

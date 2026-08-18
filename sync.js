@@ -372,7 +372,28 @@
     }
 
     try {
-      const rows = (list || []).map((r) => ({ name: r.name, type: r.type, ts: r.ts || new Date().toISOString() }));
+      const rows = (list || []).map((r) => {
+        let tsVal = new Date().toISOString();
+        if (r.ts) {
+          if (typeof r.ts === 'number') {
+            const d = new Date(r.ts);
+            tsVal = !isNaN(d.getTime()) ? d.toISOString() : new Date().toISOString();
+          } else if (typeof r.ts === 'string') {
+            if (/^\d+$/.test(r.ts)) {
+              const d = new Date(parseInt(r.ts, 10));
+              tsVal = !isNaN(d.getTime()) ? d.toISOString() : new Date().toISOString();
+            } else {
+              const d = new Date(r.ts);
+              tsVal = !isNaN(d.getTime()) ? d.toISOString() : new Date().toISOString();
+            }
+          }
+        }
+        return {
+          name: r.name || r.player || 'Jogador',
+          type: r.type || 'BINGO',
+          ts: tsVal
+        };
+      });
       
       if (broadcastChannel) {
         try {
