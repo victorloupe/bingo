@@ -407,28 +407,56 @@ progress::-moz-progress-bar {
 }
 
 /* Os 3 Cards da Coluna Esquerda com Tamanho Fixo e 100% Equilibrado */
-.tv-history-wrap,
-.tv-ranking,
-.tv-auditor-box {
+.tv-history-wrap {
+  flex: 0 0 auto;
+  height: auto;
+  min-height: 64px;
+  max-height: 84px;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 6px 12px;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.tv-ranking {
   flex: 1 1 0;
-  min-height: 0;
+  min-height: 80px;
   height: 0;
   display: flex;
   flex-direction: column;
   background: #ffffff;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 8px 12px;
+  padding: 6px 12px;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.tv-auditor-box {
+  flex: 1.45 1 0;
+  min-height: 125px;
+  height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 6px 12px;
   box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
 
 .auditor-live-content {
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
-  overflow-y: auto;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
+  gap: 4px;
   justify-content: flex-start;
 }
 
@@ -2580,28 +2608,34 @@ body.theme-dark #share-link-input {
 .auditor-armadas-wrap {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  flex-shrink: 0;
+  gap: 3px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .auditor-armadas-title {
   color: #dc2626;
   font-weight: 800;
-  font-size: 0.66rem;
+  font-size: 0.68rem;
   display: flex;
   align-items: center;
   gap: 3px;
   line-height: 1;
+  flex-shrink: 0;
 }
 
 .auditor-armadas-grid {
   display: flex;
   flex-wrap: wrap;
   align-content: flex-start;
-  gap: 3px;
-  max-height: 60px;
+  gap: 4px;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
   overflow-y: auto;
-  padding-right: 2px;
+  padding-right: 3px;
+  padding-bottom: 2px;
 }
 
 .auditor-armadas-grid::-webkit-scrollbar {

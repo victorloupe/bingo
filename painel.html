@@ -173,27 +173,63 @@
       box-sizing: border-box !important;
       margin-bottom: 0 !important;
     }
-    .tv-history-wrap,
-    .tv-ranking,
-    .tv-auditor-box {
+    .tv-history-wrap {
+      flex: 0 0 auto !important;
+      height: auto !important;
+      min-height: 64px !important;
+      max-height: 84px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      background: #ffffff !important;
+      border: 1px solid var(--border) !important;
+      border-radius: var(--radius-md) !important;
+      padding: 6px 12px !important;
+      box-shadow: var(--shadow-sm) !important;
+      overflow: hidden !important;
+    }
+    .tv-ranking {
       flex: 1 1 0 !important;
-      min-height: 0 !important;
+      min-height: 80px !important;
       height: 0 !important;
       display: flex !important;
       flex-direction: column !important;
       background: #ffffff !important;
       border: 1px solid var(--border) !important;
       border-radius: var(--radius-md) !important;
-      padding: 8px 12px !important;
+      padding: 6px 12px !important;
       box-shadow: var(--shadow-sm) !important;
       overflow: hidden !important;
     }
-    .tv-history-wrap .history,
-    .tv-ranking .table-responsive,
-    .tv-auditor-box .auditor-live-content {
+    .tv-auditor-box {
+      flex: 1.45 1 0 !important;
+      min-height: 125px !important;
+      height: 0 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      background: #ffffff !important;
+      border: 1px solid var(--border) !important;
+      border-radius: var(--radius-md) !important;
+      padding: 6px 12px !important;
+      box-shadow: var(--shadow-sm) !important;
+      overflow: hidden !important;
+    }
+    .tv-history-wrap .history {
       flex: 1 1 auto !important;
       min-height: 0 !important;
       overflow-y: auto !important;
+    }
+    .tv-ranking .table-responsive {
+      flex: 1 1 auto !important;
+      min-height: 0 !important;
+      overflow-y: auto !important;
+    }
+    .tv-auditor-box .auditor-live-content {
+      flex: 1 1 auto !important;
+      min-height: 0 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 4px !important;
+      overflow: hidden !important;
     }
   </style>
 </head>
