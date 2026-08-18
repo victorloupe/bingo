@@ -178,6 +178,30 @@
     );
   }
 
+  function triggerSponsoredStone(triggerData) {
+    if (!triggerData) return;
+    try {
+      localStorage.setItem('bingo.sponsoredTrigger', JSON.stringify(triggerData));
+    } catch (e) {}
+    if (localBus) {
+      try {
+        localBus.postMessage({
+          type: 'sponsored_trigger',
+          payload: triggerData
+        });
+      } catch (e) {}
+    }
+    if (realtimeChannel) {
+      try {
+        realtimeChannel.send({
+          type: 'broadcast',
+          event: 'sponsored_trigger',
+          payload: triggerData
+        });
+      } catch (e) {}
+    }
+  }
+
   let pushTimer = null;
   function pushState(state, immediate = true, force = false) {
     if (pushTimer) clearTimeout(pushTimer);
@@ -215,6 +239,14 @@
           ? remote.conferenceMode
           : (localStorage.getItem('bingo.conferenceMode') === '1'));
 
+    let spTriggerVal = state.sponsoredTrigger || null;
+    if (!spTriggerVal) {
+      try {
+        const rawSp = JSON.parse(localStorage.getItem('bingo.sponsoredTrigger') || 'null');
+        if (rawSp && rawSp.ts && (Date.now() - rawSp.ts < 15000)) spTriggerVal = rawSp;
+      } catch (e) {}
+    }
+
     let adNoticeObj = {};
     if (state.adNotice && typeof state.adNotice === 'object') {
       adNoticeObj = Object.assign({}, state.adNotice);
@@ -229,6 +261,7 @@
     // Grava flags dinâmicas junto no ad_notice (jsonb) para garantir propagação perfeita
     adNoticeObj._conferenceMode = isConference;
     adNoticeObj._adMode = isAd;
+    if (spTriggerVal) adNoticeObj._sponsoredTrigger = spTriggerVal;
 
     // Sponsors: preserva patrocinadores salvos caso state não passe explicitamente
     let sponsorsList = (Array.isArray(state.sponsors) && state.sponsors.length > 0) ? state.sponsors : null;
@@ -330,7 +363,8 @@
       sponsors: payload.sponsors,
       adMode: payload.ad_mode,
       adNotice: payload.ad_notice,
-      conferenceMode: isConference
+      conferenceMode: isConference,
+      sponsoredTrigger: spTriggerVal
     };
 
     // 1. Transmissão instantânea via Barramento Local do Navegador (< 1ms para todas as abas)
@@ -571,6 +605,7 @@
         };
       }
 
+      const spTrig = (rawNotice && rawNotice._sponsoredTrigger && (Date.now() - (rawNotice._sponsoredTrigger.ts || 0) < 15000)) ? rawNotice._sponsoredTrigger : null;
       const result = {
         activeRoundId: data.active_round_id || 'round_1',
         roundName: data.round_name || 'Rodada 1',
@@ -586,7 +621,8 @@
         sponsors: Array.isArray(data.sponsors) ? data.sponsors : [],
         adMode: adModeVal,
         adNotice: cleanNotice,
-        conferenceMode: confMode
+        conferenceMode: confMode,
+        sponsoredTrigger: spTrig
       };
       lastRemoteState = result;
       return result;
@@ -645,6 +681,8 @@
           } else if (e.data.type === 'ranking_update') {
             if (onDirectRankingChange && e.data.payload) onDirectRankingChange(e.data.payload);
             else if (onRemoteChange) onRemoteChange();
+          } else if (e.data.type === 'sponsored_trigger' && e.data.payload) {
+            if (window.BingoSync?._onSponsoredTrigger) window.BingoSync._onSponsoredTrigger(e.data.payload);
           }
         }
       };
@@ -681,6 +719,11 @@
             onRemoteChange();
           }
         })
+        .on('broadcast', { event: 'sponsored_trigger' }, (response) => {
+          if (window.BingoSync?._onSponsoredTrigger && response.payload) {
+            window.BingoSync._onSponsoredTrigger(response.payload);
+          }
+        })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'bingo_state', filter: `room=eq.${ROOM}` }, handleRemoteChange)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'bingo_ranking', filter: `room=eq.${ROOM}` }, handleRemoteChange)
         .on('postgres_changes', { event: '*', schema: 'public', table: 'bingo_card_batches', filter: `room=eq.${ROOM}` }, handleRemoteChange)
@@ -708,6 +751,6 @@
 
   window.BingoSync = {
     init, ready, pushState, pushRanking, pullState, pullRanking, mergeState, mergeRanking, subscribe,
-    pushCardBatch, deleteCardBatchRemote, pullCardBatches, room, buildRoomUrl, decorateRoomLinks
+    pushCardBatch, deleteCardBatchRemote, pullCardBatches, room, buildRoomUrl, decorateRoomLinks, triggerSponsoredStone
   };
 })();

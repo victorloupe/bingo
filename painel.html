@@ -107,28 +107,73 @@
     }
 
     /* Animação suave para os controles da barra inferior */
+    /* Rodapé em 3 Seções Perfeitas: Esquerda, Centro (Controles Centrais com Tamanho Fixo) e Direita */
+    .footer-controls {
+      height: 48px !important;
+      min-height: 48px !important;
+      max-height: 48px !important;
+      display: grid !important;
+      grid-template-columns: 1fr auto 1fr !important;
+      align-items: center !important;
+      gap: 10px !important;
+      background: #ffffff !important;
+      border: 1px solid var(--border) !important;
+      border-radius: var(--radius-md) !important;
+      padding: 0 12px !important;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06) !important;
+      box-sizing: border-box !important;
+    }
+
+    .toolbar-group.toolbar-left {
+      display: flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+      justify-self: start !important;
+    }
+
+    .toolbar-group.toolbar-center {
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      justify-self: center !important;
+    }
+
+    .toolbar-group.toolbar-right {
+      display: flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+      justify-self: end !important;
+    }
+
     .mode-controls-box {
-      display: inline-flex;
-      align-items: center;
-      position: relative;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      position: relative !important;
+      width: 440px !important;
+      min-width: 440px !important;
+      max-width: 440px !important;
+      height: 38px !important;
     }
     .mode-controls-pane {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      transition: opacity 0.22s cubic-bezier(0.4, 0, 0.2, 1), transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      gap: 6px !important;
+      width: 100% !important;
+      transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }
     .mode-controls-pane.is-hidden {
       display: none !important;
-      opacity: 0;
-      transform: translateY(8px) scale(0.96);
-      pointer-events: none;
+      opacity: 0 !important;
+      transform: translateY(8px) scale(0.96) !important;
+      pointer-events: none !important;
     }
     .mode-controls-pane.anim-in {
-      animation: paneSlideIn 0.26s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+      animation: paneSlideIn 0.24s cubic-bezier(0.34, 1.3, 0.64, 1) forwards !important;
     }
     .mode-controls-pane.anim-out {
-      animation: paneSlideOut 0.18s cubic-bezier(0.4, 0, 1, 1) forwards;
+      animation: paneSlideOut 0.16s cubic-bezier(0.4, 0, 1, 1) forwards !important;
     }
 
     @keyframes paneSlideIn {
@@ -174,23 +219,21 @@
       margin-bottom: 0 !important;
     }
     .tv-history-wrap {
-      flex: 0 0 auto !important;
-      height: auto !important;
-      min-height: 64px !important;
-      max-height: 84px !important;
+      flex: 1.15 1 0 !important;
+      min-height: 110px !important;
+      max-height: 155px !important;
       display: flex !important;
       flex-direction: column !important;
       background: #ffffff !important;
       border: 1px solid var(--border) !important;
       border-radius: var(--radius-md) !important;
-      padding: 6px 12px !important;
+      padding: 8px 12px !important;
       box-shadow: var(--shadow-sm) !important;
       overflow: hidden !important;
     }
     .tv-ranking {
-      flex: 1 1 0 !important;
-      min-height: 80px !important;
-      height: 0 !important;
+      flex: 0.95 1 0 !important;
+      min-height: 85px !important;
       display: flex !important;
       flex-direction: column !important;
       background: #ffffff !important;
@@ -201,9 +244,9 @@
       overflow: hidden !important;
     }
     .tv-auditor-box {
-      flex: 1.45 1 0 !important;
-      min-height: 125px !important;
-      height: 0 !important;
+      flex: 1.05 1 0 !important;
+      min-height: 105px !important;
+      max-height: 145px !important;
       display: flex !important;
       flex-direction: column !important;
       background: #ffffff !important;
@@ -230,6 +273,127 @@
       flex-direction: column !important;
       gap: 4px !important;
       overflow: hidden !important;
+    }
+
+    /* Modal de Conferência 5x5 */
+    .modal-card-item {
+      background: #ffffff !important;
+      border: 1.5px solid #e2e8f0 !important;
+      border-radius: 8px !important;
+      padding: 8px 12px !important;
+      cursor: pointer !important;
+      transition: all 0.15s ease !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      gap: 8px !important;
+      box-sizing: border-box !important;
+    }
+    .modal-card-item:hover {
+      border-color: #3b82f6 !important;
+      background: #f8fafc !important;
+      transform: translateX(2px) !important;
+    }
+    .modal-card-item.selected {
+      border-color: #2563eb !important;
+      background: #eff6ff !important;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25) !important;
+    }
+
+    .modal-bingo-card-preview {
+      background: #ffffff !important;
+      border: 2px solid #cbd5e1 !important;
+      border-radius: 12px !important;
+      padding: 12px !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+      box-sizing: border-box !important;
+    }
+
+    .modal-bingo-card-grid {
+      display: grid !important;
+      grid-template-columns: repeat(5, 1fr) !important;
+      gap: 4px !important;
+      background: #f1f5f9 !important;
+      padding: 6px !important;
+      border-radius: 8px !important;
+      border: 1.5px solid #cbd5e1 !important;
+      box-sizing: border-box !important;
+    }
+
+    .card-col-header {
+      height: 30px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      font-weight: 900 !important;
+      font-size: 0.95rem !important;
+      border-radius: 4px !important;
+      color: #ffffff !important;
+      text-transform: uppercase !important;
+    }
+    .card-col-header.header-b { background: #dc2626 !important; }
+    .card-col-header.header-i { background: #0284c7 !important; }
+    .card-col-header.header-n { background: #16a34a !important; }
+    .card-col-header.header-g { background: #d97706 !important; }
+    .card-col-header.header-o { background: #9333ea !important; }
+
+    .card-grid-cell {
+      aspect-ratio: 1 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      background: #ffffff !important;
+      border: 1.5px solid #e2e8f0 !important;
+      border-radius: 6px !important;
+      font-weight: 800 !important;
+      font-size: 1.05rem !important;
+      color: #0f172a !important;
+      position: relative !important;
+      transition: all 0.15s ease !important;
+      user-select: none !important;
+      box-sizing: border-box !important;
+    }
+
+    .card-grid-cell.hit {
+      background: #dcfce7 !important;
+      border-color: #22c55e !important;
+      color: #15803d !important;
+      font-weight: 900 !important;
+      box-shadow: inset 0 0 6px rgba(34, 197, 94, 0.2) !important;
+    }
+    .card-grid-cell.hit::after {
+      content: "✓" !important;
+      position: absolute !important;
+      top: 1px !important;
+      right: 3px !important;
+      font-size: 0.62rem !important;
+      font-weight: 900 !important;
+      color: #16a34a !important;
+    }
+
+    .card-grid-cell.missing {
+      background: #fef9c3 !important;
+      border-color: #facc15 !important;
+      color: #854d0e !important;
+      font-weight: 800 !important;
+    }
+    .card-grid-cell.missing::after {
+      content: "✕" !important;
+      position: absolute !important;
+      top: 1px !important;
+      right: 3px !important;
+      font-size: 0.62rem !important;
+      font-weight: 900 !important;
+      color: #d97706 !important;
+    }
+
+    .card-grid-cell.free {
+      background: #eff6ff !important;
+      border-color: #3b82f6 !important;
+      color: #1d4ed8 !important;
+      font-size: 0.72rem !important;
+      font-weight: 900 !important;
     }
   </style>
 </head>
@@ -358,16 +522,27 @@
       </section>
     </main>
 
-    <!-- Toolbar Minimalista em Linha Única -->
+    <!-- Toolbar Minimalista em Linha Única em 3 Seções -->
     <footer class="tv-footer">
       <div class="footer-controls">
-        <!-- Grupo 1: Ações Principais -->
-        <div class="toolbar-group">
+        <!-- Grupo 1 (Esquerda): Atalhos, Propaganda e Telão -->
+        <div class="toolbar-group toolbar-left">
           <a href="menu.html" class="btn-tool d-inline-flex align-items-center gap-1" title="Menu Principal">
             <i data-lucide="home" class="lucide"></i> Início
           </a>
+          <button class="btn-tool btn-tool-ad d-inline-flex align-items-center gap-1" id="btn-ad-toggle" title="Ligar/Desligar modo comercial no telão (Atalho P)">
+            <i data-lucide="megaphone" class="lucide"></i> <span id="ad-label">Propaganda: OFF</span>
+          </button>
+          <a href="check.html" class="btn-tool d-inline-flex align-items-center gap-1" style="background:#ecfdf5; border-color:#10b981; color:#065f46; font-weight:800;" title="Abrir Mesa de Conferência">
+            <i data-lucide="clipboard-check" class="lucide"></i> Conferência
+          </a>
+          <a class="btn-tool d-inline-flex align-items-center gap-1" href="projetor.html" target="_blank" style="background:#fffbeb; border-color:#f59e0b; color:#b45309; font-weight:800;" title="Abrir Telão">
+            <i data-lucide="tv" class="lucide"></i> Telão
+          </a>
+        </div>
 
-          <!-- Controles Dinâmicos com Animação de Entrada e Saída -->
+        <!-- Grupo 2 (Centro): Controles do Bingo Centralizados com Tamanho Fixo e Transição -->
+        <div class="toolbar-group toolbar-center">
           <div class="mode-controls-box">
             <!-- Modo Automático -->
             <div id="controls-auto" class="mode-controls-pane">
@@ -384,6 +559,12 @@
                 <option value="8000">8s</option>
                 <option value="10000">10s</option>
               </select>
+              <button class="btn-tool btn-action-undo d-inline-flex align-items-center gap-1" id="btn-undo" disabled title="Desfazer (U)">
+                <i data-lucide="undo-2" class="lucide"></i> Desfazer
+              </button>
+              <button class="btn-tool btn-action-reset d-inline-flex align-items-center gap-1" id="btn-reset" title="Reiniciar (R)">
+                <i data-lucide="rotate-ccw" class="lucide"></i> Zerar
+              </button>
             </div>
 
             <!-- Modo Manual -->
@@ -392,32 +573,18 @@
                 <input type="number" id="manual-number-input" class="manual-inp" placeholder="1 a 75" min="1" max="75" title="Digite o número (1 a 75) e tecle Enter" />
                 <button type="button" class="btn-tool btn-tool-manual-mark" id="btn-manual-mark" title="Marcar pedra (Enter)">Marcar</button>
               </div>
+              <button class="btn-tool btn-action-undo d-inline-flex align-items-center gap-1" id="btn-undo-manual" disabled title="Desfazer (U)">
+                <i data-lucide="undo-2" class="lucide"></i> Desfazer
+              </button>
+              <button class="btn-tool btn-action-reset d-inline-flex align-items-center gap-1" id="btn-reset-manual" title="Reiniciar (R)">
+                <i data-lucide="rotate-ccw" class="lucide"></i> Zerar
+              </button>
             </div>
           </div>
-
-          <button class="btn-tool d-inline-flex align-items-center gap-1" id="btn-undo" disabled title="Desfazer (U)">
-            <i data-lucide="undo-2" class="lucide"></i> Desfazer
-          </button>
-          <button class="btn-tool d-inline-flex align-items-center gap-1" id="btn-reset" title="Reiniciar (R)">
-            <i data-lucide="rotate-ccw" class="lucide"></i> Zerar
-          </button>
         </div>
 
-        <!-- Grupo 2: Propaganda & Telão -->
-        <div class="toolbar-group">
-          <button class="btn-tool btn-tool-ad d-inline-flex align-items-center gap-1" id="btn-ad-toggle" title="Ligar/Desligar modo comercial no telão (Atalho P)">
-            <i data-lucide="megaphone" class="lucide"></i> <span id="ad-label">Propaganda: OFF</span>
-          </button>
-          <a href="check.html" class="btn-tool d-inline-flex align-items-center gap-1" style="background:#ecfdf5; border-color:#10b981; color:#065f46; font-weight:800;" title="Abrir Mesa de Conferência">
-            <i data-lucide="clipboard-check" class="lucide"></i> Conferência
-          </a>
-          <a class="btn-tool d-inline-flex align-items-center gap-1" href="projetor.html" target="_blank" style="background:#fffbeb; border-color:#f59e0b; color:#b45309; font-weight:800;" title="Abrir Telão">
-            <i data-lucide="tv" class="lucide"></i> Telão
-          </a>
-        </div>
-
-        <!-- Grupo 3: Áudio & Ferramentas -->
-        <div class="toolbar-group ms-auto">
+        <!-- Grupo 3 (Direita): Áudio & Ferramentas -->
+        <div class="toolbar-group toolbar-right">
           <button class="btn-tool btn-tool-icon" id="btn-voice" title="Mutar/Ativar som do painel (M)"><i data-lucide="volume-2" class="lucide"></i></button>
           <button class="btn-tool btn-tool-icon" id="btn-open-voice" title="Configurações de Voz & Áudio"><i data-lucide="settings" class="lucide"></i></button>
           <button class="btn-tool btn-tool-icon" id="btn-full" title="Tela Cheia (F)"><i data-lucide="maximize" class="lucide"></i></button>
@@ -691,7 +858,7 @@
       <!-- Corpo em 2 Colunas -->
       <div class="row g-3 flex-grow-1 overflow-hidden" style="min-height: 0;">
         <!-- Coluna Esquerda: Busca e Lista de Cartelas -->
-        <div class="col-12 col-md-6 d-flex flex-column" style="max-height: 100%;">
+        <div class="col-12 col-md-6 d-flex flex-column">
           <!-- Barra de Busca por Número da Cartela -->
           <div class="input-group input-group-sm mb-2 flex-shrink-0">
             <span class="input-group-text bg-light fw-bold text-muted" style="font-size:0.8rem;">Série Nº</span>
@@ -714,8 +881,8 @@
             </button>
           </div>
 
-          <!-- Lista de Cartelas com Scroll Isolado -->
-          <div id="modal-audit-cards-list" class="d-flex flex-column gap-1.5 overflow-y-auto pe-1 flex-grow-1" style="max-height: 400px;">
+          <!-- Lista de Cartelas com Scroll Isolado perfeitamente alinhada com a grade da direita -->
+          <div id="modal-audit-cards-list" class="d-flex flex-column overflow-y-auto pe-1" style="gap: 6px; height: 420px; max-height: 440px;">
             <!-- Renderizado dinamicamente via JS -->
           </div>
         </div>

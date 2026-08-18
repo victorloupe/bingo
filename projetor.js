@@ -248,7 +248,13 @@
       spProjMsg.textContent = sponsor.stoneMessage ? `"${sponsor.stoneMessage}"` : `"${sponsor.desc || 'Oferecimento Especial'}"`;
     }
 
-    sponsoredOverlay?.removeAttribute('hidden');
+    if (sponsoredOverlay) {
+      sponsoredOverlay.removeAttribute('hidden');
+      sponsoredOverlay.style.setProperty('display', 'flex', 'important');
+      sponsoredOverlay.style.setProperty('visibility', 'visible', 'important');
+      sponsoredOverlay.style.setProperty('opacity', '1', 'important');
+      sponsoredOverlay.style.setProperty('z-index', '1000000', 'important');
+    }
 
     // Desbloqueia e toca fanfarra festiva
     unlockAudioOnUserGesture();
@@ -307,7 +313,12 @@
   function closeSponsoredCelebration() {
     if (sponsoredDismissTimer) clearTimeout(sponsoredDismissTimer);
     if (sponsoredProgressInterval) clearInterval(sponsoredProgressInterval);
-    sponsoredOverlay?.setAttribute('hidden', '');
+    if (sponsoredOverlay) {
+      sponsoredOverlay.setAttribute('hidden', '');
+      sponsoredOverlay.style.setProperty('display', 'none', 'important');
+      sponsoredOverlay.style.setProperty('visibility', 'hidden', 'important');
+      sponsoredOverlay.style.setProperty('opacity', '0', 'important');
+    }
   }
 
   btnCloseSpOverlay?.addEventListener('click', closeSponsoredCelebration);
@@ -348,6 +359,8 @@
     if (!adMode) {
       adOverlay.setAttribute('hidden', '');
       adOverlay.style.setProperty('display', 'none', 'important');
+      adOverlay.style.setProperty('visibility', 'hidden', 'important');
+      adOverlay.style.setProperty('opacity', '0', 'important');
       if (adIntervalTimer) { clearInterval(adIntervalTimer); adIntervalTimer = null; }
       lastRenderedSlideIndex = -1;
       return;
@@ -355,6 +368,9 @@
 
     adOverlay.removeAttribute('hidden');
     adOverlay.style.setProperty('display', 'flex', 'important');
+    adOverlay.style.setProperty('visibility', 'visible', 'important');
+    adOverlay.style.setProperty('opacity', '1', 'important');
+    adOverlay.style.setProperty('z-index', '999999', 'important');
 
     if (adLastBall) adLastBall.textContent = last != null ? `${letterFor(last)} - ${last}` : '—';
     if (adTotalDrawn) adTotalDrawn.textContent = `${drawn.length}/75`;
@@ -670,16 +686,16 @@
 
   function handleStateChange(newState) {
     if (!newState) return;
-    const newDrawn = Array.isArray(newState.drawn) ? newState.drawn : [];
+    const newDrawn = Array.isArray(newState.drawn) ? newState.drawn : drawn;
     const isNewBall = newDrawn.length > previousDrawnLength && newState.last != null && newState.last !== previousLast;
 
     drawn = newDrawn;
-    last = newState.last ?? null;
-    gameOver = !!newState.gameOver;
+    if (newState.last !== undefined) last = newState.last;
+    if (typeof newState.gameOver === 'boolean') gameOver = newState.gameOver;
     if (newState.roundName) roundName = newState.roundName;
-    nextRound = newState.nextRound ?? null;
-    roundsQueue = Array.isArray(newState.roundsQueue) ? newState.roundsQueue : [];
-    adNotice = newState.adNotice ?? null;
+    if (newState.nextRound !== undefined) nextRound = newState.nextRound;
+    if (Array.isArray(newState.roundsQueue)) roundsQueue = newState.roundsQueue;
+    if (newState.adNotice !== undefined) adNotice = newState.adNotice;
     
     // Tema do Telão (sincronizado do painel)
     if (newState.projectorTheme) {
@@ -687,7 +703,7 @@
     }
 
     // adMode (online + local)
-    let newAdMode = false;
+    let newAdMode = adMode;
     if (typeof newState.adMode === 'boolean') {
       newAdMode = newState.adMode;
     } else if (typeof newState.ad_mode === 'boolean') {
@@ -699,9 +715,12 @@
     try { localStorage.setItem('bingo.adMode', adMode ? '1' : '0'); } catch(e){}
 
     // conferenceMode (online)
-    const newConf = typeof newState.conferenceMode === 'boolean' 
-      ? newState.conferenceMode 
-      : (newState.adNotice && typeof newState.adNotice._conferenceMode === 'boolean' ? newState.adNotice._conferenceMode : false);
+    let newConf = conferenceMode;
+    if (typeof newState.conferenceMode === 'boolean') {
+      newConf = newState.conferenceMode;
+    } else if (newState.adNotice && typeof newState.adNotice._conferenceMode === 'boolean') {
+      newConf = newState.adNotice._conferenceMode;
+    }
 
     if (newConf && !previousConferenceMode) {
       try { playDrawDing(); } catch (e) {}
@@ -725,6 +744,12 @@
       const L = letterFor(last);
       playDrawDing();
       speakBall(L, last);
+    }
+
+    // Verifica evento de pedra patrocinada propagado via sync/nuvem
+    const trig = newState.sponsoredTrigger || (newState.adNotice && newState.adNotice._sponsoredTrigger);
+    if (trig && trig.ts && (Date.now() - trig.ts < 15000)) {
+      showSponsoredStoneCelebration(trig);
     }
 
     previousDrawnLength = drawn.length;
@@ -768,6 +793,13 @@
   async function initSync() {
     if (!window.BingoSync) return;
     BingoSync.init();
+
+    window.BingoSync._onSponsoredTrigger = (trig) => {
+      if (trig && trig.ts && (Date.now() - trig.ts < 15000)) {
+        showSponsoredStoneCelebration(trig);
+      }
+    };
+
     if (!BingoSync.ready()) return;
 
     await fetchAndApplyRemote();
@@ -939,7 +971,20 @@
 
   function loadLocalState() {
     try {
-      const st = JSON.parse(localStorage.getItem('bingo.state') || '{}');
+      const rawSt = localStorage.getItem('bingo.state');
+      if (!rawSt) {
+        const savedTheme = localStorage.getItem('bingo.projector.theme') || 'light';
+        applyProjectorTheme(savedTheme);
+        const savedAd = localStorage.getItem('bingo.adMode');
+        if (savedAd !== null) {
+          adMode = savedAd === '1';
+          updateAdButton();
+          updateAdCarousel();
+        }
+        return;
+      }
+
+      const st = JSON.parse(rawSt || '{}');
       const localPrizes = JSON.parse(localStorage.getItem('bingo.prizes') || 'null');
       if (localPrizes) prizes = Object.assign({}, DEFAULT_PRIZES, localPrizes);
       const localSponsors = JSON.parse(localStorage.getItem('bingo.sponsors') || 'null');
@@ -955,14 +1000,16 @@
       if (typeof st.adMode === 'boolean') {
         adMode = st.adMode;
       } else {
-        adMode = localStorage.getItem('bingo.adMode') === '1';
+        const savedAd = localStorage.getItem('bingo.adMode');
+        if (savedAd !== null) adMode = savedAd === '1';
       }
       st.adMode = adMode;
 
       if (typeof st.conferenceMode === 'boolean') {
         conferenceMode = st.conferenceMode;
       } else {
-        conferenceMode = localStorage.getItem('bingo.conferenceMode') === '1';
+        const savedConf = localStorage.getItem('bingo.conferenceMode');
+        if (savedConf !== null) conferenceMode = savedConf === '1';
       }
       st.conferenceMode = conferenceMode;
 

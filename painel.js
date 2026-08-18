@@ -284,7 +284,7 @@
 
   // ====== Persistência Local & Sincronização ======
   const LS = {
-    save() {
+    save(force = false) {
       localStorage.setItem('bingo.adMode', adMode ? '1' : '0');
       localStorage.setItem('bingo.panelMode', mode);
       let roundsList = [];
@@ -329,6 +329,12 @@
       let roundsQueue = [];
       try { roundsQueue = JSON.parse(localStorage.getItem('bingo.roundsQueue') || '[]'); } catch (e) {}
 
+      let spTrigger = null;
+      try {
+        const rawSp = JSON.parse(localStorage.getItem('bingo.sponsoredTrigger') || 'null');
+        if (rawSp && rawSp.ts && (Date.now() - rawSp.ts < 15000)) spTrigger = rawSp;
+      } catch (e) {}
+
       const data = {
         activeRoundId: activeId,
         roundName,
@@ -350,11 +356,12 @@
         adNotice,
         conferenceMode: false,
         panelMode: mode,
-        projectorTheme: localStorage.getItem('bingo.projector.theme') || 'light'
+        projectorTheme: localStorage.getItem('bingo.projector.theme') || 'light',
+        sponsoredTrigger: spTrigger
       };
       localStorage.setItem('bingo.state', JSON.stringify(data));
       localStorage.setItem('bingo.prizes', JSON.stringify(prizes));
-      window.BingoSync?.pushState(data, true);
+      window.BingoSync?.pushState(data, true, force);
     },
     load() {
       try {
@@ -751,6 +758,16 @@
   }
 
   // ====== Propaganda (Patrocinadores) ======
+  function syncAdModeWithRetry(expectedAdMode) {
+    LS.save(true);
+    setTimeout(() => {
+      if (adMode === expectedAdMode) LS.save(true);
+    }, 200);
+    setTimeout(() => {
+      if (adMode === expectedAdMode) LS.save(true);
+    }, 600);
+  }
+
   function updateAdButton() {
     if (!btnAdToggle) return;
     if (adMode) {
@@ -767,7 +784,8 @@
     lastUserActionTs = Date.now();
     localStorage.setItem('bingo.adMode', adMode ? '1' : '0');
     updateAdButton();
-    LS.save();
+    LS.save(true);
+    syncAdModeWithRetry(adMode);
     window.BingoDialog?.toast(`Propaganda ${adMode ? 'ATIVADA no Telão' : 'DESATIVADA'}`, adMode ? 'warning' : 'info');
   }
 
@@ -1129,7 +1147,9 @@
       }
     }
 
-    if (btnUndo) btnUndo.disabled = drawn.length === 0;
+    document.querySelectorAll('#btn-undo, #btn-undo-manual, .btn-action-undo').forEach((btn) => {
+      btn.disabled = drawn.length === 0;
+    });
     if (btnDraw) btnDraw.disabled = remaining().length === 0 || gameOver;
 
     renderColumns();
@@ -1205,13 +1225,21 @@
       if (remoteState || remoteRanking) {
         applyRemoteState(remoteState, remoteRanking);
       }
-      BingoSync.subscribe(async () => {
-        const [rs, rr] = await Promise.all([
-          BingoSync.pullState(),
-          BingoSync.pullRanking()
-        ]);
-        applyRemoteState(rs, rr);
-      });
+      BingoSync.subscribe(
+        async () => {
+          const [rs, rr] = await Promise.all([
+            BingoSync.pullState(),
+            BingoSync.pullRanking()
+          ]);
+          applyRemoteState(rs, rr);
+        },
+        (directState) => {
+          applyRemoteState(directState, null);
+        },
+        (directRanking) => {
+          applyRemoteState(null, directRanking);
+        }
+      );
     } catch (e) {}
   }
 
@@ -1225,8 +1253,12 @@
   // Ações de Sorteio
   btnDraw?.addEventListener('click', drawOne);
   btnAuto?.addEventListener('click', toggleAuto);
-  btnUndo?.addEventListener('click', undo);
-  btnReset?.addEventListener('click', resetAll);
+  document.querySelectorAll('#btn-undo, #btn-undo-manual, .btn-action-undo').forEach((btn) => {
+    btn.addEventListener('click', undo);
+  });
+  document.querySelectorAll('#btn-reset, #btn-reset-manual, .btn-action-reset').forEach((btn) => {
+    btn.addEventListener('click', resetAll);
+  });
   btnAdToggle?.addEventListener('click', toggleAdMode);
 
   selInterval?.addEventListener('change', (e) => {
@@ -1399,10 +1431,15 @@
       sponsor: sponsor,
       ts: Date.now()
     };
-    localStorage.setItem('bingo.sponsoredTrigger', JSON.stringify(triggerData));
+    try { localStorage.setItem('bingo.sponsoredTrigger', JSON.stringify(triggerData)); } catch (e) {}
     
-    // Salva estado e propaga para nuvem
-    LS.save();
+    // Transmissão direta via BroadcastChannel e Supabase Realtime
+    if (window.BingoSync?.triggerSponsoredStone) {
+      window.BingoSync.triggerSponsoredStone(triggerData);
+    }
+    
+    // Salva estado e propaga para nuvem com force=true
+    LS.save(true);
     
     executeDrawNumber(num);
     pendingSponsoredStone = null;
