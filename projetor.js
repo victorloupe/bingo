@@ -516,11 +516,17 @@
       const L = letterFor(last);
       elBigLetter.textContent = L;
       elBigNumber.textContent = last;
-      elBallCaption.textContent = `${L} - ${last}`;
+      if (elBallCaption) elBallCaption.textContent = `${L} - ${last}`;
+      if (elBallSphere) {
+        elBallSphere.className = 'ball-sphere-compact has-ball letter-' + L;
+      }
     } else {
       elBigLetter.textContent = '—';
       elBigNumber.textContent = '—';
-      elBallCaption.textContent = 'Aguardando';
+      if (elBallCaption) elBallCaption.textContent = 'Aguardando';
+      if (elBallSphere) {
+        elBallSphere.className = 'ball-sphere-compact';
+      }
     }
   }
 

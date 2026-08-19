@@ -1140,8 +1140,13 @@
     if (elLast) {
       if (last != null) {
         elLast.style.display = '';
-        if (elLastLetter) elLastLetter.textContent = letterFor(last);
+        const L = letterFor(last);
+        if (elLastLetter) {
+          elLastLetter.textContent = L;
+          elLastLetter.className = 'badge-letter letter-' + L;
+        }
         if (elLastNumber) elLastNumber.textContent = last;
+        elLast.className = 'last has-ball letter-' + L;
       } else {
         elLast.style.display = 'none';
       }
