@@ -400,8 +400,17 @@
         if (typeof stateData.selectedVoiceName === 'string') selectedVoiceName = stateData.selectedVoiceName;
         if (typeof stateData.rate === 'number') rate = stateData.rate;
         if (typeof stateData.pitch === 'number') pitch = stateData.pitch;
-        if (typeof stateData.adMode === 'boolean') {
+
+        let loadedNotice = null;
+        try { loadedNotice = JSON.parse(localStorage.getItem('bingo.adNotice') || 'null'); } catch (e) {}
+        if (loadedNotice && typeof loadedNotice._adMode === 'boolean') {
+          adMode = loadedNotice._adMode;
+          localStorage.setItem('bingo.adMode', adMode ? '1' : '0');
+        } else if (typeof stateData.adMode === 'boolean') {
           adMode = stateData.adMode;
+          localStorage.setItem('bingo.adMode', adMode ? '1' : '0');
+        } else if (typeof stateData.ad_mode === 'boolean') {
+          adMode = stateData.ad_mode;
           localStorage.setItem('bingo.adMode', adMode ? '1' : '0');
         } else {
           adMode = localStorage.getItem('bingo.adMode') === '1';
@@ -760,12 +769,21 @@
   // ====== Propaganda (Patrocinadores) ======
   function syncAdModeWithRetry(expectedAdMode) {
     LS.save(true);
-    setTimeout(() => {
-      if (adMode === expectedAdMode) LS.save(true);
-    }, 200);
-    setTimeout(() => {
-      if (adMode === expectedAdMode) LS.save(true);
-    }, 600);
+    // Verificações com checagem ativa no Supabase e reenvio com force se houver divergência
+    [300, 800, 1800].forEach((delay) => {
+      setTimeout(async () => {
+        if (adMode !== expectedAdMode) return;
+        LS.save(true);
+        if (window.BingoSync && BingoSync.ready() && typeof BingoSync.pullState === 'function') {
+          try {
+            const remote = await BingoSync.pullState();
+            if (remote && typeof remote.adMode === 'boolean' && remote.adMode !== expectedAdMode && adMode === expectedAdMode) {
+              LS.save(true);
+            }
+          } catch (e) {}
+        }
+      }, delay);
+    });
   }
 
   function updateAdButton() {
@@ -1183,10 +1201,21 @@
       if (remoteState.roundName) roundName = remoteState.roundName;
       if (remoteState.activeRoundId) roundId = remoteState.activeRoundId;
       if (remoteState.prizes) prizes = Object.assign({}, DEFAULT_PRIZES, remoteState.prizes);
-      if (typeof remoteState.adMode === 'boolean' && !isRecentLocalAction) {
-        adMode = remoteState.adMode;
+
+      const rNotice = remoteState.adNotice || remoteState.ad_notice;
+      let remoteAdMode = null;
+      if (rNotice && typeof rNotice._adMode === 'boolean') {
+        remoteAdMode = rNotice._adMode;
+      } else if (typeof remoteState.adMode === 'boolean') {
+        remoteAdMode = remoteState.adMode;
+      } else if (typeof remoteState.ad_mode === 'boolean') {
+        remoteAdMode = remoteState.ad_mode;
+      }
+      if (remoteAdMode !== null && !isRecentLocalAction) {
+        adMode = remoteAdMode;
         localStorage.setItem('bingo.adMode', adMode ? '1' : '0');
       }
+
       if (typeof remoteState.intervalMs === 'number') {
         intervalMs = remoteState.intervalMs;
         if (selInterval) selInterval.value = String(intervalMs);

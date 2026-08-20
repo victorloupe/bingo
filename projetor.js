@@ -701,31 +701,39 @@
     if (newState.roundName) roundName = newState.roundName;
     if (newState.nextRound !== undefined) nextRound = newState.nextRound;
     if (Array.isArray(newState.roundsQueue)) roundsQueue = newState.roundsQueue;
-    if (newState.adNotice !== undefined) adNotice = newState.adNotice;
+    const incomingNotice = (newState.adNotice && typeof newState.adNotice === 'object')
+      ? newState.adNotice
+      : ((newState.ad_notice && typeof newState.ad_notice === 'object') ? newState.ad_notice : null);
+
+    if (incomingNotice !== null) {
+      adNotice = incomingNotice;
+    }
     
     // Tema do Telão (sincronizado do painel)
     if (newState.projectorTheme) {
       applyProjectorTheme(newState.projectorTheme);
     }
 
-    // adMode (online + local)
+    // adMode (online + local) - prioriza flag encapsulada no adNotice
     let newAdMode = adMode;
-    if (typeof newState.adMode === 'boolean') {
+    if (incomingNotice && typeof incomingNotice._adMode === 'boolean') {
+      newAdMode = incomingNotice._adMode;
+    } else if (typeof newState.adMode === 'boolean') {
       newAdMode = newState.adMode;
     } else if (typeof newState.ad_mode === 'boolean') {
       newAdMode = newState.ad_mode;
-    } else if (newState.adNotice && typeof newState.adNotice._adMode === 'boolean') {
-      newAdMode = newState.adNotice._adMode;
     }
     adMode = newAdMode;
     try { localStorage.setItem('bingo.adMode', adMode ? '1' : '0'); } catch(e){}
 
     // conferenceMode (online)
     let newConf = conferenceMode;
-    if (typeof newState.conferenceMode === 'boolean') {
+    if (incomingNotice && typeof incomingNotice._conferenceMode === 'boolean') {
+      newConf = incomingNotice._conferenceMode;
+    } else if (typeof newState.conferenceMode === 'boolean') {
       newConf = newState.conferenceMode;
-    } else if (newState.adNotice && typeof newState.adNotice._conferenceMode === 'boolean') {
-      newConf = newState.adNotice._conferenceMode;
+    } else if (typeof newState.conference_mode === 'boolean') {
+      newConf = newState.conference_mode;
     }
 
     if (newConf && !previousConferenceMode) {
@@ -998,21 +1006,29 @@
       const localQueue = JSON.parse(localStorage.getItem('bingo.roundsQueue') || 'null');
       if (Array.isArray(localQueue)) roundsQueue = localQueue;
       const localNotice = JSON.parse(localStorage.getItem('bingo.adNotice') || 'null');
-      if (localNotice) adNotice = localNotice;
+      if (localNotice && typeof localNotice === 'object') adNotice = localNotice;
       
       const localRanking = JSON.parse(localStorage.getItem('bingo.ranking') || '[]');
       if (Array.isArray(localRanking)) rankingList = localRanking;
 
-      if (typeof st.adMode === 'boolean') {
+      if (localNotice && typeof localNotice._adMode === 'boolean') {
+        adMode = localNotice._adMode;
+      } else if (typeof st.adMode === 'boolean') {
         adMode = st.adMode;
+      } else if (typeof st.ad_mode === 'boolean') {
+        adMode = st.ad_mode;
       } else {
         const savedAd = localStorage.getItem('bingo.adMode');
         if (savedAd !== null) adMode = savedAd === '1';
       }
       st.adMode = adMode;
 
-      if (typeof st.conferenceMode === 'boolean') {
+      if (localNotice && typeof localNotice._conferenceMode === 'boolean') {
+        conferenceMode = localNotice._conferenceMode;
+      } else if (typeof st.conferenceMode === 'boolean') {
         conferenceMode = st.conferenceMode;
+      } else if (typeof st.conference_mode === 'boolean') {
+        conferenceMode = st.conference_mode;
       } else {
         const savedConf = localStorage.getItem('bingo.conferenceMode');
         if (savedConf !== null) conferenceMode = savedConf === '1';

@@ -527,10 +527,10 @@
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-  <script src="supabase-config.js?v=3.3"></script>
-  <script src="operator-key.js?v=3.3"></script>
-  <script src="dialog.js?v=3.3"></script>
-  <script src="sync.js?v=3.3"></script>
+  <script src="supabase-config.js?v=4.1"></script>
+  <script src="operator-key.js?v=4.1"></script>
+  <script src="dialog.js?v=4.1"></script>
+  <script src="sync.js?v=4.1"></script>
 
   <script>
     const DEFAULT_PRIZES = {
@@ -576,14 +576,27 @@
         st.roundsList = loadRoundsList();
         let adNotice = null;
         try { adNotice = JSON.parse(localStorage.getItem('bingo.adNotice') || 'null'); } catch (e) {}
+        if (!adNotice || typeof adNotice !== 'object') adNotice = {};
+        adNotice._adMode = boolVal;
+        adNotice._conferenceMode = false;
         st.adNotice = adNotice;
+        localStorage.setItem('bingo.adNotice', JSON.stringify(adNotice));
         localStorage.setItem('bingo.state', JSON.stringify(st));
         window.BingoSync?.pushState(st, true, true);
-        // Reenvia: se outro aparelho tiver sobrescrito o valor na nuvem entre
-        // o clique e a gravação, a repetição garante que o Telão receba.
-        [1200, 3000].forEach((delay) => {
-          setTimeout(() => {
-            if (getAdMode() === boolVal) window.BingoSync?.pushState(st, true, true);
+        // Reenvia e verifica se o Supabase confirmou o estado
+        [400, 1200, 2500].forEach((delay) => {
+          setTimeout(async () => {
+            if (getAdMode() === boolVal) {
+              window.BingoSync?.pushState(st, true, true);
+              if (window.BingoSync && BingoSync.ready() && typeof BingoSync.pullState === 'function') {
+                try {
+                  const rem = await BingoSync.pullState();
+                  if (rem && typeof rem.adMode === 'boolean' && rem.adMode !== boolVal && getAdMode() === boolVal) {
+                    window.BingoSync?.pushState(st, true, true);
+                  }
+                } catch (e) {}
+              }
+            }
           }, delay);
         });
       } catch (e) {}
@@ -1482,11 +1495,13 @@
           if (Array.isArray(remoteState.roundsList)) {
             localStorage.setItem('bingo.roundsList', JSON.stringify(remoteState.roundsList));
           }
-          if (remoteState.activeRoundId) localStorage.setItem('bingo.activeRoundId', remoteState.activeRoundId);
-          if (typeof remoteState.adMode === 'boolean') {
-            if (Date.now() - lastUserActionTs > 3000) {
-              localStorage.setItem('bingo.adMode', remoteState.adMode ? '1' : '0');
-            }
+          const rNotice = remoteState.adNotice || remoteState.ad_notice;
+          let rAdMode = null;
+          if (rNotice && typeof rNotice._adMode === 'boolean') rAdMode = rNotice._adMode;
+          else if (typeof remoteState.adMode === 'boolean') rAdMode = remoteState.adMode;
+          else if (typeof remoteState.ad_mode === 'boolean') rAdMode = remoteState.ad_mode;
+          if (rAdMode !== null && Date.now() - lastUserActionTs > 3000) {
+            localStorage.setItem('bingo.adMode', rAdMode ? '1' : '0');
           }
           if (remoteState.prizes) localStorage.setItem('bingo.prizes', JSON.stringify(remoteState.prizes));
           if (Array.isArray(remoteState.sponsors)) localStorage.setItem('bingo.sponsors', JSON.stringify(remoteState.sponsors));
@@ -1510,10 +1525,13 @@
               localStorage.setItem('bingo.roundsList', JSON.stringify(rs.roundsList));
             }
             if (rs.activeRoundId) localStorage.setItem('bingo.activeRoundId', rs.activeRoundId);
-            if (typeof rs.adMode === 'boolean') {
-              if (Date.now() - lastUserActionTs > 3000) {
-                localStorage.setItem('bingo.adMode', rs.adMode ? '1' : '0');
-              }
+            const subNotice = rs.adNotice || rs.ad_notice;
+            let subAdMode = null;
+            if (subNotice && typeof subNotice._adMode === 'boolean') subAdMode = subNotice._adMode;
+            else if (typeof rs.adMode === 'boolean') subAdMode = rs.adMode;
+            else if (typeof rs.ad_mode === 'boolean') subAdMode = rs.ad_mode;
+            if (subAdMode !== null && Date.now() - lastUserActionTs > 3000) {
+              localStorage.setItem('bingo.adMode', subAdMode ? '1' : '0');
             }
             if (rs.prizes) localStorage.setItem('bingo.prizes', JSON.stringify(rs.prizes));
             if (Array.isArray(rs.sponsors)) localStorage.setItem('bingo.sponsors', JSON.stringify(rs.sponsors));

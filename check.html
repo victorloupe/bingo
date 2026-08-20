@@ -410,11 +410,11 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
-  <script src="supabase-config.js?v=3.3"></script>
-  <script src="operator-key.js?v=3.3"></script>
-  <script src="dialog.js?v=3.3"></script>
-  <script src="sync.js?v=3.3"></script>
-  <script src="cartelas.js?v=3.3"></script>
+  <script src="supabase-config.js?v=4.1"></script>
+  <script src="operator-key.js?v=4.1"></script>
+  <script src="dialog.js?v=4.1"></script>
+  <script src="sync.js?v=4.1"></script>
+  <script src="cartelas.js?v=4.1"></script>
 
   <script>
     const DEFAULT_PRIZES = {
@@ -1331,8 +1331,13 @@
         localStorage.setItem('bingo.state', JSON.stringify(merged));
         if (merged.prizes) localStorage.setItem('bingo.prizes', JSON.stringify(merged.prizes));
         if (merged.sponsors) localStorage.setItem('bingo.sponsors', JSON.stringify(merged.sponsors));
-        if (typeof merged.adMode === 'boolean') localStorage.setItem('bingo.adMode', merged.adMode ? '1' : '0');
-        if (merged.adNotice) localStorage.setItem('bingo.adNotice', JSON.stringify(merged.adNotice));
+        const mNotice = merged.adNotice || merged.ad_notice;
+        let mAdMode = null;
+        if (mNotice && typeof mNotice._adMode === 'boolean') mAdMode = mNotice._adMode;
+        else if (typeof merged.adMode === 'boolean') mAdMode = merged.adMode;
+        else if (typeof merged.ad_mode === 'boolean') mAdMode = merged.ad_mode;
+        if (mAdMode !== null) localStorage.setItem('bingo.adMode', mAdMode ? '1' : '0');
+        if (mNotice) localStorage.setItem('bingo.adNotice', JSON.stringify(mNotice));
         if (conferenceActive) {
           window.BingoSync.pushState(merged);
         }
@@ -1356,8 +1361,13 @@
           localStorage.setItem('bingo.state', JSON.stringify(rs));
           if (rs.prizes) localStorage.setItem('bingo.prizes', JSON.stringify(rs.prizes));
           if (rs.sponsors) localStorage.setItem('bingo.sponsors', JSON.stringify(rs.sponsors));
-          if (typeof rs.adMode === 'boolean') localStorage.setItem('bingo.adMode', rs.adMode ? '1' : '0');
-          if (rs.adNotice) localStorage.setItem('bingo.adNotice', JSON.stringify(rs.adNotice));
+          const rNotice = rs.adNotice || rs.ad_notice;
+          let rAdMode = null;
+          if (rNotice && typeof rNotice._adMode === 'boolean') rAdMode = rNotice._adMode;
+          else if (typeof rs.adMode === 'boolean') rAdMode = rs.adMode;
+          else if (typeof rs.ad_mode === 'boolean') rAdMode = rs.ad_mode;
+          if (rAdMode !== null) localStorage.setItem('bingo.adMode', rAdMode ? '1' : '0');
+          if (rNotice) localStorage.setItem('bingo.adNotice', JSON.stringify(rNotice));
         }
         const rr = await BingoSync.pullRanking();
         if (Array.isArray(rr)) {

@@ -192,8 +192,16 @@ const LS = {
       if(typeof stateData.selectedVoiceName==='string') selectedVoiceName = stateData.selectedVoiceName;
       if(typeof stateData.rate==='number') rate = stateData.rate;
       if(typeof stateData.pitch==='number') pitch = stateData.pitch;
-      if (typeof stateData.adMode === 'boolean') {
+      let loadedNotice = null;
+      try { loadedNotice = JSON.parse(localStorage.getItem('bingo.adNotice') || 'null'); } catch (e) {}
+      if (loadedNotice && typeof loadedNotice._adMode === 'boolean') {
+        adMode = loadedNotice._adMode;
+        localStorage.setItem('bingo.adMode', adMode ? '1' : '0');
+      } else if (typeof stateData.adMode === 'boolean') {
         adMode = stateData.adMode;
+        localStorage.setItem('bingo.adMode', adMode ? '1' : '0');
+      } else if (typeof stateData.ad_mode === 'boolean') {
+        adMode = stateData.ad_mode;
         localStorage.setItem('bingo.adMode', adMode ? '1' : '0');
       } else {
         adMode = localStorage.getItem('bingo.adMode') === '1';
@@ -221,9 +229,19 @@ const LS = {
 };
 
 function syncAdModeWithRetry(expectedAdMode) {
-  [250, 1200, 3000].forEach((delay) => {
-    setTimeout(() => {
-      if (adMode === expectedAdMode) LS.save(true);
+  LS.save(true);
+  [300, 800, 1800].forEach((delay) => {
+    setTimeout(async () => {
+      if (adMode !== expectedAdMode) return;
+      LS.save(true);
+      if (window.BingoSync && BingoSync.ready() && typeof BingoSync.pullState === 'function') {
+        try {
+          const remote = await BingoSync.pullState();
+          if (remote && typeof remote.adMode === 'boolean' && remote.adMode !== expectedAdMode && adMode === expectedAdMode) {
+            LS.save(true);
+          }
+        } catch (e) {}
+      }
     }, delay);
   });
 }
@@ -1160,14 +1178,17 @@ function applyRemoteState(remoteState, remoteRanking) {
       if (remoteState.roundName) roundName = remoteState.roundName;
       if (remoteState.activeRoundId) roundId = remoteState.activeRoundId;
     }
-    if (typeof remoteState.adMode === 'boolean') {
-      if (!isRecentLocalAction) {
-        adMode = remoteState.adMode;
-        localStorage.setItem('bingo.adMode', adMode ? '1' : '0');
-      }
+    const rNotice = remoteState.adNotice || remoteState.ad_notice;
+    let rAdMode = null;
+    if (rNotice && typeof rNotice._adMode === 'boolean') rAdMode = rNotice._adMode;
+    else if (typeof remoteState.adMode === 'boolean') rAdMode = remoteState.adMode;
+    else if (typeof remoteState.ad_mode === 'boolean') rAdMode = remoteState.ad_mode;
+    if (rAdMode !== null && !isRecentLocalAction) {
+      adMode = rAdMode;
+      localStorage.setItem('bingo.adMode', adMode ? '1' : '0');
     }
     if (remoteState.prizes) prizes = Object.assign({}, DEFAULT_PRIZES, remoteState.prizes);
-    if (remoteState.adNotice) localStorage.setItem('bingo.adNotice', JSON.stringify(remoteState.adNotice));
+    if (rNotice) localStorage.setItem('bingo.adNotice', JSON.stringify(rNotice));
     if (Array.isArray(remoteState.sponsors)) localStorage.setItem('bingo.sponsors', JSON.stringify(remoteState.sponsors));
     if (Array.isArray(remoteState.roundsQueue)) localStorage.setItem('bingo.roundsQueue', JSON.stringify(remoteState.roundsQueue));
     if (Array.isArray(remoteState.roundsList)) localStorage.setItem('bingo.roundsList', JSON.stringify(remoteState.roundsList));

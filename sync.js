@@ -230,9 +230,19 @@
 
     const isAd = typeof state.adMode === 'boolean'
       ? state.adMode
-      : (typeof remote.adMode === 'boolean'
-          ? remote.adMode
-          : (localStorage.getItem('bingo.adMode') === '1'));
+      : (typeof state.ad_mode === 'boolean'
+          ? state.ad_mode
+          : (state.adNotice && typeof state.adNotice._adMode === 'boolean'
+              ? state.adNotice._adMode
+              : (state.ad_notice && typeof state.ad_notice._adMode === 'boolean'
+                  ? state.ad_notice._adMode
+                  : (remote.adNotice && typeof remote.adNotice._adMode === 'boolean'
+                      ? remote.adNotice._adMode
+                      : (typeof remote.adMode === 'boolean'
+                          ? remote.adMode
+                          : (typeof remote.ad_mode === 'boolean'
+                              ? remote.ad_mode
+                              : (localStorage.getItem('bingo.adMode') === '1')))))));
     const isConference = typeof state.conferenceMode === 'boolean'
       ? state.conferenceMode
       : (typeof remote.conferenceMode === 'boolean'
@@ -362,8 +372,11 @@
       prizes: payload.prizes,
       sponsors: payload.sponsors,
       adMode: payload.ad_mode,
+      ad_mode: payload.ad_mode,
       adNotice: payload.ad_notice,
+      ad_notice: payload.ad_notice,
       conferenceMode: isConference,
+      conference_mode: isConference,
       sponsoredTrigger: spTriggerVal
     };
 
@@ -587,10 +600,12 @@
       if (error || !data) return null;
       const nRound = (data.next_round && typeof data.next_round === 'object' && data.next_round.name) ? data.next_round : null;
       const rawNotice = (data.ad_notice && typeof data.ad_notice === 'object') ? data.ad_notice : null;
-      const confMode = rawNotice && typeof rawNotice._conferenceMode === 'boolean' ? rawNotice._conferenceMode : false;
-      const adModeVal = typeof data.ad_mode === 'boolean' 
-        ? data.ad_mode 
-        : (rawNotice && typeof rawNotice._adMode === 'boolean' ? rawNotice._adMode : false);
+      const confMode = (rawNotice && typeof rawNotice._conferenceMode === 'boolean')
+        ? rawNotice._conferenceMode
+        : (typeof data.conference_mode === 'boolean' ? data.conference_mode : false);
+      const adModeVal = (rawNotice && typeof rawNotice._adMode === 'boolean')
+        ? rawNotice._adMode
+        : (typeof data.ad_mode === 'boolean' ? data.ad_mode : false);
 
       let cleanNotice = rawNotice ? {
         _conferenceMode: confMode,
@@ -620,8 +635,11 @@
         prizes: data.prizes || {},
         sponsors: Array.isArray(data.sponsors) ? data.sponsors : [],
         adMode: adModeVal,
+        ad_mode: adModeVal,
         adNotice: cleanNotice,
+        ad_notice: cleanNotice,
         conferenceMode: confMode,
+        conference_mode: confMode,
         sponsoredTrigger: spTrig
       };
       lastRemoteState = result;
